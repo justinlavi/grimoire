@@ -1,0 +1,5 @@
+{
+  "name": "{{GRIMOIRE_DIRECTORY}}",
+  "skill_prefix": "{{SKILL_PREFIX}}",
+  "description": "{{GRIMOIRE_PURPOSE}}"
+}

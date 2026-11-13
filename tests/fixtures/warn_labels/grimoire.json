@@ -1,0 +1,5 @@
+{
+  "name": "warn_labels",
+  "skill_prefix": "warn",
+  "description": "Fixture grimoire whose pages contain verbose wikilink display labels."
+}
