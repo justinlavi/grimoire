@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Core install logic for the Arcana Summoning Rite.
+"""Core install logic for Grimoire Summoning Rite.
 
 Sister module to `summon.py` (the dispatcher). This module is the install
-engine: constants, the Logger, git/HTTP helpers, GitHub/GitLab discovery, the
+framework: constants, the Logger, git/HTTP helpers, GitHub/GitLab discovery, the
 install pipeline, and the interactive terminal flow.
 
 It depends only on the Python standard library so it runs on a stock Python
@@ -33,9 +33,9 @@ from agent_targets import (
 RITE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = RITE_DIR.parent
 GRIMOIRES_HOME = Path.home() / "grimoires"
-ARCANA_DIR = GRIMOIRES_HOME / "arcana"
+FRAMEWORK_DIR = Path.home() / ".grimoire"
 LOCAL_LIBRARY = GRIMOIRES_HOME / "library.json"
-DEFAULT_ARCANA_URL = "https://github.com/justinlavi/arcana.git"
+DEFAULT_FRAMEWORK_URL = "https://github.com/justinlavi/grimoire.git"
 
 
 DEFAULT_AGENT_TARGETS = automatic_instruction_target_ids(REPO_ROOT)
@@ -45,8 +45,8 @@ SETTINGS_DEFAULTS = {
     "last_scope_url": "",
     "agent_targets": DEFAULT_AGENT_TARGETS,
     "skip_skill_registration": False,
-    "custom_arcana_url": "",
-    "custom_arcana_ref": "",
+    "custom_framework_url": "",
+    "custom_framework_ref": "",
 }
 
 
@@ -55,7 +55,7 @@ def _load_grimoire_block():
     candidates = [
         RITE_DIR / "templates" / "grimoire_block.md",
         REPO_ROOT / "rites" / "templates" / "grimoire_block.md",
-        ARCANA_DIR / "rites" / "templates" / "grimoire_block.md",
+        FRAMEWORK_DIR / "rites" / "templates" / "grimoire_block.md",
     ]
 
     for template_path in candidates:
@@ -72,7 +72,7 @@ def _load_grimoire_block():
 GRIMOIRE_BLOCK = _load_grimoire_block()
 
 # The Grimoire routing block is defined solely by its BEGIN/END markers. They
-# are the single durable contract: everything between them is Arcana-owned and
+# are the single durable contract: everything between them is framework-owned and
 # the user never edits it; everything outside is the user's. Detection and
 # idempotency key on these markers only - summon_state and inject_agent_file
 # import them so the detector and the injectors cannot drift.
@@ -204,8 +204,8 @@ def git_capture(*args, cwd=None):
         return 127, "", "git executable not found on PATH"
 
 
-def detect_arcana_url():
-    """Detect Arcana origin from the repo this script lives in."""
+def detect_framework_url():
+    """Detect framework origin from the repo this script lives in."""
     ok, _ = git("-C", str(REPO_ROOT), "rev-parse", "--is-inside-work-tree")
     if not ok:
         return ""
@@ -213,13 +213,13 @@ def detect_arcana_url():
     return url if ok else ""
 
 
-def resolve_arcana_url(args):
-    """Resolve the Arcana git URL from flag, env, local origin, or public default."""
+def resolve_framework_url(args):
+    """Resolve the framework git URL from flag, env, local origin, or public default."""
     return (
-        args.arcana_url
-        or os.environ.get("ARCANA_URL", "")
-        or detect_arcana_url()
-        or DEFAULT_ARCANA_URL
+        args.framework_url
+        or os.environ.get("FRAMEWORK_URL", "")
+        or detect_framework_url()
+        or DEFAULT_FRAMEWORK_URL
     )
 
 
@@ -321,7 +321,7 @@ def _api_get(url, token_header=None, token_value=None):
         return None, str(e)
 
 
-ENGINE_REPO_NAME = "arcana"
+FRAMEWORK_REPO_NAME = "grimoire"
 
 
 def _metadata_marks_grimoire(name, description="", topics=None):
@@ -329,8 +329,8 @@ def _metadata_marks_grimoire(name, description="", topics=None):
     normalized = {str(t).lower() for t in topics}
     name_l = (name or "").lower()
     desc_l = (description or "").lower()
-    if name_l == ENGINE_REPO_NAME:
-        return False  # the engine describes grimoires; it is not one
+    if name_l == FRAMEWORK_REPO_NAME:
+        return False  # the framework describes grimoires; it is not one
     return (
         name_l.endswith("-grimoire")
         or "grimoire" in normalized
@@ -571,7 +571,7 @@ def check_git(log):
 # none of these are checked out, the working tree is partial - most commonly
 # because `git checkout` aborted on a path that's invalid on this OS (Windows
 # rejects names containing < > : " | ? *).
-WORKING_TREE_SENTINELS = ("README.md", "arcana.json", "arcana.md")
+WORKING_TREE_SENTINELS = ("README.md", "framework.json", "grimoire.md")
 
 
 def working_tree_populated(target_dir):
@@ -599,45 +599,45 @@ def attempt_working_tree_recovery(target_dir, name, log, git_fn=git):
     return False
 
 
-def install_arcana(arcana_url, log, git_fn=git, cancel_event=None):
-    """Clone or update Arcana."""
-    log.info("Installing Arcana...")
+def install_framework(framework_url, log, git_fn=git, cancel_event=None):
+    """Clone or update the framework."""
+    log.info("Installing the framework...")
     if cancel_event is not None and cancel_event.is_set():
-        log.warn("Cancelled before Arcana install")
+        log.warn("Cancelled before framework install")
         return False
-    if (ARCANA_DIR / ".git").is_dir():
-        log.info("Arcana already installed - pulling latest...")
-        ok, _ = git_fn("-C", str(ARCANA_DIR), "pull", "--ff-only", log=log)
+    if (FRAMEWORK_DIR / ".git").is_dir():
+        log.info("Framework already installed - pulling latest...")
+        ok, _ = git_fn("-C", str(FRAMEWORK_DIR), "pull", "--ff-only", log=log)
         if ok:
-            log.ok(f"Arcana updated: {ARCANA_DIR}")
+            log.ok(f"Framework updated: {FRAMEWORK_DIR}")
         else:
-            log.warn("Arcana pull failed (local changes?) - skipping update")
-            log.ok(f"Arcana exists: {ARCANA_DIR}")
-        if not working_tree_populated(ARCANA_DIR):
-            if not attempt_working_tree_recovery(ARCANA_DIR, "Arcana", log, git_fn):
+            log.warn("Framework pull failed (local changes?) - skipping update")
+            log.ok(f"Framework exists: {FRAMEWORK_DIR}")
+        if not working_tree_populated(FRAMEWORK_DIR):
+            if not attempt_working_tree_recovery(FRAMEWORK_DIR, "Framework", log, git_fn):
                 return False
-    elif arcana_url:
-        ref = os.environ.get("ARCANA_REF", "").strip()
-        log.info(f"Cloning Arcana from {arcana_url}" + (f" at {ref}" if ref else "") + "...")
+    elif framework_url:
+        ref = os.environ.get("FRAMEWORK_REF", "").strip()
+        log.info(f"Cloning the framework from {framework_url}" + (f" at {ref}" if ref else "") + "...")
         ref_args = ["--branch", ref] if ref else []
-        ok, _ = git_fn("clone", *ref_args, arcana_url, str(ARCANA_DIR), log=log)
+        ok, _ = git_fn("clone", *ref_args, framework_url, str(FRAMEWORK_DIR), log=log)
         if not ok:
-            log.err("Failed to clone Arcana - check network and git credentials")
-            if (ARCANA_DIR / ".git").is_dir() and not working_tree_populated(ARCANA_DIR):
+            log.err("Failed to clone the framework - check network and git credentials")
+            if (FRAMEWORK_DIR / ".git").is_dir() and not working_tree_populated(FRAMEWORK_DIR):
                 log.err(
                     "A partial clone was left at {0}. After resolving the cause, "
-                    "remove that directory and re-run summon.".format(ARCANA_DIR)
+                    "remove that directory and re-run summon.".format(FRAMEWORK_DIR)
                 )
             return False
-        if not working_tree_populated(ARCANA_DIR):
-            if not attempt_working_tree_recovery(ARCANA_DIR, "Arcana", log, git_fn):
+        if not working_tree_populated(FRAMEWORK_DIR):
+            if not attempt_working_tree_recovery(FRAMEWORK_DIR, "Framework", log, git_fn):
                 return False
-        log.ok(f"Arcana cloned to {ARCANA_DIR}")
+        log.ok(f"Framework cloned to {FRAMEWORK_DIR}")
     else:
-        if ARCANA_DIR.is_dir():
-            log.ok(f"Arcana exists: {ARCANA_DIR}")
+        if FRAMEWORK_DIR.is_dir():
+            log.ok(f"Framework exists: {FRAMEWORK_DIR}")
         else:
-            log.err("Cannot detect Arcana origin URL")
+            log.err("Cannot detect framework origin URL")
             return False
     return True
 
@@ -769,7 +769,7 @@ def inject_agent_configs(log):
 
 
 def _registered_skill_count(skills_dir):
-    """Count Arcana-managed installed skill directories under one target."""
+    """Count framework-managed installed skill directories under one target."""
     if not skills_dir.is_dir():
         return 0
     count = 0
@@ -781,7 +781,7 @@ def _registered_skill_count(skills_dir):
             content = skill_file.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        if "ARCANA_SKILL_OWNERSHIP" in content:
+        if "FRAMEWORK_SKILL_OWNERSHIP" in content:
             count += 1
     return count
 
@@ -789,14 +789,14 @@ def _registered_skill_count(skills_dir):
 def sync_skills(log):
     """Run the skill registration script."""
     log.info("Syncing Grimoire skills...")
-    register_script = ARCANA_DIR / "rites" / "sync_skills.py"
+    register_script = FRAMEWORK_DIR / "rites" / "sync_skills.py"
     if not register_script.is_file():
         register_script = RITE_DIR / "sync_skills.py"
 
     if not register_script.is_file():
-        log.err(f"sync_skills.py not found at {ARCANA_DIR / 'rites'} or {RITE_DIR}")
-        log.err("Skills NOT synced. Re-run manually after Arcana lands:")
-        log.err(f"  python3 {ARCANA_DIR / 'rites' / 'sync_skills.py'}")
+        log.err(f"sync_skills.py not found at {FRAMEWORK_DIR / 'rites'} or {RITE_DIR}")
+        log.err("Skills NOT synced. Re-run manually after the framework lands:")
+        log.err(f"  python3 {FRAMEWORK_DIR / 'rites' / 'sync_skills.py'}")
         return False
 
     result = subprocess.run(
@@ -827,7 +827,7 @@ def sync_skills(log):
     if total == 0:
         expected = ", ".join(str(config["path"]) for config in skill_registration_targets(REPO_ROOT).values())
         log.warn(
-            "No Arcana-managed skills landed in any registered agent directory - "
+            "No framework-managed skills landed in any registered agent directory - "
             "this usually means no supported local agent is set up on this machine."
         )
         log.warn(f"Expected skill target(s): {expected}")
@@ -841,7 +841,7 @@ def sync_skills(log):
 
 
 def finalize_install(installed_keys, library, log):
-    """Run the post-Arcana install steps: library, agent blocks, skills."""
+    """Run the post-framework install steps: library, agent blocks, skills."""
     if installed_keys:
         update_local_library(installed_keys, library, log)
     inject_agent_configs(log)
@@ -883,13 +883,13 @@ def _prompt_cli_mode(scope_preselected):
     print()
     print("  What would you like to do?")
     print()
-    print("    1) Install Arcana               (sets up the framework; build grimoires from scratch)")
-    print("    2) Install Arcana + clone grimoires  (also pulls existing grimoires from a git host)")
+    print("    1) Install the framework               (sets up the framework; build grimoires from scratch)")
+    print("    2) Install the framework + clone grimoires  (also pulls existing grimoires from a git host)")
     print()
     while True:
         choice = _prompt_text("  Choice [1]: ", default="1").strip() or "1"
         if choice == "1":
-            return "arcana_only"
+            return "framework_only"
         if choice == "2":
             return "clone"
         print(f"  Invalid choice: {choice!r}. Enter 1 or 2.")
@@ -931,15 +931,15 @@ def _print_cli_summary(mode, installed_keys, skills_ok):
     print()
     print("============================================")
     if skills_ok:
-        print("  Arcana Summoning Complete")
+        print("  Grimoire Summoning Complete")
     else:
-        print("  Arcana Summoning Complete (with warnings)")
+        print("  Grimoire Summoning Complete (with warnings)")
     print("============================================")
     print()
-    print("  Arcana:  ~/grimoires/arcana/")
+    print("  Framework: ~/.grimoire/")
     print()
-    if mode == "arcana_only":
-        print("  Grimoires: none cloned - Arcana only.")
+    if mode == "framework_only":
+        print("  Grimoires: none cloned - framework only.")
         print("  To create your first grimoire, open an agent session and run: /grm-create")
     elif installed_keys:
         print("  Installed grimoires:")
@@ -958,12 +958,12 @@ def _print_cli_summary(mode, installed_keys, skills_ok):
     print()
     if not skills_ok:
         print("  *** Skill registration failed - see errors above. Re-run: ***")
-        print(f"      python3 {ARCANA_DIR / 'rites' / 'sync_skills.py'}")
+        print(f"      python3 {FRAMEWORK_DIR / 'rites' / 'sync_skills.py'}")
         print()
     print("  Next steps:")
     agent_labels = ", ".join(target["label"] for target in automatic_instruction_targets(REPO_ROOT))
     print(f"    1. Open a new {agent_labels} session")
-    print("    2. Try: /grm-create  (maintainers: /arc-help lists the full platform catalog)")
+    print("    2. Try: /grm-create  (maintainers: /grm-dev-help lists the full platform catalog)")
     print()
 
 
@@ -972,21 +972,21 @@ def run_cli(args):
     log = Logger()
     print()
     print("============================================")
-    print("  Arcana Summoning Rite")
+    print("  Grimoire Summoning Rite")
     print("============================================")
 
     if not check_git(log):
         sys.exit(1)
 
     GRIMOIRES_HOME.mkdir(parents=True, exist_ok=True)
-    log.ok(f"Install directory: {GRIMOIRES_HOME}")
+    log.ok(f"Grimoire home: {GRIMOIRES_HOME}")
 
     scope_url = args.scope or os.environ.get("GRIMOIRE_SCOPE", "")
     mode = _prompt_cli_mode(scope_preselected=bool(scope_url))
 
     print()
-    arcana_url = resolve_arcana_url(args)
-    if not install_arcana(arcana_url, log):
+    framework_url = resolve_framework_url(args)
+    if not install_framework(framework_url, log):
         sys.exit(1)
 
     installed_keys = []
@@ -1000,7 +1000,7 @@ def run_cli(args):
             print()
             print("  Where are your grimoires hosted?")
             print("  Enter the URL of the group or org containing your grimoires.")
-            print("  Press Enter to skip grimoire cloning and install Arcana only.")
+            print("  Press Enter to skip grimoire cloning and install the framework only.")
             print()
             print("  Examples:")
             print("    https://github.com/my-org")
@@ -1019,12 +1019,12 @@ def run_cli(args):
             log.info("Skipping discovery (no scope URL provided)")
 
         if not library["grimoires"]:
-            log.warn("No grimoires available to clone. Continuing with Arcana-only install.")
+            log.warn("No grimoires available to clone. Continuing with framework-only install.")
         else:
             log.ok(f"Library loaded ({len(library['grimoires'])} grimoire(s) available)")
             selected_keys = _cli_select_grimoires(library, log)
             if not selected_keys:
-                log.warn("No grimoires selected. Continuing with Arcana-only install.")
+                log.warn("No grimoires selected. Continuing with framework-only install.")
             else:
                 print()
                 log.ok(f"Selected {len(selected_keys)} grimoire(s)")
@@ -1036,7 +1036,7 @@ def run_cli(args):
                     if install_grimoire(key, entry, log):
                         installed_keys.append(key)
                 if selected_keys and not installed_keys:
-                    log.warn("No grimoires were cloned successfully - continuing with Arcana-only install.")
+                    log.warn("No grimoires were cloned successfully - continuing with framework-only install.")
 
     print()
     skills_ok = finalize_install(installed_keys, library, log)

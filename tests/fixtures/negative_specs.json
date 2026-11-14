@@ -118,14 +118,14 @@
   },
   "validate_grimoire_structure": {
     "allowlist": {
-      "GRIMOIRE_STRUCTURE_CONTRACT": "fires only when the Arcana scaffold contract itself is malformed (environment)",
-      "GRIMOIRE_STRUCTURE_CONTRACT_READ": "fires only when the Arcana scaffold contract is unreadable (I/O)",
-      "GRIMOIRE_STRUCTURE_FORMULA_MISSING_MANAGED": "environment: Arcana formula missing a managed file",
-      "GRIMOIRE_STRUCTURE_FORMULA_ROOT_MISSING": "environment: Arcana formula root absent",
+      "GRIMOIRE_STRUCTURE_CONTRACT": "fires only when the framework scaffold contract itself is malformed (environment)",
+      "GRIMOIRE_STRUCTURE_CONTRACT_READ": "fires only when the framework scaffold contract is unreadable (I/O)",
+      "GRIMOIRE_STRUCTURE_FORMULA_MISSING_MANAGED": "environment: framework formula missing a managed file",
+      "GRIMOIRE_STRUCTURE_FORMULA_ROOT_MISSING": "environment: framework formula root absent",
       "GRIMOIRE_STRUCTURE_JSON_UNREADABLE": "fires only on a malformed-JSON read failure (I/O)",
       "GRIMOIRE_STRUCTURE_JSON_VALUE": "requires grimoire.json with a wrong-typed field; this fixture exercises the missing-required-key path",
       "GRIMOIRE_STRUCTURE_MISSING_MANIFEST": "mutually exclusive with INVALID_MANIFEST; this fixture exercises the present-but-incomplete manifest path",
-      "GRIMOIRE_STRUCTURE_STALE_MANAGED": "requires a managed scaffold file present but divergent from its Arcana formula source; this fixture exercises the missing-managed path"
+      "GRIMOIRE_STRUCTURE_STALE_MANAGED": "requires a managed scaffold file present but divergent from its framework formula source; this fixture exercises the missing-managed path"
     },
     "expected_codes": [
       "GRIMOIRE_STRUCTURE_HUB_MISPLACED",
@@ -150,7 +150,7 @@
   "validate_links": {
     "allowlist": {
       "LINK_DEPRECATED_PLACEHOLDER": "depends on the live DEPRECATED_TOKENS map; tentative",
-      "LINK_WIKILINK_PUBLIC_DOC": "fires only on Arcana public docs/ surface; not present in a grimoire",
+      "LINK_WIKILINK_PUBLIC_DOC": "fires only on framework public docs/ surface; not present in a grimoire",
       "LINK_CASE_MISMATCH": "fires only on case-insensitive filesystems (the same link is LINK_WIKILINK_BROKEN on Linux); covered by tests/test_case_sensitivity.py",
       "LINK_MARKDOWN_CASE_MISMATCH": "fires only on case-insensitive filesystems (the same link is LINK_MARKDOWN_BROKEN on Linux); covered by tests/test_case_sensitivity.py"
     },
@@ -180,7 +180,7 @@
   "validate_naming": {
     "allowlist": {
       "SKILL_SCHEMA_DIRECT_SKILL_FILE": "requires a declared family dir with a direct SKILL.md instead of nested skill folders",
-      "SKILL_SCHEMA_MANIFEST_READ": "fires only when arcana.json is unreadable (I/O)",
+      "SKILL_SCHEMA_MANIFEST_READ": "fires only when framework.json is unreadable (I/O)",
       "SKILL_SCHEMA_MISSING_DIR": "superseded by the more specific MISSING_FAMILY_DIR in this fixture",
       "SKILL_SCHEMA_MISSING_FAMILIES": "fires on the empty/absent-families path; this fixture exercises the malformed-family-entries path",
       "SKILL_SCHEMA_MISSING_SKILL_FILE": "requires a declared family dir present but without SKILL.md",
@@ -197,12 +197,12 @@
       "SKILL_SCHEMA_UNEXPECTED_FAMILY_DIR"
     ],
     "files": {
-      "arcana.json": "ewogICJuYW1lIjogImFyY2FuYSIsCiAgInNraWxsX3ByZWZpeCI6ICJhcmMiLAogICJza2lsbF9mYW1pbGllcyI6IHsKICAgICJiYWRfc3RyIjogIm5vdC1hbi1vYmplY3QiLAogICAgIm5vX3BhdGgiOiB7InNraWxsX3ByZWZpeCI6ICJhcmMifSwKICAgICJnaG9zdCI6IHsic2tpbGxfcHJlZml4IjogImFyYyIsICJwYXRoIjogInNraWxscy9naG9zdCJ9CiAgfQp9Cg==",
+      "framework.json": "ewogICJuYW1lIjogImFyY2FuYSIsCiAgInNraWxsX3ByZWZpeCI6ICJhcmMiLAogICJza2lsbF9mYW1pbGllcyI6IHsKICAgICJiYWRfc3RyIjogIm5vdC1hbi1vYmplY3QiLAogICAgIm5vX3BhdGgiOiB7InNraWxsX3ByZWZpeCI6ICJhcmMifSwKICAgICJnaG9zdCI6IHsic2tpbGxfcHJlZml4IjogImFyYyIsICJwYXRoIjogInNraWxscy9naG9zdCJ9CiAgfQp9Cg==",
       "docs/BadName.md": "IyB4Cg==",
       "docs/bad-name.md": "IyB4Cg==",
       "skills/rogue/widget/SKILL.md": "LS0tCm5hbWU6IHdyb25nLW5hbWUKLS0tCiMgV2lkZ2V0Cg=="
     },
-    "run_mode": "arcana_home"
+    "run_mode": "framework_home"
   },
   "validate_orphans": {
     "allowlist": {},
@@ -260,11 +260,11 @@
       "SECURITY_EXEC"
     ],
     "files": {
-      "arcana.json": "ewogICJuYW1lIjogImFyY2FuYSIKfQo=",
+      "framework.json": "ewogICJuYW1lIjogImFyY2FuYSIKfQo=",
       "docs/creds.md": "IyBOb3RlcwoKYXBpX2tleSA9ICJBS0lBSU9TRk9ETk43RVhBTVBMRSIK",
       "rites/danger.py": "ZGVmIHJ1bihzKToKICAgIHJldHVybiBldmFsKHMpCgpkZWYgcnVuMihzKToKICAgIGV4ZWMocykK"
     },
-    "run_mode": "arcana_home"
+    "run_mode": "framework_home"
   },
   "validate_semantics": {
     "allowlist": {},
@@ -272,25 +272,25 @@
       "SEMANTICS_HYPHENATED_EXAMPLE"
     ],
     "files": {
-      "arcana.json": "ewogICJuYW1lIjogImFyY2FuYSIKfQo=",
+      "framework.json": "ewogICJuYW1lIjogImFyY2FuYSIKfQo=",
       "docs/x.md": "IyBYCgpSb3V0ZSB2aWEgY2hhcHRlcnMvZm9vLWJhci9iYXogZm9yIGRldGFpbHMuCg=="
     },
-    "run_mode": "arcana_home"
+    "run_mode": "framework_home"
   },
   "validate_skill_refs": {
     "allowlist": {
       "COMMAND_SURFACE_MUTATION_PROFILE_DRIFT": "requires a fully-valid command_surface.json + matching skills/invocations/rites/rite_profiles scaffold with a deliberate profile mismatch; exercised by the real validator against live contracts",
       "COMMAND_SURFACE_RITE_PROFILES_READ": "fires only when rite_profiles.json is unreadable (I/O)",
-      "SKILL_REFS_MANIFEST_READ": "fires only when arcana.json is unreadable (I/O)"
+      "SKILL_REFS_MANIFEST_READ": "fires only when framework.json is unreadable (I/O)"
     },
     "expected_codes": [
       "SKILL_REFS_DANGLING"
     ],
     "files": {
-      "arcana.json": "ewogICJuYW1lIjogImFyY2FuYSIsCiAgInNraWxsX3ByZWZpeCI6ICJhcmMiLAogICJza2lsbF9mYW1pbGllcyI6IHsiYXJjYW5hIjogeyJza2lsbF9wcmVmaXgiOiAiYXJjIiwgInBhdGgiOiAic2tpbGxzL2FyY2FuYSJ9fQp9Cg==",
+      "framework.json": "ewogICJuYW1lIjogImFyY2FuYSIsCiAgInNraWxsX3ByZWZpeCI6ICJhcmMiLAogICJza2lsbF9mYW1pbGllcyI6IHsiYXJjYW5hIjogeyJza2lsbF9wcmVmaXgiOiAiYXJjIiwgInBhdGgiOiAic2tpbGxzL2FyY2FuYSJ9fQp9Cg==",
       "docs/x.md": "IyBYCgpTZWUgL2FyYy1naG9zdCBmb3IgZGV0YWlscy4K"
     },
-    "run_mode": "arcana_home"
+    "run_mode": "framework_home"
   },
   "validate_structure": {
     "allowlist": {},
@@ -304,11 +304,11 @@
     ],
     "files": {
       "README.md": "IyBBcmNhbmEKCkZpeHR1cmUgcmVhZG1lLgo=",
-      "arcana.json": "ewogICJuYW1lIjogImFyY2FuYSIKfQo=",
-      "arcana.md": "LS0tCnR5cGU6IGh1Ygp0aXRsZTogIkFyY2FuYSIKdGFnczogW3R5cGUvaHViXQotLS0KCiMgQXJjYW5hCg==",
+      "framework.json": "ewogICJuYW1lIjogImFyY2FuYSIKfQo=",
+      "grimoire.md": "LS0tCnR5cGU6IGh1Ygp0aXRsZTogIkFyY2FuYSIKdGFnczogW3R5cGUvaHViXQotLS0KCiMgQXJjYW5hCg==",
       "chapters/.gitkeep": "",
       "docs/orphan.md": "LS0tCnR5cGU6IHJlZmVyZW5jZQp0aXRsZTogIk9ycGhhbiIKdGFnczogW3R5cGUvcmVmZXJlbmNlLCBhcmNhbmEvZG9jc10KYXV0aG9yaXR5OiBncmltb2lyZQpsYXN0X3ZlcmlmaWVkOiAyMDI2LTA1LTI1Ci0tLQoKIyBPcnBoYW4K"
     },
-    "run_mode": "arcana_home"
+    "run_mode": "framework_home"
   }
 }

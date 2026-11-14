@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Load and validate Arcana's mutating-rite profile contract."""
+"""Load and validate the framework's mutating-rite profile contract."""
 
 from __future__ import annotations
 

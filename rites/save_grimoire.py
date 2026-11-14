@@ -31,7 +31,7 @@ from pathlib import Path
 from _lib import add_grimoire_arg, info, ok, resolve_grimoire_arg, warn
 from diagnostics import ResultReporter, add_output_format_arg
 
-ARCANA_PATH = Path(__file__).resolve().parent.parent
+FRAMEWORK_PATH = Path(__file__).resolve().parent.parent
 GIT_TIMEOUT = 300
 STATUS_WORDS = {"A": "added", "M": "changed", "D": "removed", "R": "renamed", "?": "new", "C": "copied", "U": "conflicted"}
 
@@ -98,7 +98,7 @@ def upstream_state(root: Path, fetch: bool) -> dict:
 
 
 def validation_passes(root: Path) -> tuple[bool, str]:
-    cmd = [sys.executable, str(ARCANA_PATH / "rites" / "validate.py"), "--grimoire", str(root), "--summary"]
+    cmd = [sys.executable, str(FRAMEWORK_PATH / "rites" / "validate.py"), "--grimoire", str(root), "--summary"]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     except (OSError, subprocess.TimeoutExpired) as exc:

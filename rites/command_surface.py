@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Load and validate Arcana's public command-surface contract."""
+"""Load and validate the framework's public command-surface contract."""
 
 from __future__ import annotations
 
@@ -186,7 +186,7 @@ def validate_command_surface(root: Path) -> tuple[dict[str, Any] | None, list[di
                     "code": "COMMAND_SURFACE_FAMILY",
                     "message": f"{command} family must be {discovered_entry['family']}",
                     "path": path,
-                    "hint": "Match the family declared by arcana.json.",
+                    "hint": "Match the family declared by framework.json.",
                 })
             if entry.get("skill_source") != discovered_entry["skill_source"]:
                 errors.append({
@@ -217,7 +217,7 @@ def validate_command_surface(root: Path) -> tuple[dict[str, Any] | None, list[di
     for command in sorted(contract_commands - discovered_commands):
         errors.append({
             "code": "COMMAND_SURFACE_EXTRA",
-            "message": f"{command} is not backed by an Arcana-shipped SKILL.md",
+            "message": f"{command} is not backed by a framework-shipped SKILL.md",
             "path": CONTRACT_PATH.as_posix(),
             "hint": "Create the skill or remove this command entry.",
         })

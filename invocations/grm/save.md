@@ -2,7 +2,7 @@
 type: playbook
 title: "Save"
 aliases: ["save", "grm-save", "share-changes", "commit-and-push"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-11-11
 ---
@@ -27,7 +27,7 @@ conversation.
 
 ## Preconditions
 
-!`cat ARCANA_HOME/invocations/meta/grimoire_directory_guard.md`
+!`cat FRAMEWORK_HOME/invocations/meta/grimoire_directory_guard.md`
 
 The grimoire must be a git repository. If it is not, say that there is no
 shared copy to save to yet and offer to set one up with the user's git host.
@@ -37,7 +37,7 @@ shared copy to save to yet and offer to set one up with the user's git host.
 ### 1. Plan
 
 ```bash
-ARCANA_HOME/bin/arcana save_grimoire --grimoire GRIMOIRE_ROOT --format json
+FRAMEWORK_HOME/bin/grimoire save_grimoire --grimoire GRIMOIRE_ROOT --format json
 ```
 
 The plan lists every change (added, changed, removed, new), the branch, and
@@ -61,7 +61,7 @@ before saving. Keep it under 72 characters when you can.
 ### 3. Apply
 
 ```bash
-ARCANA_HOME/bin/arcana save_grimoire --grimoire GRIMOIRE_ROOT --apply --message "<line>" --format json
+FRAMEWORK_HOME/bin/grimoire save_grimoire --grimoire GRIMOIRE_ROOT --apply --message "<line>" --format json
 ```
 
 Report from the envelope:
@@ -94,7 +94,7 @@ One line: what was shared, and that teammates receive it on their next
 
 ## Related
 
-- Save rite: `ARCANA_HOME/rites/save_grimoire.py`
+- Save rite: `FRAMEWORK_HOME/rites/save_grimoire.py`
 - Pick up teammates' changes and bring everything current: [[invocations/grm/update|update]]
 - Validate before saving: [[invocations/grm/check|check]]
 - First-time setup: [[invocations/grm/setup|setup]]

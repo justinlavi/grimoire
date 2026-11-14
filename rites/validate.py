@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unified validation orchestrator - runs Arcana or grimoire validation rites.
+"""Unified validation orchestrator - runs the framework or grimoire validation rites.
 
 Usage:
     python3 rites/validate.py              # sequential (default)
@@ -29,26 +29,26 @@ from _lib import is_colocated_source_path
 from diagnostics import add_output_format_arg, human_label, human_location
 
 RITE_DIR = Path(__file__).resolve().parent
-ARCANA_ROOT = Path(os.environ.get("ARCANA_HOME", RITE_DIR.parent))
+FRAMEWORK_ROOT = Path(os.environ.get("FRAMEWORK_HOME", RITE_DIR.parent))
 
 VALIDATORS_CONTRACT = RITE_DIR / "data" / "validators.json"
 
 
 def _load_validator_lists():
-    """Load the canonical Arcana and grimoire validator sequences."""
+    """Load the canonical the framework and grimoire validator sequences."""
     with open(VALIDATORS_CONTRACT, encoding="utf-8") as f:
         data = json.load(f)
-    return data["arcana"], data["grimoire"]
+    return data["framework"], data["grimoire"]
 
 
-ARCANA_RITES, GRIMOIRE_RITES = _load_validator_lists()
+FRAMEWORK_RITES, GRIMOIRE_RITES = _load_validator_lists()
 
 MODE_SELECTORS = {"all", "parallel", "smart", "auto", "summary"}
 
 
-def run_rite(name, profile="arcana", target_root=None):
+def run_rite(name, profile="framework", target_root=None):
     """Run a single validation rite. Returns (name, success, report)."""
-    target_root = target_root or ARCANA_ROOT
+    target_root = target_root or FRAMEWORK_ROOT
     command = [sys.executable, str(RITE_DIR / name)]
     if profile == "grimoire":
         command.extend(["--grimoire", str(target_root)])
@@ -57,7 +57,7 @@ def run_rite(name, profile="arcana", target_root=None):
     result = subprocess.run(
         command,
         capture_output=True, text=True,
-        env={**os.environ, "ARCANA_HOME": str(ARCANA_ROOT)},
+        env={**os.environ, "FRAMEWORK_HOME": str(FRAMEWORK_ROOT)},
     )
     try:
         report = json.loads(result.stdout)
@@ -77,7 +77,7 @@ def run_rite(name, profile="arcana", target_root=None):
                     "message": "validator did not emit a valid JSON diagnostic report",
                     "hint": (result.stdout + result.stderr)[-2000:],
                     "validator": "validate",
-                    "docs_reference": "invocations/arc/validators/validators.md",
+                    "docs_reference": "invocations/dev/validators/validators.md",
                 }
             ],
         }
@@ -113,9 +113,9 @@ def _short_selector(value):
     return stem.replace("_", "-")
 
 
-def validator_selector_map(profile="arcana"):
+def validator_selector_map(profile="framework"):
     """Map human selector names to validator rite filenames."""
-    rites = GRIMOIRE_RITES if profile == "grimoire" else ARCANA_RITES
+    rites = GRIMOIRE_RITES if profile == "grimoire" else FRAMEWORK_RITES
     selectors = {}
     for rite in rites:
         for form in _selector_forms(rite):
@@ -134,7 +134,7 @@ def split_selector_tokens(values):
     return tokens
 
 
-def apply_validator_selection(rites, profile="arcana", only=None, exclude=None):
+def apply_validator_selection(rites, profile="framework", only=None, exclude=None):
     """Return rites filtered by selector tokens, preserving canonical order."""
     selector_map = validator_selector_map(profile)
     only_tokens = split_selector_tokens(only)
@@ -212,12 +212,12 @@ def git_changed_files(root):
         return []
 
 
-def determine_smart_rites(profile="arcana", target_root=None):
+def determine_smart_rites(profile="framework", target_root=None):
     """Determine which validators to run based on changed files."""
-    target_root = target_root or ARCANA_ROOT
+    target_root = target_root or FRAMEWORK_ROOT
     changes = git_changed_files(target_root)
     if not changes:
-        return list(GRIMOIRE_RITES if profile == "grimoire" else ARCANA_RITES)
+        return list(GRIMOIRE_RITES if profile == "grimoire" else FRAMEWORK_RITES)
 
     if profile == "grimoire":
         return determine_smart_grimoire_rites(changes, target_root)
@@ -259,7 +259,7 @@ def determine_smart_rites(profile="arcana", target_root=None):
                 content = path.read_text(errors="replace")
                 if "](" in content or "[[" in content:
                     needed.add("validate_links.py")
-                if "/arc-" in content:
+                if "/grm-dev-" in content:
                     needed.add("validate_skill_refs.py")
                 if content.startswith("---\n"):
                     needed.add("validate_frontmatter.py")
@@ -275,7 +275,7 @@ def determine_smart_rites(profile="arcana", target_root=None):
         if f.startswith("skills/"):
             needed.add("validate_skill_refs.py")
 
-    return [r for r in ARCANA_RITES if r in needed] if needed else list(ARCANA_RITES)
+    return [r for r in FRAMEWORK_RITES if r in needed] if needed else list(FRAMEWORK_RITES)
 
 
 def determine_smart_grimoire_rites(changes, target_root):
@@ -364,12 +364,12 @@ def emit_suite_report(report, output_format):
 
 def profile_label(profile):
     """Return a human-facing validation target label."""
-    return "Grimoire" if profile == "grimoire" else "Arcana"
+    return "Grimoire" if profile == "grimoire" else "Framework"
 
 
-def run_sequential(rites, summary_only=False, output_format="human", profile="arcana", target_root=None):
+def run_sequential(rites, summary_only=False, output_format="human", profile="framework", target_root=None):
     """Run rites sequentially. Returns number of failures."""
-    target_root = target_root or ARCANA_ROOT
+    target_root = target_root or FRAMEWORK_ROOT
     failed = 0
     reports = []
     human = output_format == "human"
@@ -411,9 +411,9 @@ def run_sequential(rites, summary_only=False, output_format="human", profile="ar
     return failed
 
 
-def run_parallel(rites, output_format="human", profile="arcana", target_root=None):
+def run_parallel(rites, output_format="human", profile="framework", target_root=None):
     """Run rites in parallel. Returns number of failures."""
-    target_root = target_root or ARCANA_ROOT
+    target_root = target_root or FRAMEWORK_ROOT
     failed = 0
     reports = []
     human = output_format == "human"
@@ -479,7 +479,7 @@ def _resolve_selection(rite_list, *, profile, only, exclude, explicit):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Unified Arcana and grimoire validation orchestrator")
+    parser = argparse.ArgumentParser(description="Unified framework and grimoire validation orchestrator")
     parser.add_argument(
         "selectors",
         nargs="*",
@@ -512,9 +512,9 @@ def main():
     group.add_argument("--summary", action="store_true", help="Summary-only output")
     add_output_format_arg(parser)
     args = parser.parse_args()
-    profile = "grimoire" if args.grimoire else "arcana"
-    target_root = args.grimoire.expanduser().resolve() if args.grimoire else ARCANA_ROOT
-    rites = GRIMOIRE_RITES if profile == "grimoire" else ARCANA_RITES
+    profile = "grimoire" if args.grimoire else "framework"
+    target_root = args.grimoire.expanduser().resolve() if args.grimoire else FRAMEWORK_ROOT
+    rites = GRIMOIRE_RITES if profile == "grimoire" else FRAMEWORK_RITES
     mode_tokens, selector_tokens = parse_positional_selectors(args.selectors)
 
     explicit_modes = [

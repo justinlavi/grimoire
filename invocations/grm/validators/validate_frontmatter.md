@@ -2,7 +2,7 @@
 type: reference
 title: "Validate Grimoire Frontmatter"
 aliases: ["validate-grimoire-frontmatter"]
-tags: [arcana/invocations, type/reference, scope/grimoire]
+tags: [framework/invocations, type/reference, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-25
 ---
@@ -12,7 +12,7 @@ last_verified: 2026-05-25
 ## Purpose
 
 Validate active-grimoire page frontmatter against
-`ARCANA_HOME/docs/page_schema.md`, including the rule that `type: source` is
+`FRAMEWORK_HOME/docs/page_schema.md`, including the rule that `type: source` is
 reserved for source wrappers under `chapters/**/sources/`.
 
 ## Invocation
@@ -26,7 +26,7 @@ reserved for source wrappers under `chapters/**/sources/`.
 Run against the resolved active grimoire:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_frontmatter --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_frontmatter --grimoire GRIMOIRE_ROOT
 ```
 
-Use this when pages were added, imported, or edited. For Arcana itself, use `/arc-validate frontmatter`.
+Use this when pages were added, imported, or edited. For the framework itself, use `/grm-dev-validate frontmatter`.

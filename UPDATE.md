@@ -1,58 +1,58 @@
-# Arcana Update
+# Grimoire Update
 
-This is the stable, **skill-less** entry point for bringing **Arcana and every
+This is the stable, **skill-less** entry point for bringing **the framework and every
 grimoire in the library up to the current version**. It is the dependable path
-when the installed `/arc-*` / `/grm-*` slash commands are missing, old, renamed,
+when the installed `/grm-*` slash commands are missing, old, renamed,
 incorrectly prefixed, or otherwise untrustworthy — and, more generally, the way
 to self-update from the source tree when you cannot trust the skill layer.
 
-It needs only the pulled Arcana source and a Python 3.10 or newer, which
-the `bin/arcana` launcher finds (`python3`, `python`, or the Windows `py`
-launcher), and lives at the repository root. Start the update by running `/grm-update` (or `/arc-update`), or
+It needs only the pulled framework source and a Python 3.10 or newer, which
+the `bin/grimoire` launcher finds (`python3`, `python`, or the Windows `py`
+launcher), and lives at the repository root. Start the update by running `/grm-update` (or `/grm-dev-update`), or
 by following the Human Quick Start below.
 
 ## Human Quick Start
 
-1. Pull Arcana with any Git tool you trust: SmartGit, GitHub Desktop, Git Bash,
+1. Pull the framework with any Git tool you trust: SmartGit, GitHub Desktop, Git Bash,
    or a terminal.
 2. Open a fresh AI-agent session.
 3. Tell the agent:
 
 ```text
-Read ~/grimoires/arcana/UPDATE.md and follow its AI Update Playbook exactly.
+Read ~/.grimoire/UPDATE.md and follow its AI Update Playbook exactly.
 Do not rely on installed slash commands until the update re-registers skills.
 ```
 
-If Arcana lives somewhere else, give the agent the real path to this file.
+If the framework lives somewhere else, give the agent the real path to this file.
 
 ## AI Update Playbook
 
-The installed slash-command layer may be stale. Treat the pulled Arcana source
+The installed slash-command layer may be stale. Treat the pulled framework source
 tree as the source of truth, not the agent's currently registered skill files.
 Run every command exactly as written and **report each rite's own machine output
 (`--format json`) — never a number you counted yourself.** "Skills
 re-registered" is asserted only by quoting `sync_skills`' counts; "a grimoire
 is current" only by its pull classification plus a clean validate.
 
-### 0. Resolve Arcana
+### 0. Resolve the framework
 
-Prefer the directory containing this file; otherwise `cd ~/grimoires/arcana`. If
-neither exists, ask the user for the Arcana checkout path. Pin it:
+Prefer the directory containing this file; otherwise `cd ~/.grimoire`. If
+neither exists, ask the user for the framework checkout path. Pin it:
 
 ```bash
-ARCANA="$(git -C ~/grimoires/arcana rev-parse --show-toplevel)"
+FRAMEWORK="$(git -C ~/.grimoire rev-parse --show-toplevel)"
 ```
 
-### 1. Pull the installed Arcana
+### 1. Pull the installed framework
 
-"Arcana" is whatever is installed at `$ARCANA` — the upstream project or a fork
+"The framework" is whatever is installed at `$FRAMEWORK` — the upstream project or a fork
 you or your team maintain. The AI pulls it from whatever remote it tracks; this
 is usually a clean fast-forward.
 
 ```bash
-git -C "$ARCANA" status --short          # if dirty: STOP, report, do not pull or force
-GIT_TERMINAL_PROMPT=0 git -C "$ARCANA" pull --ff-only
-git -C "$ARCANA" rev-parse HEAD && cat "$ARCANA/VERSION"
+git -C "$FRAMEWORK" status --short          # if dirty: STOP, report, do not pull or force
+GIT_TERMINAL_PROMPT=0 git -C "$FRAMEWORK" pull --ff-only
+git -C "$FRAMEWORK" rev-parse HEAD && cat "$FRAMEWORK/VERSION"
 ```
 
 A dirty tree, a non-fast-forward (local commits), or a pull that fails (for
@@ -60,10 +60,10 @@ example a private fork the current credentials can't reach) is a STOP: report it
 and let the user resolve it. Never force. Run the rest from the now-current
 source.
 
-### 2. Validate the Arcana source (gate)
+### 2. Validate the framework source (gate)
 
 ```bash
-"$ARCANA/bin/arcana" validate --summary --format json
+"$FRAMEWORK/bin/grimoire" validate --summary --format json
 ```
 
 If status is not `ok` (exit non-zero), STOP and report the failing validators
@@ -72,7 +72,7 @@ before any skill or grimoire mutation.
 ### 3. Update everything — one command
 
 ```bash
-"$ARCANA/bin/arcana" summon --update --apply --format json
+"$FRAMEWORK/bin/grimoire" summon --update --apply --format json
 ```
 
 This is the deterministic core. In one pass it:
@@ -80,9 +80,9 @@ This is the deterministic core. In one pass it:
 - reconciles `~/grimoires/library.json` against disk,
 - **pulls every grimoire in the library** — branch-aware: it fetches, and
   fast-forwards a clean branch that is behind its upstream,
-- re-registers Arcana and grimoire skills with `--reset-managed` (the path that
+- re-registers the framework and grimoire skills with `--reset-managed` (the path that
   removes stale namespaces, not a best-effort register), and
-- **heals only the grimoires it confirmed current** (re-syncs Arcana-owned
+- **heals only the grimoires it confirmed current** (re-syncs framework-owned
   managed scaffold, refreshes each grimoire README's update block, enforces
   chapter-local source locality when citations identify one clear chapter
   package, repairs wikilinks, re-validates).
@@ -121,17 +121,19 @@ malformed markers. For each one, read `rites/templates/grimoire_block.md` and pl
 the canonical block caring only about the marked region — replace an existing
 routing block in any form, or insert one after the first heading — preserving every
 line outside the markers; if the file's intent is unclear, stop and ask the user.
-(`/grm-update agentfile`, or the maintainer's `/arc-update agentfile`, runs this same
+(`/grm-update agentfile`, or the maintainer's `/grm-dev-update agentfile`, runs this same
 rite plus the judgment step.)
 
 ### 5. Final gate
 
 ```bash
-"$ARCANA/bin/arcana" summon --check --format json
+"$FRAMEWORK/bin/grimoire" summon --check --format json
 ```
 
 It must report no drift for the grimoires that were brought current. Report the
-exit status. Ask the user to open a fresh agent session, because agents cache
+exit status. When `next_actions` lists `retired_checkout_remove`, a framework
+checkout from a release before 1.8 is still inside the grimoire home; nothing
+reads it, so offer to delete that folder. Ask the user to open a fresh agent session, because agents cache
 skill listings.
 
 ### If the one command cannot run
@@ -154,5 +156,5 @@ or `grimoire.json`), ensure the README's update block matches
 - [Installation](docs/installation.md)
 - [Agent configuration](docs/agent_configuration.md)
 - [Summoning contract](docs/summoning_contract.md)
-- [Sync skills, library, and the agent file](invocations/arc/update.md)
+- [Sync skills, library, and the agent file](invocations/dev/update.md)
 - [Update from a grimoire](invocations/grm/update.md)

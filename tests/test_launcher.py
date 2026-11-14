@@ -1,4 +1,4 @@
-"""bin/arcana runs a rite with whatever Python the machine has, beside the engine or from the plugin."""
+"""bin/grimoire runs a rite with whatever Python the machine has, beside the framework or from the plugin."""
 
 import os
 import shutil
@@ -16,11 +16,11 @@ def _sh(*args: str, env: dict | None = None) -> subprocess.CompletedProcess:
     full = dict(os.environ)
     if env:
         full.update(env)
-    return subprocess.run([SH, str(REPO_ROOT / "bin" / "arcana"), *args], capture_output=True, text=True, env=full, timeout=120)
+    return subprocess.run([SH, str(REPO_ROOT / "bin" / "grimoire"), *args], capture_output=True, text=True, env=full, timeout=120)
 
 
 @pytest.mark.skipif(SH is None, reason="no POSIX shell available")
-def test_launcher_runs_a_rite_beside_the_engine():
+def test_launcher_runs_a_rite_beside_the_framework():
     result = _sh("validate", "--help")
     assert result.returncode == 0, result.stderr
     assert "usage" in result.stdout.lower()
@@ -39,14 +39,14 @@ def test_launcher_lists_rites_and_refuses_unknown_ones():
 
 
 @pytest.mark.skipif(SH is None, reason="no POSIX shell available")
-def test_plugin_copy_resolves_the_engine_through_arcana_home(tmp_path):
+def test_plugin_copy_resolves_the_framework_through_framework_home(tmp_path):
     plugin_bin = tmp_path / "plugin" / "bin"
     plugin_bin.mkdir(parents=True)
-    for name in ("arcana", "arcana.py"):
+    for name in ("grimoire", "grimoire.py"):
         shutil.copy(REPO_ROOT / "bin" / name, plugin_bin / name)
     result = subprocess.run(
-        [SH, str(plugin_bin / "arcana"), "recent_changes", "--help"],
-        capture_output=True, text=True, env={**os.environ, "ARCANA_HOME": str(REPO_ROOT)}, timeout=120,
+        [SH, str(plugin_bin / "grimoire"), "recent_changes", "--help"],
+        capture_output=True, text=True, env={**os.environ, "FRAMEWORK_HOME": str(REPO_ROOT)}, timeout=120,
     )
     assert result.returncode == 0, result.stderr
     assert "--since" in result.stdout
@@ -55,7 +55,7 @@ def test_plugin_copy_resolves_the_engine_through_arcana_home(tmp_path):
 @pytest.mark.skipif(sys.platform != "win32", reason="cmd launcher is Windows-only")
 def test_cmd_launcher_runs_a_rite():
     result = subprocess.run(
-        ["cmd", "/c", str(REPO_ROOT / "bin" / "arcana.cmd"), "validate", "--help"],
+        ["cmd", "/c", str(REPO_ROOT / "bin" / "grimoire.cmd"), "validate", "--help"],
         capture_output=True, text=True, timeout=120,
     )
     assert result.returncode == 0, result.stderr
@@ -63,6 +63,6 @@ def test_cmd_launcher_runs_a_rite():
 
 
 def test_plugin_tree_carries_the_launcher():
-    assert (REPO_ROOT / "plugins" / "grm" / "bin" / "arcana").read_text(encoding="utf-8") == (REPO_ROOT / "bin" / "arcana").read_text(encoding="utf-8")
-    assert (REPO_ROOT / "plugins" / "grm" / "bin" / "arcana.cmd").read_text(encoding="utf-8") == (REPO_ROOT / "bin" / "arcana.cmd").read_text(encoding="utf-8")
-    assert (REPO_ROOT / "plugins" / "grm" / "bin" / "arcana.py").read_text(encoding="utf-8") == (REPO_ROOT / "bin" / "arcana.py").read_text(encoding="utf-8")
+    assert (REPO_ROOT / "plugins" / "grimoire" / "bin" / "grimoire").read_text(encoding="utf-8") == (REPO_ROOT / "bin" / "grimoire").read_text(encoding="utf-8")
+    assert (REPO_ROOT / "plugins" / "grimoire" / "bin" / "grimoire.cmd").read_text(encoding="utf-8") == (REPO_ROOT / "bin" / "grimoire.cmd").read_text(encoding="utf-8")
+    assert (REPO_ROOT / "plugins" / "grimoire" / "bin" / "grimoire.py").read_text(encoding="utf-8") == (REPO_ROOT / "bin" / "grimoire.py").read_text(encoding="utf-8")

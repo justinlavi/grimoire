@@ -1,5 +1,5 @@
-# Seeded by Arcana when the grimoire is created or healed; edit freely.
-# Arcana copies this file only when it is absent and never overwrites it.
+# Seeded by the framework when the grimoire is created or healed; edit freely.
+# The framework copies this file only when it is absent and never overwrites it.
 
 # Obsidian: track the shared graph and app config, ignore per-user state
 .obsidian/*
@@ -22,4 +22,4 @@ desktop.ini
 # wrangler.jsonc are worth committing.
 publish/content/
 publish/quartz/
-publish/.engine/
+publish/.framework/

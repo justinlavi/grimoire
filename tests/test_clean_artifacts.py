@@ -53,7 +53,7 @@ def test_clean_location_human_false_suppresses_output(tmp_path, capsys):
 
 
 def test_json_envelope_dry_run_is_clean():
-    # --dry-run keeps the real Arcana .artifacts intact; stdout must be one JSON object.
+    # --dry-run keeps the real the framework .artifacts intact; stdout must be one JSON object.
     result = subprocess.run(
         [sys.executable, str(RITE), "--dry-run", "--format", "json"],
         capture_output=True,

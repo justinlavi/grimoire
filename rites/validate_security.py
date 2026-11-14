@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Security scanning for credentials and unsafe patterns in Arcana files.
+"""Security scanning for credentials and unsafe patterns in framework files.
 
 Usage: python3 rites/validate_security.py
 Exit codes: 0 = success, 1 = security issues found
@@ -9,10 +9,10 @@ import re
 import sys
 from pathlib import Path
 
-from _lib import default_arcana_root, is_skipped, ok, warn
+from _lib import default_framework_root, is_skipped, ok, warn
 from diagnostics import DiagnosticReporter, add_output_format_arg
 
-ARCANA_ROOT = default_arcana_root()
+FRAMEWORK_ROOT = default_framework_root()
 
 FORBIDDEN_PATTERNS = [
     (re.compile(r"""password\s*=\s*['"][^'"]+['"]""", re.IGNORECASE), "password assignment"),
@@ -22,23 +22,23 @@ FORBIDDEN_PATTERNS = [
     (re.compile(r"BEGIN.*PRIVATE KEY"), "private key"),
 ]
 
-SKIP_DIRS = {"rites", "invocations/arc/validators", "invocations/arc/quality"}
+SKIP_DIRS = {"rites", "invocations/dev/validators", "invocations/dev/quality"}
 
 
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Security scanning for Arcana files")
+    parser = argparse.ArgumentParser(description="Security scanning for framework files")
     add_output_format_arg(parser)
     args = parser.parse_args()
     human = args.format == "human"
-    reporter = DiagnosticReporter("validate_security", ARCANA_ROOT)
+    reporter = DiagnosticReporter("validate_security", FRAMEWORK_ROOT)
 
     if human:
         print()
-        print("Validating Arcana Security")
+        print("Validating Framework Security")
         print("==================================")
-        print(f"Arcana root: {ARCANA_ROOT}")
+        print(f"Framework root: {FRAMEWORK_ROOT}")
         print()
 
     # Scan for forbidden patterns
@@ -46,13 +46,13 @@ def main():
         print("Scanning for potential credentials...")
     cred_found = 0
 
-    for path in sorted(ARCANA_ROOT.rglob("*")):
+    for path in sorted(FRAMEWORK_ROOT.rglob("*")):
         if not path.is_file():
             continue
         if path.suffix not in (".md", ".py"):
             continue
 
-        rel = str(path.relative_to(ARCANA_ROOT)).replace("\\", "/")
+        rel = str(path.relative_to(FRAMEWORK_ROOT)).replace("\\", "/")
         if is_skipped(rel, SKIP_DIRS):
             continue
 
@@ -85,7 +85,7 @@ def main():
         print("Checking for unsafe script patterns...")
     unsafe = 0
 
-    rites_dir = ARCANA_ROOT / "rites"
+    rites_dir = FRAMEWORK_ROOT / "rites"
     if rites_dir.is_dir():
         for path in sorted(rites_dir.glob("*.py")):
             if path.name == "validate_security.py":
@@ -101,7 +101,7 @@ def main():
                     hint="Use explicit parsing or dispatch instead.",
                 )
                 if human:
-                    warn(f"Script uses eval() (security risk): {path.relative_to(ARCANA_ROOT)}")
+                    warn(f"Script uses eval() (security risk): {path.relative_to(FRAMEWORK_ROOT)}")
                 unsafe += 1
 
             if "exec(" in content:
@@ -112,7 +112,7 @@ def main():
                     hint="Use explicit APIs instead.",
                 )
                 if human:
-                    warn(f"Script uses exec() (security risk): {path.relative_to(ARCANA_ROOT)}")
+                    warn(f"Script uses exec() (security risk): {path.relative_to(FRAMEWORK_ROOT)}")
                 unsafe += 1
 
     if human and unsafe == 0:

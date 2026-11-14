@@ -2,7 +2,7 @@
 type: playbook
 title: "Remove Grimoire Content"
 aliases: ["remove", "delete", "remove-content"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-06-06
 ---
@@ -21,7 +21,7 @@ Delete a page or chapter from the active grimoire without leaving the wiki point
 
 ## Preconditions
 
-!`cat ARCANA_HOME/invocations/meta/grimoire_directory_guard.md`
+!`cat FRAMEWORK_HOME/invocations/meta/grimoire_directory_guard.md`
 
 ## Workflow
 
@@ -30,7 +30,7 @@ Delete a page or chapter from the active grimoire without leaving the wiki point
 Take `$target` as a grimoire-relative path under `chapters/` (a page or a whole chapter folder). Plan first - this is destructive:
 
 ```bash
-ARCANA_HOME/bin/arcana restructure_grimoire --grimoire GRIMOIRE_ROOT --remove PATH
+FRAMEWORK_HOME/bin/grimoire restructure_grimoire --grimoire GRIMOIRE_ROOT --remove PATH
 ```
 
 The plan lists what would be deleted and every inbound wikilink that would break. The rite refuses to remove a chapter hub on its own (remove the whole chapter folder instead) or anything outside `chapters/`.
@@ -42,7 +42,7 @@ Show the user what will be deleted and which inbound links will break. Removal i
 ### 3. Apply
 
 ```bash
-ARCANA_HOME/bin/arcana restructure_grimoire --grimoire GRIMOIRE_ROOT --remove PATH --apply
+FRAMEWORK_HOME/bin/grimoire restructure_grimoire --grimoire GRIMOIRE_ROOT --remove PATH --apply
 ```
 
 ### 4. Heal the references (judgment)
@@ -55,7 +55,7 @@ For each inbound link the rite reported:
 ### 5. Validate
 
 ```bash
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT links orphans structure
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT links orphans structure
 ```
 
 ## Related

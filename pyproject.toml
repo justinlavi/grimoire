@@ -3,9 +3,9 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arcana-grimoire"
+name = "grimoire-framework"
 version = "1.8.0"
-description = "Engine for grimoires - structured, AI-navigable knowledge bases the LLM keeps current."
+description = "Framework for grimoires - structured, AI-navigable knowledge bases the LLM keeps current."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -35,14 +35,14 @@ dev = [
 
 
 [project.urls]
-Homepage = "https://github.com/justinlavi/arcana"
-Repository = "https://github.com/justinlavi/arcana"
-Issues = "https://github.com/justinlavi/arcana/issues"
-Changelog = "https://github.com/justinlavi/arcana/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/justinlavi/grimoire"
+Repository = "https://github.com/justinlavi/grimoire"
+Issues = "https://github.com/justinlavi/grimoire/issues"
+Changelog = "https://github.com/justinlavi/grimoire/blob/main/CHANGELOG.md"
 
-# Arcana is a knowledge-base + scripts repository, not a pip-installable
+# The framework is a knowledge-base + scripts repository, not a pip-installable
 # library. The pyproject.toml exists to declare the `dev` dependency group
-# contributors install on top of a stock Python - nobody is meant to `import arcana_grimoire`. Tell setuptools
+# contributors install on top of a stock Python - nobody is meant to `import framework_grimoire`. Tell setuptools
 # explicitly that there are no packages to ship so it doesn't try to
 # auto-discover and choke on rites/, skills/, sources/, etc.
 [tool.setuptools]
@@ -55,8 +55,8 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 # `-m "not eval"` deselects the model-in-the-loop invocation eval tier by default,
 # so the fast gate (`pytest -q`) runs only deterministic, model-free scaffolding.
-# Opt in with: ARCANA_EVAL_MODEL=1 python -m pytest -m eval
+# Opt in with: FRAMEWORK_EVAL_MODEL=1 python -m pytest -m eval
 addopts = ["-ra", "--strict-markers", "-m", "not eval"]
 markers = [
-    "eval: model-in-the-loop invocation eval (deselected by default; needs ARCANA_EVAL_MODEL)",
+    "eval: model-in-the-loop invocation eval (deselected by default; needs FRAMEWORK_EVAL_MODEL)",
 ]

@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Arcana Summoning Rite - installs Arcana and optionally clones grimoires.
+"""Grimoire Summoning Rite - installs the framework and optionally clones grimoires.
 
 Usage:
-    python3 summon.py [--arcana-url URL] [--scope URL]
+    python3 summon.py [--framework-url URL] [--scope URL]
     python3 summon.py --check | --reconcile [--apply] | --update [--apply]
 
 One-liner entry point:
-    curl -fsSL https://raw.githubusercontent.com/justinlavi/arcana/main/rites/summon.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/justinlavi/grimoire/main/rites/summon.sh | bash
 
 This file is the dispatcher. The install logic lives in `summon_core.py`
 (terminal install: git, discovery, library, agent files, skills; pure stdlib)
 and the agent-legible state surface lives in `summon_state.py`.
 
 Options:
-    --arcana-url URL   URL of the Arcana git repository to install
+    --framework-url URL   URL of the framework git repository to install
     --scope URL        URL of the group/org containing your grimoires
     -h, --help         Show this help message
 
 Environment variables:
-    ARCANA_URL      Same as --arcana-url (flag takes precedence)
+    FRAMEWORK_URL      Same as --framework-url (flag takes precedence)
     GRIMOIRE_SCOPE  Same as --scope (flag takes precedence)
     GITLAB_TOKEN    GitLab personal access token for private instances
     GITHUB_TOKEN    GitHub token for private orgs
@@ -33,11 +33,11 @@ from summon_core import run_cli
 def build_parser():
     """Build the dispatcher's argument parser (install flags plus the state surface)."""
     parser = argparse.ArgumentParser(
-        description="Arcana Summoning Rite - install Arcana and optionally clone grimoires"
+        description="Grimoire Summoning Rite - install the framework and optionally clone grimoires"
     )
     parser.add_argument(
-        "--arcana-url",
-        help="URL of the Arcana git repository to install (defaults to public GitHub Arcana)",
+        "--framework-url",
+        help="URL of the framework git repository to install (defaults to the public GitHub repository)",
     )
     parser.add_argument(
         "--scope",
@@ -51,7 +51,7 @@ def main():
 
     # Agent-legibility surface: --check / --reconcile / --update route to
     # summon_state instead of the interactive installer (see
-    # rites/summon_state.py). It is only available on a full Arcana checkout;
+    # rites/summon_state.py). It is only available on a full framework checkout;
     # the piped bootstrap ships the install-only subset, so a missing
     # summon_state degrades to the installer path rather than failing.
     try:

@@ -2,7 +2,7 @@
 """Repair filename-only wikilinks to canonical full-path form.
 
 Scans markdown files for broken wikilinks of the form ``[[basename]]`` or
-``[[basename|label]]`` (Obsidian shorthand that doesn't resolve under Arcana's
+``[[basename|label]]`` (Obsidian shorthand that doesn't resolve under the framework's
 full-path rule) and rewrites them as ``[[chapters/<path>/<basename>|<label>]]``.
 
 Resolution order, first hit wins:
@@ -57,8 +57,8 @@ INLINE_CODE_RE = re.compile(r"`[^`]*`")
 
 
 SKIP_DIRS = {
-    "invocations/arc/validators",
-    "invocations/arc/quality",
+    "invocations/dev/validators",
+    "invocations/dev/quality",
     "sources",
     "inbox",
     "tests",
@@ -70,7 +70,7 @@ SKIP_FILES = {"operating_model.md"}
 
 PLACEHOLDER_TOKENS = [
     "{", "<", "invocation_name", "chapter_name", "file_name",
-    "ARCANA_HOME", "GRIMOIRE_PATH", "ARCANA_PATH",
+    "FRAMEWORK_HOME", "GRIMOIRE_PATH", "FRAMEWORK_PATH",
     "Chapter Name", "Title", "Sub-topic", "filename",
     "related_page", "sub_topic", "related_chapter",
     "path/to/related", "path/url/system", "Source title",

@@ -2,7 +2,7 @@
 type: reference
 title: "Validate Grimoire Encoding"
 aliases: ["validate-grimoire-encoding"]
-tags: [arcana/invocations, type/reference, scope/grimoire]
+tags: [framework/invocations, type/reference, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-25
 ---
@@ -24,7 +24,7 @@ Validate that the active grimoire uses UTF-8 without BOM, LF line endings, and n
 Run against the resolved active grimoire:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_encoding --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_encoding --grimoire GRIMOIRE_ROOT
 ```
 
 Report every violation with the path and line number. Exit code 0 means the grimoire is encoding-clean.

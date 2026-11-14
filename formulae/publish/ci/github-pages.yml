@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ARCANA_URL: https://github.com/justinlavi/arcana.git
-  ARCANA_REF: main
+  FRAMEWORK_URL: https://github.com/justinlavi/grimoire.git
+  FRAMEWORK_REF: main
   QUARTZ_REPO: https://github.com/jackyzha0/quartz.git
   QUARTZ_REF: v5.1.0
 

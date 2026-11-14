@@ -2,7 +2,7 @@
 type: reference
 title: "Cloudflare Build Settings"
 aliases: ["cloudflare-pages", "cloudflare-publish"]
-tags: [type/reference, arcana/formula, scope/publish]
+tags: [type/reference, framework/formula, scope/publish]
 authority: grimoire
 last_verified: 2026-11-12
 ---
@@ -21,7 +21,7 @@ it with Cloudflare Access before sharing the URL.
 | Deploy command | `cd publish && npx wrangler deploy` |
 | Build output directory | `publish/quartz/public` |
 | Root directory | repository root |
-| Environment variables | `NODE_VERSION=22`; `ARCANA_URL` (your Arcana mirror, if any) and `ARCANA_REF` (branch or tag, default `main`); `QUARTZ_REPO` / `QUARTZ_REF` to pin Quartz |
+| Environment variables | `NODE_VERSION=22`; `FRAMEWORK_URL` (your framework mirror, if any) and `FRAMEWORK_REF` (branch or tag, default `main`); `QUARTZ_REPO` / `QUARTZ_REF` to pin Quartz |
 
 `publish/wrangler.jsonc` names the Worker, the static asset directory, and
 any custom domains:

@@ -2,7 +2,7 @@
 type: playbook
 title: "Add"
 aliases: ["add", "add-content", "import", "file-a-source"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-11-12
 ---
@@ -49,9 +49,9 @@ over decides the mode:
    `chapters/<chapter>/<chapter>.md`, `type: hub`.
 3. Practical folder names only inside chapters (`templates/`, `scripts/`,
    `snippets/`). Never `invocations/`, `formulae/`, or `rites/`; those live
-   only in Arcana.
+   only in the framework.
 4. Every page carries frontmatter (`type`, `title`, `tags`, `authority`,
-   `sources`, `last_verified`); see `ARCANA_HOME/docs/page_schema.md`.
+   `sources`, `last_verified`); see `FRAMEWORK_HOME/docs/page_schema.md`.
 5. Every page derived from a source carries `authority: external` (or
    `hybrid`) and lists the source in `sources:`. Authored pages are
    `authority: grimoire`.
@@ -70,9 +70,9 @@ over decides the mode:
 ## Step 0: Precondition
 
 Resolve the active grimoire with the shared grimoire directory guard and set
-`GRIMOIRE_ROOT`. Arcana is not a grimoire.
+`GRIMOIRE_ROOT`. The framework is not a grimoire.
 
-!`cat {{ARCANA_PATH}}/invocations/meta/grimoire_directory_guard.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/meta/grimoire_directory_guard.md`
 
 ## Step 1: Decide the mode
 
@@ -114,7 +114,7 @@ material opens a new routable area.
 2. **Stamp the page** so it never ships with a placeholder date:
 
    ```bash
-   ARCANA_HOME/bin/arcana new_page \
+   FRAMEWORK_HOME/bin/grimoire new_page \
      --grimoire GRIMOIRE_ROOT \
      --path chapters/<chapter>/<slug>.md \
      --type <concept|entity|playbook|reference> \
@@ -141,7 +141,7 @@ material opens a new routable area.
 
    ```bash
    mkdir -p chapters/<chapter_name>
-   cp ARCANA_HOME/formulae/chapter_hub.formula.md chapters/<chapter_name>/<chapter_name>.md
+   cp FRAMEWORK_HOME/formulae/chapter_hub.formula.md chapters/<chapter_name>/<chapter_name>.md
    ```
 
 3. **Customize the hub.** Replace `{{CHAPTER_TITLE}}`, `{{CHAPTER_NAME}}`,
@@ -179,7 +179,7 @@ screenshot, PDF, dataset).
    raw artifact, a source wrapper, or both. A raw artifact keeps its original
    filename unless the user asks to rename it.
 3. Text source: create `chapters/<path>/sources/<slug>.md` from
-   `ARCANA_HOME/formulae/source.formula.md` with the cleaned plain-text body
+   `FRAMEWORK_HOME/formulae/source.formula.md` with the cleaned plain-text body
    under `## Source Body`.
 4. Binary or large source: copy the raw artifact to
    `chapters/<path>/sources/<slug>/<original-file>` and create
@@ -227,7 +227,7 @@ whether to create it or to point at a specific path.
 2. **Update affected pages.** Existing page: edit in place, keep the
    frontmatter, bump `last_verified` to today, add the source path to
    `sources:` without duplicates. New page: scaffold from
-   `ARCANA_HOME/formulae/page.formula.md` (or stamp it with `new_page.py`)
+   `FRAMEWORK_HOME/formulae/page.formula.md` (or stamp it with `new_page.py`)
    with the right `type:`; source-derived pages get `authority: external` and
    a `sources:` entry, promoted drafts get `authority: grimoire` (or `hybrid`
    when they cite an artifact). Link related pages with full-path wikilinks.
@@ -239,7 +239,7 @@ whether to create it or to point at a specific path.
 ## Step V: Validate
 
 ```bash
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT structure frontmatter links provenance
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT structure frontmatter links provenance
 ```
 
 Fix and re-run until clean, or run `/grm-check quick` for the whole
@@ -253,11 +253,11 @@ judge and why; contradictions surfaced; validator pass or fail.
 
 ## Related
 
-- Page formula: `ARCANA_HOME/formulae/page.formula.md`
-- Source formula: `ARCANA_HOME/formulae/source.formula.md`
-- Chapter hub formula: `ARCANA_HOME/formulae/chapter_hub.formula.md`
-- Page stamping rite: `ARCANA_HOME/rites/new_page.py`
-- Page schema: `ARCANA_HOME/docs/page_schema.md`
+- Page formula: `FRAMEWORK_HOME/formulae/page.formula.md`
+- Source formula: `FRAMEWORK_HOME/formulae/source.formula.md`
+- Chapter hub formula: `FRAMEWORK_HOME/formulae/chapter_hub.formula.md`
+- Page stamping rite: `FRAMEWORK_HOME/rites/new_page.py`
+- Page schema: `FRAMEWORK_HOME/docs/page_schema.md`
 - Drop zone contract: `inbox/README.md` in the grimoire
 - Grimoire creation: [[invocations/grm/create_grimoire|create grimoire]]
 - Share the result: [[invocations/grm/save|save]]

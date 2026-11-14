@@ -34,20 +34,20 @@ def test_command_surface_contract_covers_public_skills():
 
 def test_command_surface_validator_reports_missing_public_skill(tmp_path):
     _write(
-        tmp_path / "arcana.json",
+        tmp_path / "framework.json",
         json.dumps({
-            "skill_prefix": "arc",
+            "skill_prefix": "grm",
             "skill_families": {
-                "arc": {
-                    "skill_prefix": "arc",
-                    "path": "skills/arc",
+                "dev": {
+                    "skill_prefix": "grm",
+                    "path": "skills/dev",
                     "slug_prefix": "",
                 }
             },
         }),
     )
     _write(
-        tmp_path / "skills/arc/example/SKILL.md",
+        tmp_path / "skills/dev/example/SKILL.md",
         "---\nname: {{SKILL_PREFIX}}-example\ndescription: Example\n---\n",
     )
     _write(

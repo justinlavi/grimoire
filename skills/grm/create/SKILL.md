@@ -16,10 +16,10 @@ If the user provided a name, use it: **$name**
 
 ## Context
 
-- **Arcana**: `{{ARCANA_PATH}}`
+- **Framework root**: `{{FRAMEWORK_PATH}}`
 - **Library**: `~/grimoires/library.json`
-- **Formulae**: `{{ARCANA_PATH}}/formulae/grimoire/`
+- **Formulae**: `{{FRAMEWORK_PATH}}/formulae/grimoire/`
 
 ## Invocation
 
-!`cat {{ARCANA_PATH}}/invocations/grm/create_grimoire.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/grm/create_grimoire.md`

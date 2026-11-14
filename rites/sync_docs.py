@@ -2,7 +2,7 @@
 """Generate canonical docs from authoritative source files.
 
 Currently emits:
-  docs/skills.md - canonical operational catalog of every Arcana skill,
+  docs/skills.md - canonical operational catalog of every framework skill,
                     derived from SKILL.md frontmatter and the public
                     command-surface contract.
 
@@ -25,9 +25,9 @@ from pathlib import Path
 from command_surface import command_entries, validate_command_surface
 from _lib import SKILL_PREFIX_PLACEHOLDER, load_skill_families, parse_frontmatter
 
-ARCANA_PATH = Path(__file__).resolve().parent.parent
-SKILLS_DIR = ARCANA_PATH / "skills"
-DOCS_DIR = ARCANA_PATH / "docs"
+FRAMEWORK_PATH = Path(__file__).resolve().parent.parent
+SKILLS_DIR = FRAMEWORK_PATH / "skills"
+DOCS_DIR = FRAMEWORK_PATH / "docs"
 SKILLS_DOC = DOCS_DIR / "skills.md"
 
 
@@ -36,15 +36,15 @@ def read_frontmatter(skill_file):
     return parse_frontmatter(skill_file.read_text(encoding="utf-8", errors="replace"))
 
 
-def load_arcana_skill_families():
-    """Return normalized command-family definitions from arcana.json."""
-    return load_skill_families(ARCANA_PATH, with_fallback=True)
+def load_framework_skill_families():
+    """Return normalized command-family definitions from framework.json."""
+    return load_skill_families(FRAMEWORK_PATH, with_fallback=True)
 
 
 def collect_skills():
-    """Return skill metadata for every Arcana-shipped public skill."""
+    """Return skill metadata for every framework-shipped public skill."""
     skills = []
-    for family in load_arcana_skill_families():
+    for family in load_framework_skill_families():
         family_dir = family["path"]
         if not family_dir.is_dir():
             continue
@@ -68,7 +68,7 @@ def collect_skills():
             if isinstance(argument_hint, list):
                 argument_hint = "[" + ", ".join(str(item) for item in argument_hint) + "]"
             argument_hint = str(argument_hint).strip()
-            source = skill_file.relative_to(ARCANA_PATH).as_posix()
+            source = skill_file.relative_to(FRAMEWORK_PATH).as_posix()
             skills.append({
                 "name": registered_name,
                 "description": description,
@@ -80,7 +80,7 @@ def collect_skills():
 
 def load_command_metadata():
     """Return command-surface metadata keyed by registered skill name."""
-    contract, errors = validate_command_surface(ARCANA_PATH)
+    contract, errors = validate_command_surface(FRAMEWORK_PATH)
     if errors:
         messages = [
             f"{error['code']}: {error['message']} ({error['path']})"
@@ -101,44 +101,36 @@ def load_command_metadata():
 def group_skills(skills):
     """Group skills by command family and purpose.
 
-    Two command roots: grm (the universal grimoire surface) and arc (the Arcana
-    platform/maintainer surface). Validation entry points get their own bucket so
-    they read separately from the operational commands.
+    Two families: the grimoire verbs (`grm-*`) and the maintainer verbs
+    (`grm-dev-*`). The maintainer validation entry point gets its own bucket so
+    it reads separately from the operational commands.
     """
     groups = {}
     for skill in skills:
         name = skill["name"]
-        if name == "grm-validate" or name.startswith("grm-validate-"):
-            group = "grimoire_validate"
-        elif name.startswith("grm-audit-"):
-            group = "grimoire_audit"
+        if name == "grm-dev-validate":
+            group = "framework_validate"
+        elif name.startswith("grm-dev-"):
+            group = "framework"
         elif name.startswith("grm-"):
             group = "grimoire"
-        elif name == "arc-validate" or name.startswith("arc-validate-"):
-            group = "arcana_validate"
-        elif name.startswith("arc-"):
-            group = "arcana"
         else:
             group = name.split("-", 1)[0] if "-" in name else name
         groups.setdefault(group, []).append(skill)
 
-    # Stable ordering: Arcana core first, then the grimoire surface.
+    # Stable ordering: framework core first, then the grimoire surface.
     priority = {
-        "arcana": 0,
-        "arcana_validate": 1,
-        "grimoire": 2,
-        "grimoire_validate": 3,
-        "grimoire_audit": 4,
+        "grimoire": 0,
+        "framework": 1,
+        "framework_validate": 2,
     }
     return sorted(groups.items(), key=lambda kv: (priority.get(kv[0], 99), kv[0]))
 
 
 GROUP_HEADERS = {
-    "arcana": "Arcana maintenance",
-    "arcana_validate": "Arcana validation",
+    "framework": "Framework maintenance",
+    "framework_validate": "Framework validation",
     "grimoire": "Grimoire operations",
-    "grimoire_validate": "Grimoire validation",
-    "grimoire_audit": "Grimoire audits",
 }
 
 
@@ -204,9 +196,9 @@ def render_skills_doc(skills, command_metadata):
     lines = [
         "---",
         "type: reference",
-        'title: "Arcana Skill Catalog"',
+        'title: "Grimoire Skill Catalog"',
         'aliases: ["skill-catalog", "skills-list"]',
-        "tags: [type/reference, arcana/docs, generated]",
+        "tags: [type/reference, framework/docs, generated]",
         "authority: grimoire",
         "last_verified: 2026-05-12",
         "---",
@@ -216,17 +208,17 @@ def render_skills_doc(skills, command_metadata):
         "     and rites/data/command_surface.json. -->",
         "<!-- Regenerate with: python3 rites/sync_docs.py --apply -->",
         "",
-        "# Arcana Skill Catalog",
+        "# Grimoire Skill Catalog",
         "",
-        "Every command Arcana ships, grouped by what it does. `grm-*` commands",
-        "operate on your grimoires; `arc-*` commands maintain the Arcana platform",
+        "Every command the framework ships, grouped by what it does. `grm-*` commands",
+        "operate on your grimoires; `grm-dev-*` commands maintain the framework",
         "itself (most people never need them). Each command links to its source",
         "`SKILL.md`.",
         "",
         "Grimoire skills (e.g. `cook-*` for a cooking grimoire, `dnd-*` for a D&D",
         "grimoire) are declared in each grimoire's own `skills/` directory and are",
-        "not listed here. Run `/arc-help` to enumerate every skill installed for an",
-        "agent (Arcana + every grimoire).",
+        "not listed here. Run `/grm-dev-help` to enumerate every skill installed for an",
+        "agent (the framework + every grimoire).",
         "",
         "The [Command contract](#command-contract) at the end carries the",
         "engineering metadata (workflow home, owner, mutation profile, rite, guard,",
@@ -302,7 +294,7 @@ def main():
     print("  ----------------------------")
 
     skills = collect_skills()
-    print(f"  Discovered {len(skills)} Arcana skill(s) under {SKILLS_DIR}")
+    print(f"  Discovered {len(skills)} framework skill(s) under {SKILLS_DIR}")
     try:
         command_metadata = load_command_metadata()
     except RuntimeError as exc:
@@ -316,17 +308,17 @@ def main():
     old_content = SKILLS_DOC.read_text(encoding="utf-8") if SKILLS_DOC.is_file() else ""
 
     if new_content == old_content:
-        print(f"  [OK]  {SKILLS_DOC.relative_to(ARCANA_PATH)} is up to date.")
+        print(f"  [OK]  {SKILLS_DOC.relative_to(FRAMEWORK_PATH)} is up to date.")
         print()
         sys.exit(0)
 
-    print(f"  [DIFF] {SKILLS_DOC.relative_to(ARCANA_PATH)}")
+    print(f"  [DIFF] {SKILLS_DOC.relative_to(FRAMEWORK_PATH)}")
     print()
     diff = difflib.unified_diff(
         old_content.splitlines(keepends=True),
         new_content.splitlines(keepends=True),
-        fromfile=f"a/{SKILLS_DOC.relative_to(ARCANA_PATH)}",
-        tofile=f"b/{SKILLS_DOC.relative_to(ARCANA_PATH)}",
+        fromfile=f"a/{SKILLS_DOC.relative_to(FRAMEWORK_PATH)}",
+        tofile=f"b/{SKILLS_DOC.relative_to(FRAMEWORK_PATH)}",
     )
     sys.stdout.writelines(diff)
     print()
@@ -338,7 +330,7 @@ def main():
         print()
         sys.exit(0)
     else:
-        print(f"  Re-run with --apply to write {SKILLS_DOC.relative_to(ARCANA_PATH)}.")
+        print(f"  Re-run with --apply to write {SKILLS_DOC.relative_to(FRAMEWORK_PATH)}.")
         print()
         sys.exit(1)
 

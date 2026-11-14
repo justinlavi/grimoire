@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Validates Arcana structure completeness.
+"""Validates framework structure completeness.
 
 Usage: python3 rites/validate_structure.py
 Exit codes: 0 = success, 1 = validation errors found
 
 Hub convention (v2):
     For any folder F that acts as a router, the hub file is F/<basename(F)>.md.
-    The Arcana root hub is arcana.md; the grm/ invocation router is
+    The framework root hub is grimoire.md; the grm/ invocation router is
     invocations/grm/grm.md; etc.
 
 Documentation index coverage:
     Every docs/*.md page (and CONTRIBUTING.md) must be reachable from both
-    routing surfaces - arcana.md and README.md - so a new doc never silently
+    routing surfaces - grimoire.md and README.md - so a new doc never silently
     falls out of the primer. This makes that coverage a runtime validator check,
     not only a pytest assertion.
 """
@@ -19,21 +19,21 @@ Documentation index coverage:
 import sys
 from pathlib import Path
 
-from _lib import default_arcana_root
+from _lib import default_framework_root
 from agent_targets import target_entries, validate_agent_targets
 from diagnostics import DiagnosticReporter, add_output_format_arg
 from rite_profiles import profile_entries, validate_rite_profiles
 from summon_contract import mode_entries, validate_summon_contract
 
-ARCANA_ROOT = default_arcana_root()
+FRAMEWORK_ROOT = default_framework_root()
 
 REQUIRED_DIRS = [
     "docs",
     "invocations/grm",
     "invocations/grm/validators",
-    "invocations/arc",
-    "invocations/arc/quality",
-    "invocations/arc/validators",
+    "invocations/dev",
+    "invocations/dev/quality",
+    "invocations/dev/validators",
     "invocations/meta",
     "formulae",
     "formulae/grimoire",
@@ -41,16 +41,16 @@ REQUIRED_DIRS = [
     "resources",
     "skills",
     "skills/grm",
-    "skills/arc",
+    "skills/dev",
 ]
 
 REQUIRED_FILES = [
-    "arcana.md",
+    "grimoire.md",
     "README.md",
     "UPDATE.md",
     "CHANGELOG.md",
     "VERSION",
-    "arcana.json",
+    "framework.json",
     "rites/summon.sh",
     "rites/sync_skills.py",
     "docs/installation.md",
@@ -75,16 +75,16 @@ FORBIDDEN_GRIMOIRE_LAYER_PATHS = [
 HUB_DIRS = [
     "invocations/grm",
     "invocations/grm/validators",
-    "invocations/arc",
-    "invocations/arc/quality",
-    "invocations/arc/validators",
+    "invocations/dev",
+    "invocations/dev/quality",
+    "invocations/dev/validators",
     "invocations/meta",
 ]
 
 
 def hub_path(rel_dir):
     """Resolve the hub file path for a folder using the F/F.md convention."""
-    folder = ARCANA_ROOT / rel_dir
+    folder = FRAMEWORK_ROOT / rel_dir
     return folder / f"{folder.name}.md"
 
 
@@ -99,12 +99,12 @@ def doc_index_violations(root):
     routing surfaces fail to reference.
 
     A new docs/ page must be reachable from both routing surfaces so it never
-    silently falls out of the primer: arcana.md (the vault hub, which links docs
+    silently falls out of the primer: grimoire.md (the vault hub, which links docs
     as `[[docs/<stem>|...]]`) and README.md (the public doc, which links them as
     `(docs/<name>)`). This is the runtime form of the coverage tests/test_doc_indexes
     asserts; both share this single implementation.
     """
-    hub = root / "arcana.md"
+    hub = root / "grimoire.md"
     readme = root / "README.md"
     hub_text = hub.read_text(encoding="utf-8", errors="replace") if hub.is_file() else None
     readme_text = readme.read_text(encoding="utf-8", errors="replace") if readme.is_file() else None
@@ -113,7 +113,7 @@ def doc_index_violations(root):
     for doc in _docs_files(root):
         if hub_text is not None and f"docs/{doc.stem}" not in hub_text:
             violations.append(("STRUCTURE_DOC_NOT_IN_HUB", f"docs/{doc.name}",
-                               f"docs/{doc.name} is not routed from arcana.md"))
+                               f"docs/{doc.name} is not routed from grimoire.md"))
         if readme_text is not None and f"docs/{doc.name}" not in readme_text:
             violations.append(("STRUCTURE_DOC_NOT_IN_README", f"docs/{doc.name}",
                                f"docs/{doc.name} is not linked from README.md"))
@@ -121,7 +121,7 @@ def doc_index_violations(root):
     if (root / "CONTRIBUTING.md").is_file():
         if hub_text is not None and "CONTRIBUTING" not in hub_text:
             violations.append(("STRUCTURE_DOC_NOT_IN_HUB", "CONTRIBUTING.md",
-                               "CONTRIBUTING.md is not referenced from arcana.md"))
+                               "CONTRIBUTING.md is not referenced from grimoire.md"))
         if readme_text is not None and "CONTRIBUTING" not in readme_text:
             violations.append(("STRUCTURE_DOC_NOT_IN_README", "CONTRIBUTING.md",
                                "CONTRIBUTING.md is not referenced from README.md"))
@@ -131,23 +131,23 @@ def doc_index_violations(root):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Validate Arcana structure completeness")
+    parser = argparse.ArgumentParser(description="Validate framework structure completeness")
     add_output_format_arg(parser)
     args = parser.parse_args()
     human = args.format == "human"
-    reporter = DiagnosticReporter("validate_structure", ARCANA_ROOT)
+    reporter = DiagnosticReporter("validate_structure", FRAMEWORK_ROOT)
 
     if human:
         print()
-        print("Validating Arcana Structure")
+        print("Validating Framework Structure")
         print("==================================")
-        print(f"Arcana root: {ARCANA_ROOT}")
+        print(f"Framework root: {FRAMEWORK_ROOT}")
         print()
 
     if human:
         print("Checking required directories...")
     for d in REQUIRED_DIRS:
-        path = ARCANA_ROOT / d
+        path = FRAMEWORK_ROOT / d
         if not path.is_dir():
             reporter.error("STRUCTURE_MISSING_DIR", f"missing directory: {d}", path=d)
             if human:
@@ -161,7 +161,7 @@ def main():
     if human:
         print("Checking required files...")
     for f in REQUIRED_FILES:
-        path = ARCANA_ROOT / f
+        path = FRAMEWORK_ROOT / f
         if not path.is_file():
             reporter.error("STRUCTURE_MISSING_FILE", f"missing file: {f}", path=f)
             if human:
@@ -173,9 +173,9 @@ def main():
         print()
 
     if human:
-        print("Checking Arcana root excludes grimoire layers...")
+        print("Checking framework root excludes grimoire layers...")
     for rel in FORBIDDEN_GRIMOIRE_LAYER_PATHS:
-        path = ARCANA_ROOT / rel
+        path = FRAMEWORK_ROOT / rel
         if path.exists():
             reporter.error(
                 "STRUCTURE_FORBIDDEN_GRIMOIRE_LAYER",
@@ -194,7 +194,7 @@ def main():
         print("Checking router hub files (folder-name convention)...")
     for d in HUB_DIRS:
         hub = hub_path(d)
-        rel = hub.relative_to(ARCANA_ROOT)
+        rel = hub.relative_to(FRAMEWORK_ROOT)
         if not hub.is_file():
             reporter.error("STRUCTURE_MISSING_HUB", f"missing hub file: {rel}", path=rel)
             if human:
@@ -207,19 +207,19 @@ def main():
 
     if human:
         print("Checking documentation index coverage...")
-    doc_violations = doc_index_violations(ARCANA_ROOT)
+    doc_violations = doc_index_violations(FRAMEWORK_ROOT)
     for code, path, message in doc_violations:
         reporter.error(code, message, path=path, docs_reference="docs/governance.md")
         if human:
             print(f"  MISSING  {message}")
     if human and not doc_violations:
-        print("  OK       every docs/ page is routed from arcana.md and linked from README.md")
+        print("  OK       every docs/ page is routed from grimoire.md and linked from README.md")
     if human:
         print()
 
     if human:
         print("Checking mutating rite profiles...")
-    rite_profile_contract, rite_profile_errors = validate_rite_profiles(ARCANA_ROOT)
+    rite_profile_contract, rite_profile_errors = validate_rite_profiles(FRAMEWORK_ROOT)
     for error in rite_profile_errors:
         reporter.error(
             error["code"],
@@ -241,7 +241,7 @@ def main():
 
     if human:
         print("Checking Summoning Rite contract...")
-    summon_contract, summon_contract_errors = validate_summon_contract(ARCANA_ROOT)
+    summon_contract, summon_contract_errors = validate_summon_contract(FRAMEWORK_ROOT)
     for error in summon_contract_errors:
         reporter.error(
             error["code"],
@@ -263,7 +263,7 @@ def main():
 
     if human:
         print("Checking agent target registry...")
-    agent_target_contract, agent_target_errors = validate_agent_targets(ARCANA_ROOT)
+    agent_target_contract, agent_target_errors = validate_agent_targets(FRAMEWORK_ROOT)
     for error in agent_target_errors:
         reporter.error(
             error["code"],

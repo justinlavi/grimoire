@@ -2,14 +2,14 @@
 type: reference
 title: "Page Schema"
 aliases: ["frontmatter", "page-frontmatter", "frontmatter-spec"]
-tags: [type/reference, arcana/schema]
+tags: [type/reference, framework/schema]
 authority: grimoire
 last_verified: 2026-05-12
 ---
 
 # Page Schema
 
-Every authored Markdown page in a Grimoire (Arcana itself, or any grimoire)
+Every authored Markdown page in a Grimoire (the framework itself, or any grimoire)
 carries YAML frontmatter. Raw artifacts under `chapters/**/sources/` may be
 copied exactly as received; source wrapper Markdown under
 `chapters/**/sources/` uses this schema.
@@ -61,7 +61,7 @@ for example `chapters/<chapter>/sources/` or
 source wrapper Markdown, or both:
 
 - **Raw artifact**: a copied PDF, article export, transcript, image, dataset,
-  or original Markdown file. Raw artifacts do not need Arcana frontmatter and
+  or original Markdown file. Raw artifacts do not need framework frontmatter and
   are not rewritten to satisfy the page schema.
 - **Source wrapper**: a Markdown file created from
   `formulae/source.formula.md`. It declares `type: source`,
@@ -144,7 +144,7 @@ Tags are flat strings inside YAML (Dataview-compatible). Avoid spaces; use `_` o
 
 ### Topical facets as a second retrieval axis
 
-The hub tree is the primary navigation path: every page has one home, reached by routing from hub to hub. A topical facet (`domain/<...>`, or a grimoire's chosen equivalent such as `topic/<...>`) is an **optional second axis** - it groups cross-cutting pages that span chapters so an agent can find them by lexical tag search (for example, grep for `domain/cmake`) without walking every hub. It is recommended when a grimoire has subjects that recur across chapters, but it is not mechanically required: whether and how to use it is an editorial choice the owner curates. Arcana does not impose a domain vocabulary - keeping framework taxonomy out of grimoire content - so facet quality is reviewed by judgment (`/grm-check naming`), not a validator.
+The hub tree is the primary navigation path: every page has one home, reached by routing from hub to hub. A topical facet (`domain/<...>`, or a grimoire's chosen equivalent such as `topic/<...>`) is an **optional second axis** - it groups cross-cutting pages that span chapters so an agent can find them by lexical tag search (for example, grep for `domain/cmake`) without walking every hub. It is recommended when a grimoire has subjects that recur across chapters, but it is not mechanically required: whether and how to use it is an editorial choice the owner curates. The framework does not impose a domain vocabulary - keeping framework taxonomy out of grimoire content - so facet quality is reviewed by judgment (`/grm-check naming`), not a validator.
 
 ### Hub level tags (recap)
 
@@ -239,7 +239,7 @@ Derived chapter pages cite it with
    `authority: external`, and non-empty `sources:`.
 4. Source wrappers do not cite themselves.
 
-The `/arc-validate frontmatter` skill validates Arcana itself; `/grm-check frontmatter` validates an active grimoire.
+The `/grm-dev-validate frontmatter` skill validates the framework itself; `/grm-check frontmatter` validates an active grimoire.
 
 ---
 

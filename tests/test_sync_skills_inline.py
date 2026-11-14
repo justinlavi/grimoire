@@ -14,9 +14,9 @@ def _spec(source_dir: Path, grimoire_path: str = "") -> sync_skills.SkillSpec:
         skill_prefix="grm",
         source_dir=source_dir,
         source_label="Test",
-        source_kind="arcana",
+        source_kind="framework",
         source_key="grm",
-        source_repo="arcana",
+        source_repo="framework",
         grimoire_path=grimoire_path,
     )
 
@@ -31,7 +31,7 @@ def test_render_inlines_invocation_and_leaves_no_directive(tmp_path):
     _write(
         invocation,
         "---\ntype: playbook\ntitle: Probe\n---\n\n# Invocation: Probe\n\n"
-        "Run `python3 ARCANA_HOME/rites/validate.py`.\n",
+        "Run `python3 FRAMEWORK_HOME/rites/validate.py`.\n",
     )
     source = tmp_path / "skills" / "probe"
     _write(
@@ -49,10 +49,10 @@ def test_render_inlines_invocation_and_leaves_no_directive(tmp_path):
     assert "# Invocation: Probe" in body
     # The inlined invocation's own frontmatter is dropped.
     assert "type: playbook" not in body
-    # ARCANA_HOME/ becomes the concrete engine path, forward slashes everywhere.
-    assert "ARCANA_HOME/" not in body
-    assert f"{sync_skills.ARCANA_PATH.as_posix()}/rites/validate.py" in body
-    assert "\\" not in sync_skills.ARCANA_PATH.as_posix()
+    # FRAMEWORK_HOME/ becomes the concrete framework path, forward slashes everywhere.
+    assert "FRAMEWORK_HOME/" not in body
+    assert f"{sync_skills.FRAMEWORK_PATH.as_posix()}/rites/validate.py" in body
+    assert "\\" not in sync_skills.FRAMEWORK_PATH.as_posix()
     # Text after the directive survives in order.
     assert body.index("END INLINED") < body.index("Done.")
 
@@ -110,11 +110,11 @@ def test_render_resolves_grimoire_path_before_inlining(tmp_path):
 
 
 def test_every_shipped_skill_renders_without_a_directive():
-    """The real catalog: every Arcana-shipped skill must come out self-contained."""
-    specs = sync_skills.collect_arcana_skill_specs()
-    assert specs, "no Arcana skills discovered"
+    """The real catalog: every framework-shipped skill must come out self-contained."""
+    specs = sync_skills.collect_framework_skill_specs()
+    assert specs, "no framework skills discovered"
     for spec in specs:
         body = sync_skills.render_skill_files(spec, pointer_only=True)["SKILL.md"]
         assert "!`" not in body, f"/{spec.command_name} still carries a dynamic-context directive"
-        assert "{{ARCANA_PATH}}" not in body and "ARCANA_HOME/" not in body, f"/{spec.command_name}"
+        assert "{{FRAMEWORK_PATH}}" not in body and "FRAMEWORK_HOME/" not in body, f"/{spec.command_name}"
         assert body.count("\n") < 500, f"/{spec.command_name} exceeds the 500-line skill guidance"

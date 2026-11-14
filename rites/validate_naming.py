@@ -10,10 +10,10 @@ import sys
 import json
 from pathlib import Path
 
-from _lib import default_arcana_root, is_skipped, ok, read_frontmatter_name, warn
+from _lib import default_framework_root, is_skipped, ok, read_frontmatter_name, warn
 from diagnostics import DiagnosticReporter, add_output_format_arg
 
-ARCANA_ROOT = default_arcana_root()
+FRAMEWORK_ROOT = default_framework_root()
 
 UPPERCASE_EXCEPTIONS = {"README.md", "UPDATE.md", "CHANGELOG.md", "CONTRIBUTING.md",
                         "CLAUDE.md", "AGENTS.md", "LICENSE.md",
@@ -21,7 +21,7 @@ UPPERCASE_EXCEPTIONS = {"README.md", "UPDATE.md", "CHANGELOG.md", "CONTRIBUTING.
 
 
 SKIP_DIRS = {".git", "tests"}
-ARCANA_MANIFEST = ARCANA_ROOT / "arcana.json"
+FRAMEWORK_MANIFEST = FRAMEWORK_ROOT / "framework.json"
 
 
 def check_naming(glob_pattern, label, ext, reporter, human):
@@ -29,9 +29,9 @@ def check_naming(glob_pattern, label, ext, reporter, human):
 
     if human:
         print(f"Checking {label} naming...")
-    for path in sorted(ARCANA_ROOT.rglob(glob_pattern)):
+    for path in sorted(FRAMEWORK_ROOT.rglob(glob_pattern)):
         name = path.name
-        if is_skipped(path.relative_to(ARCANA_ROOT), SKIP_DIRS):
+        if is_skipped(path.relative_to(FRAMEWORK_ROOT), SKIP_DIRS):
             continue
 
         if name in UPPERCASE_EXCEPTIONS:
@@ -44,7 +44,7 @@ def check_naming(glob_pattern, label, ext, reporter, human):
                 path=path,
             )
             if human:
-                warn(f"Hyphenated (should use snake_case): {path.relative_to(ARCANA_ROOT)}")
+                warn(f"Hyphenated (should use snake_case): {path.relative_to(FRAMEWORK_ROOT)}")
             violations += 1
 
         if re.search(r"[a-z][A-Z]", name):
@@ -54,7 +54,7 @@ def check_naming(glob_pattern, label, ext, reporter, human):
                 path=path,
             )
             if human:
-                warn(f"CamelCase (should use snake_case): {path.relative_to(ARCANA_ROOT)}")
+                warn(f"CamelCase (should use snake_case): {path.relative_to(FRAMEWORK_ROOT)}")
             violations += 1
 
     if human and violations == 0:
@@ -65,39 +65,39 @@ def check_naming(glob_pattern, label, ext, reporter, human):
 
 
 def load_skill_families(reporter, human):
-    """Return Arcana skill families declared in arcana.json."""
+    """Return framework skill families declared in framework.json."""
     try:
-        metadata = json.loads(ARCANA_MANIFEST.read_text(encoding="utf-8"))
+        metadata = json.loads(FRAMEWORK_MANIFEST.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        reporter.error("SKILL_SCHEMA_MANIFEST_READ", f"could not read arcana.json: {exc}", path="arcana.json")
+        reporter.error("SKILL_SCHEMA_MANIFEST_READ", f"could not read framework.json: {exc}", path="framework.json")
         if human:
-            warn(f"Could not read arcana.json skill_families: {exc}")
+            warn(f"Could not read framework.json skill_families: {exc}")
         return []
 
-    default_prefix = metadata.get("skill_prefix", "arc")
+    default_prefix = metadata.get("skill_prefix", "grm")
     raw_families = metadata.get("skill_families", {})
     if not isinstance(raw_families, dict) or not raw_families:
-        reporter.error("SKILL_SCHEMA_MISSING_FAMILIES", "arcana.json missing skill_families", path="arcana.json")
+        reporter.error("SKILL_SCHEMA_MISSING_FAMILIES", "framework.json missing skill_families", path="framework.json")
         if human:
-            warn("arcana.json missing skill_families")
+            warn("framework.json missing skill_families")
         return []
 
     families = []
     for name, config in raw_families.items():
         if not isinstance(config, dict):
-            reporter.error("SKILL_SCHEMA_FAMILY_INVALID", f"skill_families.{name} must be an object", path="arcana.json")
+            reporter.error("SKILL_SCHEMA_FAMILY_INVALID", f"skill_families.{name} must be an object", path="framework.json")
             if human:
                 warn(f"skill_families.{name} must be an object")
             continue
         rel_path = config.get("path", "")
         if not rel_path:
-            reporter.error("SKILL_SCHEMA_FAMILY_MISSING_PATH", f"skill_families.{name} missing path", path="arcana.json")
+            reporter.error("SKILL_SCHEMA_FAMILY_MISSING_PATH", f"skill_families.{name} missing path", path="framework.json")
             if human:
                 warn(f"skill_families.{name} missing path")
             continue
         families.append({
             "name": name,
-            "path": ARCANA_ROOT / rel_path,
+            "path": FRAMEWORK_ROOT / rel_path,
             "rel_path": Path(rel_path),
             "skill_prefix": config.get("skill_prefix", default_prefix),
             "slug_prefix": config.get("slug_prefix", ""),
@@ -107,7 +107,7 @@ def load_skill_families(reporter, human):
 
 def check_skill_schema(reporter, human):
     violations = 0
-    skills_dir = ARCANA_ROOT / "skills"
+    skills_dir = FRAMEWORK_ROOT / "skills"
 
     if human:
         print("Checking skill naming schema...")
@@ -119,7 +119,7 @@ def check_skill_schema(reporter, human):
 
     families = load_skill_families(reporter, human)
     if not families:
-        reporter.error("SKILL_SCHEMA_NO_FAMILIES", "no valid skill families declared", path="arcana.json")
+        reporter.error("SKILL_SCHEMA_NO_FAMILIES", "no valid skill families declared", path="framework.json")
         if human:
             warn("No valid skill families declared")
         return 1
@@ -133,7 +133,7 @@ def check_skill_schema(reporter, human):
                 path=folder,
             )
             if human:
-                warn(f"Unexpected skill family directory: {folder.relative_to(ARCANA_ROOT)}")
+                warn(f"Unexpected skill family directory: {folder.relative_to(FRAMEWORK_ROOT)}")
             violations += 1
             continue
 
@@ -146,7 +146,7 @@ def check_skill_schema(reporter, human):
                 path=family_dir,
             )
             if human:
-                warn(f"Missing skill family directory: {family_dir.relative_to(ARCANA_ROOT)}")
+                warn(f"Missing skill family directory: {family_dir.relative_to(FRAMEWORK_ROOT)}")
             violations += 1
             continue
 
@@ -155,7 +155,7 @@ def check_skill_schema(reporter, human):
             if not skill_file.is_file():
                 reporter.error("SKILL_SCHEMA_MISSING_SKILL_FILE", "missing SKILL.md", path=folder)
                 if human:
-                    warn(f"Missing SKILL.md: {folder.relative_to(ARCANA_ROOT)}")
+                    warn(f"Missing SKILL.md: {folder.relative_to(FRAMEWORK_ROOT)}")
                 violations += 1
                 continue
 
@@ -174,7 +174,7 @@ def check_skill_schema(reporter, human):
                 )
                 if human:
                     warn(
-                        f"Skill name mismatch: {skill_file.relative_to(ARCANA_ROOT)} "
+                        f"Skill name mismatch: {skill_file.relative_to(FRAMEWORK_ROOT)} "
                         f"(expected `{expected_name}`, got `{actual_name}`)"
                     )
                 violations += 1
@@ -187,7 +187,7 @@ def check_skill_schema(reporter, human):
                 path=direct_skill,
             )
             if human:
-                warn(f"Skill family has direct SKILL.md; expected nested skill folders: {direct_skill.relative_to(ARCANA_ROOT)}")
+                warn(f"Skill family has direct SKILL.md; expected nested skill folders: {direct_skill.relative_to(FRAMEWORK_ROOT)}")
             violations += 1
 
     for skill_file in sorted(skills_dir.rglob("SKILL.md")):
@@ -199,7 +199,7 @@ def check_skill_schema(reporter, human):
             path=skill_file,
         )
         if human:
-            warn(f"SKILL.md is outside declared skill families: {skill_file.relative_to(ARCANA_ROOT)}")
+            warn(f"SKILL.md is outside declared skill families: {skill_file.relative_to(FRAMEWORK_ROOT)}")
         violations += 1
 
     if human and violations == 0:
@@ -216,13 +216,13 @@ def main():
     add_output_format_arg(parser)
     args = parser.parse_args()
     human = args.format == "human"
-    reporter = DiagnosticReporter("validate_naming", ARCANA_ROOT)
+    reporter = DiagnosticReporter("validate_naming", FRAMEWORK_ROOT)
 
     if human:
         print()
         print("Validating Naming Conventions")
         print("==================================")
-        print(f"Arcana root: {ARCANA_ROOT}")
+        print(f"Framework root: {FRAMEWORK_ROOT}")
         print()
 
     markdown_violations = check_naming("*.md", "markdown file", "md", reporter, human)

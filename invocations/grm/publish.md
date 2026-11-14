@@ -2,7 +2,7 @@
 type: playbook
 title: "Publish"
 aliases: ["publish", "grm-publish", "site", "static-site"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-11-12
 ---
@@ -31,7 +31,7 @@ HTML. `publish/build.sh` runs those four steps everywhere.
 
 ## Preconditions
 
-!`cat ARCANA_HOME/invocations/meta/grimoire_directory_guard.md`
+!`cat FRAMEWORK_HOME/invocations/meta/grimoire_directory_guard.md`
 
 `build` needs Node.js 22+ and npm on the machine; `check` needs only Python
 and git. Never bypass a blocker finding. Warnings mean "fine behind access
@@ -48,9 +48,9 @@ hostname; GitLab and GitHub Pages derive their URL from the project.
 1. Copy the publishing formulae into `publish/`:
 
    ```bash
-   cp ARCANA_HOME/formulae/publish/publish.json GRIMOIRE_ROOT/publish/publish.json
-   cp ARCANA_HOME/formulae/publish/build.sh GRIMOIRE_ROOT/publish/build.sh
-   cp ARCANA_HOME/formulae/publish/quartz.config.yaml GRIMOIRE_ROOT/publish/quartz.config.yaml
+   cp FRAMEWORK_HOME/formulae/publish/publish.json GRIMOIRE_ROOT/publish/publish.json
+   cp FRAMEWORK_HOME/formulae/publish/build.sh GRIMOIRE_ROOT/publish/build.sh
+   cp FRAMEWORK_HOME/formulae/publish/quartz.config.yaml GRIMOIRE_ROOT/publish/quartz.config.yaml
    ```
 
    Then fill `{{SITE_TITLE}}` and `{{BASE_URL}}` in `quartz.config.yaml`
@@ -59,22 +59,22 @@ hostname; GitLab and GitHub Pages derive their URL from the project.
    path, `group.pages.example.com/grimoire`).
 
 2. Copy the CI template for the target and tell the user where it goes:
-   - `gitlab-pages`: `ARCANA_HOME/formulae/publish/ci/gitlab-pages.yml` ->
+   - `gitlab-pages`: `FRAMEWORK_HOME/formulae/publish/ci/gitlab-pages.yml` ->
      `GRIMOIRE_ROOT/.gitlab-ci.yml`. Mention "Pages access control: project
      members" in the project's Pages settings.
-   - `github-pages`: `ARCANA_HOME/formulae/publish/ci/github-pages.yml` ->
+   - `github-pages`: `FRAMEWORK_HOME/formulae/publish/ci/github-pages.yml` ->
      `GRIMOIRE_ROOT/.github/workflows/pages.yml`; the repository's Pages
      source must be "GitHub Actions". Say plainly that a free-plan site is
      public.
-   - `cloudflare`: show `ARCANA_HOME/formulae/publish/ci/cloudflare_pages.md`
+   - `cloudflare`: show `FRAMEWORK_HOME/formulae/publish/ci/cloudflare_pages.md`
      and write `GRIMOIRE_ROOT/publish/wrangler.jsonc` from its sample with the
      user's Worker name and hostname.
 
-   If the grimoire lives on a private host, set `ARCANA_URL` in the CI file
-   to the engine mirror the runner can reach.
+   If the grimoire lives on a private host, set `FRAMEWORK_URL` in the CI file
+   to the framework mirror the runner can reach.
 
 3. Make sure `.gitignore` ignores `publish/content/`, `publish/quartz/`, and
-   `publish/.engine/` (the seeded scaffold ignore file already does). Only
+   `publish/.framework/` (the seeded scaffold ignore file already does). Only
    `publish.json`, `build.sh`, `quartz.config.yaml`, the CI file, and any
    `wrangler.jsonc` are committed.
 
@@ -98,8 +98,8 @@ the configuration, never the output.
 ## Scope: `check`
 
 ```bash
-ARCANA_HOME/bin/arcana stage_publish --grimoire GRIMOIRE_ROOT --apply
-ARCANA_HOME/bin/arcana audit_publish --grimoire GRIMOIRE_ROOT --mode content --format json
+FRAMEWORK_HOME/bin/grimoire stage_publish --grimoire GRIMOIRE_ROOT --apply
+FRAMEWORK_HOME/bin/grimoire audit_publish --grimoire GRIMOIRE_ROOT --mode content --format json
 ```
 
 Read the diagnostics: every `PUBLISH_BLOCKER` is a stop with its file and
@@ -109,8 +109,8 @@ unlinked source path into a Markdown link.
 
 ## Related
 
-- Staging rite: `ARCANA_HOME/rites/stage_publish.py`
-- Audit rite: `ARCANA_HOME/rites/audit_publish.py`
-- Formulae: `ARCANA_HOME/formulae/publish/`
+- Staging rite: `FRAMEWORK_HOME/rites/stage_publish.py`
+- Audit rite: `FRAMEWORK_HOME/rites/audit_publish.py`
+- Formulae: `FRAMEWORK_HOME/formulae/publish/`
 - The layer's contract: `publish/README.md` in the grimoire
 - Share the configuration with the team: [[invocations/grm/save|save]]

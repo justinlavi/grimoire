@@ -2,7 +2,7 @@
 type: playbook
 title: "Validate Grimoire Structure"
 aliases: ["validate-structure-domain"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-25
 ---
@@ -11,25 +11,25 @@ last_verified: 2026-05-25
 
 ## Purpose
 
-Validate a grimoire's mechanical structure against current Arcana formulae.
+Validate a grimoire's mechanical structure against current framework formulae.
 
 This invocation ensures:
 
 - Required root files and directories exist
 - Root and chapter hubs follow the folder-name convention
 - `grimoire.json` declares `name` and `skill_prefix`
-- Managed scaffold files match the current Arcana formulae
+- Managed scaffold files match the current framework formulae
 - Obsidian app configuration uses absolute wikilink creation
-- Obsidian graph configuration matches Arcana's opinionated color groups
+- Obsidian graph configuration matches the framework's opinionated color groups
 
 ## Preconditions
 
-Before executing, resolve `GRIMOIRE_ROOT` with the shared grimoire directory guard. Arcana is not a grimoire. Stop if no active grimoire can be resolved.
+Before executing, resolve `GRIMOIRE_ROOT` with the shared grimoire directory guard. The framework is not a grimoire. Stop if no active grimoire can be resolved.
 
 ## When to Cast
 
 - After creating or editing chapters/pages
-- After pulling a newer Arcana version
+- After pulling a newer framework version
 - During periodic grimoire quality reviews
 - Before running `/grm-check`
 - Before publishing or handoff
@@ -45,7 +45,7 @@ From the active grimoire context, cast:
 Mechanical equivalent:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_grimoire_structure --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_grimoire_structure --grimoire GRIMOIRE_ROOT
 ```
 
 ## Validation Workflow
@@ -59,7 +59,7 @@ ARCANA_HOME/bin/arcana validate_grimoire_structure --grimoire GRIMOIRE_ROOT
 
 ### Phase 2: Managed Scaffold Drift
 
-The following files are operational support files, not grimoire-specific authored content. They should match `ARCANA_HOME/formulae/grimoire/` exactly:
+The following files are operational support files, not grimoire-specific authored content. They should match `FRAMEWORK_HOME/formulae/grimoire/` exactly:
 
 - `.editorconfig`
 - `.gitattributes`
@@ -68,9 +68,9 @@ The following files are operational support files, not grimoire-specific authore
 - `inbox/README.md`
 - `publish/README.md`
 
-One scaffold file is **seeded, not managed**: `.gitignore`. Arcana copies it in when it is absent (at create and at every heal) and never overwrites it, so a grimoire may customise it freely. Its absence is a warning (`GRIMOIRE_STRUCTURE_MISSING_SEEDED`), never an error.
+One scaffold file is **seeded, not managed**: `.gitignore`. The framework copies it in when it is absent (at create and at every heal) and never overwrites it, so a grimoire may customise it freely. Its absence is a warning (`GRIMOIRE_STRUCTURE_MISSING_SEEDED`), never an error.
 
-If any are missing or stale, copy the current version from Arcana unless the user explicitly wants a custom local variant. Custom local variants should be rare because they create cross-platform and agent-behavior drift.
+If any are missing or stale, copy the current version from the framework unless the user explicitly wants a custom local variant. Custom local variants should be rare because they create cross-platform and agent-behavior drift.
 
 ### Phase 3: Hub Convention
 
@@ -96,7 +96,7 @@ This prevents Ctrl-clicking unresolved full-path wikilinks from creating recursi
 | Manifest has `name` and `skill_prefix` | Critical |
 | Root hub exists and matches manifest `name` | Critical |
 | Required storage directories exist | Critical |
-| Managed scaffold files match Arcana formulae | Critical |
+| Managed scaffold files match framework formulae | Critical |
 | Chapter hubs follow folder-name convention | Critical |
 | Obsidian link config is absolute | Critical |
 
@@ -111,6 +111,6 @@ This prevents Ctrl-clicking unresolved full-path wikilinks from creating recursi
 ## Related Docs
 
 - `docs/operating_model.md`
-- `invocations/grm/validators/validate.md`
+- `invocations/grm/validators/validators.md`
 - `formulae/grimoire/`
 - `rites/validate_grimoire_structure.py`

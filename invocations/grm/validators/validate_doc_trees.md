@@ -2,7 +2,7 @@
 type: reference
 title: "Validate Grimoire Doc Trees"
 aliases: ["validate-grimoire-doc-trees", "grimoire-validate-doc-trees", "validate-tree-diagrams"]
-tags: [arcana/invocations, type/reference, scope/grimoire]
+tags: [framework/invocations, type/reference, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-28
 ---
@@ -27,7 +27,7 @@ been renamed, added, or removed without updating the doc.
 Run against the resolved active grimoire:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_doc_trees --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_doc_trees --grimoire GRIMOIRE_ROOT
 ```
 
 Exit code 0 means every diagram with a resolvable filesystem anchor matches

@@ -44,8 +44,10 @@ HEAL_ELIGIBLE = frozenset({"up_to_date", "fast_forwarded", "ahead"})
 NEEDS_MANUAL_PULL = frozenset({"auth_failed", "offline", "fetch_error", "behind_blocked", "diverged"})
 
 # README update-block markers.
-UPDATE_BEGIN = "<!-- BEGIN ARCANA UPDATE -->"
-UPDATE_END = "<!-- END ARCANA UPDATE -->"
+UPDATE_BEGIN = "<!-- BEGIN GRIMOIRE UPDATE -->"
+UPDATE_END = "<!-- END GRIMOIRE UPDATE -->"
+# Marker pairs written by releases before 1.8; a block under one is replaced in place.
+RETIRED_UPDATE_MARKERS = (("<!-- BEGIN ARCANA UPDATE -->", "<!-- END ARCANA UPDATE -->"),)
 ROOT_SOURCE_SCAFFOLD_FILES = {"README.md", ".gitkeep"}
 
 _AUTH_MARKERS = (
@@ -183,9 +185,9 @@ def bring_current(local_path: Path, rec: dict[str, Any], *, git: Callable = summ
 # ---------------------------------------------------------------------------
 
 
-def _formula_update_block(arcana_root: Path) -> str | None:
+def _formula_update_block(framework_root: Path) -> str | None:
     """Extract the marked update block from the grimoire formula README."""
-    path = arcana_root / "formulae" / "grimoire" / "README.md"
+    path = framework_root / "formulae" / "grimoire" / "README.md"
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
@@ -203,10 +205,11 @@ def _replace_readme_block(text: str, block: str) -> str:
     Replaces the marked block in place when present; otherwise inserts it before
     the first second-level heading (or appends). Idempotent.
     """
-    s = text.find(UPDATE_BEGIN)
-    e = text.find(UPDATE_END)
-    if s != -1 and e != -1 and e > s:
-        return text[:s] + block + text[e + len(UPDATE_END):]
+    for begin, end in ((UPDATE_BEGIN, UPDATE_END), *RETIRED_UPDATE_MARKERS):
+        s = text.find(begin)
+        e = text.find(end)
+        if s != -1 and e != -1 and e > s:
+            return text[:s] + block + text[e + len(end):]
 
     first = text.find("\n## ")
     if first != -1:
@@ -311,10 +314,10 @@ def relocate_root_sources(local_path: Path) -> dict[str, Any]:
     return {"status": status, "moved": moved, "left_for_review": left_for_review}
 
 
-def default_heal(local_path: Path, arcana_root: Path) -> dict[str, Any]:
+def default_heal(local_path: Path, framework_root: Path) -> dict[str, Any]:
     """Mechanical, idempotent grimoire heal: managed scaffold, README block, links.
 
-    Only called for a confirmed-current grimoire. Re-sync the Arcana-owned managed
+    Only called for a confirmed-current grimoire. Re-sync the framework-owned managed
     scaffold (never the customized README/hub/manifest/log), refresh the README
     update block, then promote wikilinks. Re-validation is left to the caller.
     """
@@ -327,11 +330,11 @@ def default_heal(local_path: Path, arcana_root: Path) -> dict[str, Any]:
         "messages": [],
     }
 
-    # 1. Managed scaffold: copy Arcana formula over the grimoire's copy (safe -
+    # 1. Managed scaffold: copy framework formula over the grimoire's copy (safe -
     #    managed_scaffold_files excludes README/hub/grimoire.json).
     try:
-        contract = load_scaffold_contract(arcana_root)
-        formula_dir = arcana_root / "formulae" / "grimoire"
+        contract = load_scaffold_contract(framework_root)
+        formula_dir = framework_root / "formulae" / "grimoire"
         for rel in managed_scaffold_files(contract):
             src = formula_dir / rel
             dst = local_path / rel
@@ -365,7 +368,7 @@ def default_heal(local_path: Path, arcana_root: Path) -> dict[str, Any]:
         result["messages"].append(f"root sources relocation failed: {exc}")
 
     # 3. Ensure the README carries the current update block from the formula.
-    block = _formula_update_block(arcana_root)
+    block = _formula_update_block(framework_root)
     readme = local_path / "README.md"
     if block and readme.is_file():
         try:
@@ -376,7 +379,7 @@ def default_heal(local_path: Path, arcana_root: Path) -> dict[str, Any]:
             result["messages"].append(f"README block injection failed: {exc}")
 
     # 4. Promote/repair wikilinks a structural change may have broken.
-    repair = _run_repair_links(arcana_root, local_path)
+    repair = _run_repair_links(framework_root, local_path)
     result["links_repaired"] = repair.get("repaired")
     if repair.get("status") == "error":
         result["status"] = "error"
@@ -385,9 +388,9 @@ def default_heal(local_path: Path, arcana_root: Path) -> dict[str, Any]:
     return result
 
 
-def _run_repair_links(arcana_root: Path, local_path: Path) -> dict[str, Any]:
+def _run_repair_links(framework_root: Path, local_path: Path) -> dict[str, Any]:
     """Run repair_links.py --apply against a grimoire; report a small result."""
-    script = arcana_root / "rites" / "repair_links.py"
+    script = framework_root / "rites" / "repair_links.py"
     if not script.is_file():
         return {"status": "skipped", "message": "repair_links.py not found"}
     try:
@@ -403,9 +406,9 @@ def _run_repair_links(arcana_root: Path, local_path: Path) -> dict[str, Any]:
             "message": (proc.stderr or proc.stdout or "").strip()[-200:] if proc.returncode else ""}
 
 
-def revalidate(arcana_root: Path, local_path: Path) -> tuple[bool, str]:
+def revalidate(framework_root: Path, local_path: Path) -> tuple[bool, str]:
     """Re-run grimoire validation; return (ok, short detail)."""
-    script = arcana_root / "rites" / "validate.py"
+    script = framework_root / "rites" / "validate.py"
     if not script.is_file():
         return False, "validate.py not found"
     try:
@@ -427,7 +430,7 @@ def revalidate(arcana_root: Path, local_path: Path) -> tuple[bool, str]:
 def process_grimoire(
     key: str,
     entry: dict[str, Any],
-    arcana_root: Path,
+    framework_root: Path,
     *,
     apply: bool,
     fetch: bool = True,
@@ -464,8 +467,8 @@ def process_grimoire(
     if rec["heal_eligible"]:
         rec["suggested_command"] = None
         if apply:
-            heal = heal_fn(local_path, arcana_root)
-            ok, detail = revalidate_fn(arcana_root, local_path)
+            heal = heal_fn(local_path, framework_root)
+            ok, detail = revalidate_fn(framework_root, local_path)
             heal["validate"] = "ok" if ok else "fail"
             if not ok:
                 heal["status"] = "error"
@@ -483,7 +486,7 @@ def process_grimoire(
 
 def process_all(
     home: Path,
-    arcana_root: Path,
+    framework_root: Path,
     *,
     apply: bool,
     fetch: bool = True,
@@ -498,7 +501,7 @@ def process_all(
     `apply=True` fast-forwards and heals the grimoires confirmed current.
     """
     home = Path(home)
-    arcana_root = Path(arcana_root)
+    framework_root = Path(framework_root)
     if library is None:
         library = sync_library.load_library(home / "library.json")
     grimoires_map = library.get("grimoires", {})
@@ -506,7 +509,7 @@ def process_all(
     results: list[dict[str, Any]] = []
     for key in sorted(grimoires_map):
         results.append(process_grimoire(
-            key, grimoires_map[key], arcana_root,
+            key, grimoires_map[key], framework_root,
             apply=apply, fetch=fetch, git=git, heal_fn=heal_fn, revalidate_fn=revalidate_fn,
         ))
 
@@ -552,15 +555,15 @@ def _build_reporter(home: Path, result: dict[str, Any], *, apply: bool) -> Resul
 def main() -> int:
     parser = argparse.ArgumentParser(description="Pull and heal every grimoire in the library")
     parser.add_argument("--home", default=None, help="Grimoires home (default: ~/grimoires)")
-    parser.add_argument("--arcana-root", default=None, help="Arcana root (default: detected)")
+    parser.add_argument("--framework-root", default=None, help="Framework root (default: detected)")
     parser.add_argument("--apply", action="store_true", help="Pull and heal (default: plan only)")
     add_output_format_arg(parser)
     args = parser.parse_args()
 
     home = Path(args.home).expanduser().resolve() if args.home else summon_core.GRIMOIRES_HOME
-    arcana_root = Path(args.arcana_root).expanduser().resolve() if args.arcana_root else summon_core.REPO_ROOT
+    framework_root = Path(args.framework_root).expanduser().resolve() if args.framework_root else summon_core.REPO_ROOT
 
-    result = process_all(home, arcana_root, apply=args.apply)
+    result = process_all(home, framework_root, apply=args.apply)
     reporter = _build_reporter(home, result, apply=args.apply)
     summary = {**result["summary"], "grimoires": result["grimoires"],
                "needs_manual_pull": result["needs_manual_pull"], "applied": args.apply}

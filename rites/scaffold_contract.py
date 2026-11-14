@@ -13,9 +13,9 @@ class ScaffoldContractError(RuntimeError):
     """Raised when the scaffold contract cannot be loaded."""
 
 
-def load_scaffold_contract(arcana_root: Path) -> dict:
-    """Load the grimoire scaffold contract from an Arcana root."""
-    path = arcana_root / CONTRACT_RELATIVE_PATH
+def load_scaffold_contract(framework_root: Path) -> dict:
+    """Load the grimoire scaffold contract from a framework root."""
+    path = framework_root / CONTRACT_RELATIVE_PATH
     try:
         contract = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -71,7 +71,7 @@ def managed_scaffold_files(contract: dict) -> list[str]:
 
 
 def seeded_scaffold_files(contract: dict) -> list[str]:
-    """Files Arcana copies in when absent and never overwrites (user-owned after that)."""
+    """Files the framework copies in when absent and never overwrites (user-owned after that)."""
     return [
         entry["target"]
         for entry in file_entries(contract)

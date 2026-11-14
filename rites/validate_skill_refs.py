@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Validates Arcana skill references and the public command-surface contract.
+"""Validates framework skill references and the public command-surface contract.
 
-Scans all markdown files in Arcana for slash-command references matching
-Arcana's declared command-family prefixes (for example `arc-` and `grm-`) and
+Scans all markdown files in the framework for slash-command references matching
+the framework's declared command families (for example `grm-` and `grm-dev-`) and
 ensures each reference resolves to a source `SKILL.md`. Catches drift like:
 
  - A doc mentioning `/grm-foo` after the skill was deleted/renamed.
  - A new skill mentioned in prose before its `skills/` folder is created.
 
 Grimoire skill references (e.g. `/dnd-...`) are NOT validated here;
-they live in their own grimoire repos. This is an Arcana-internal check.
+they live in their own grimoire repos. This is a framework-internal check.
 
 Also validates `rites/data/command_surface.json`, the public contract that
-connects every Arcana-shipped command to its skill source, invocation home,
+connects every framework-shipped command to its skill source, invocation home,
 workflow owner, safety posture, and validation profile.
 
 Usage: python3 rites/validate_skill_refs.py
@@ -25,7 +25,7 @@ import sys
 
 from _lib import (
     SKILL_PREFIX_PLACEHOLDER,
-    default_arcana_root,
+    default_framework_root,
     is_skipped,
     ok,
     read_frontmatter_name,
@@ -35,17 +35,17 @@ import command_surface as command_surface_contract
 import rite_profiles as rite_profiles_contract
 from diagnostics import DiagnosticReporter, add_output_format_arg
 
-ARCANA_ROOT = default_arcana_root()
-SKILLS_DIR = ARCANA_ROOT / "skills"
-ARCANA_MANIFEST = ARCANA_ROOT / "arcana.json"
+FRAMEWORK_ROOT = default_framework_root()
+SKILLS_DIR = FRAMEWORK_ROOT / "skills"
+FRAMEWORK_MANIFEST = FRAMEWORK_ROOT / "framework.json"
 
-# Match slash-command references for Arcana-shipped command-family prefixes.
+# Match slash-command references for framework-shipped command-family prefixes.
 SKILL_REF_RE = re.compile(r"(?<![A-Za-z0-9_/-])/([a-z][a-z0-9]*)-([a-z][a-z0-9-]*)\b")
 
 # Tokens that, when they immediately follow the matched slug, indicate a
 # wildcard/placeholder rather than a concrete skill reference. Examples:
-#   /arc-example-*       (wildcard summary)
-#   /arc-example-<name>  (placeholder for prose)
+#   /grm-dev-example-*       (wildcard summary)
+#   /grm-dev-example-<name>  (placeholder for prose)
 #   /grm-example-{slug}  (variable substitution)
 PLACEHOLDER_SUFFIXES = ("-*", "-<", "-{")
 
@@ -63,16 +63,16 @@ SKIP_DIRS = {
 
 
 def load_skill_families(reporter, human):
-    """Return Arcana command-family definitions from arcana.json."""
+    """Return framework command-family definitions from framework.json."""
     try:
-        metadata = json.loads(ARCANA_MANIFEST.read_text(encoding="utf-8"))
+        metadata = json.loads(FRAMEWORK_MANIFEST.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        reporter.error("SKILL_REFS_MANIFEST_READ", f"could not read arcana.json: {exc}", path="arcana.json")
+        reporter.error("SKILL_REFS_MANIFEST_READ", f"could not read framework.json: {exc}", path="framework.json")
         if human:
-            warn(f"Could not read arcana.json: {exc}")
+            warn(f"Could not read framework.json: {exc}")
         return []
 
-    default_prefix = metadata.get("skill_prefix", "arc")
+    default_prefix = metadata.get("skill_prefix", "grm")
     raw_families = metadata.get("skill_families", {})
     if not isinstance(raw_families, dict):
         return []
@@ -84,13 +84,13 @@ def load_skill_families(reporter, human):
         families.append({
             "name": name,
             "skill_prefix": config.get("skill_prefix", default_prefix),
-            "path": ARCANA_ROOT / config.get("path", ""),
+            "path": FRAMEWORK_ROOT / config.get("path", ""),
         })
     return families
 
 
 def discover_skill_commands(reporter, human):
-    """Return the set of valid slash commands shipped by Arcana."""
+    """Return the set of valid slash commands shipped by the framework."""
     commands = set()
     prefixes = set()
     for family in load_skill_families(reporter, human):
@@ -111,11 +111,11 @@ def discover_skill_commands(reporter, human):
 
 
 def scan_for_skill_refs(prefixes):
-    """Yield (file_rel, lineno, full_command) for each Arcana skill reference."""
-    for path in sorted(ARCANA_ROOT.rglob("*.md")):
+    """Yield (file_rel, lineno, full_command) for each framework skill reference."""
+    for path in sorted(FRAMEWORK_ROOT.rglob("*.md")):
         if path.name in SKIP_FILES:
             continue
-        rel = str(path.relative_to(ARCANA_ROOT)).replace("\\", "/")
+        rel = str(path.relative_to(FRAMEWORK_ROOT)).replace("\\", "/")
         if is_skipped(rel, SKIP_DIRS):
             continue
         try:
@@ -161,28 +161,28 @@ def mutation_profile_mismatches(surface_entries, rite_profile_entries):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Validate Arcana skill references")
+    parser = argparse.ArgumentParser(description="Validate framework skill references")
     add_output_format_arg(parser)
     args = parser.parse_args()
     human = args.format == "human"
-    reporter = DiagnosticReporter("validate_skill_refs", ARCANA_ROOT)
+    reporter = DiagnosticReporter("validate_skill_refs", FRAMEWORK_ROOT)
 
     if human:
         print()
         print("Validate Skill References")
         print("====================================")
-        print(f"Arcana root:    {ARCANA_ROOT}")
+        print(f"Framework root:    {FRAMEWORK_ROOT}")
         print(f"Skills dir:     {SKILLS_DIR}")
         print()
 
     valid_commands, prefixes = discover_skill_commands(reporter, human)
     if human:
         print(f"Skill prefixes: {', '.join(f'{prefix}-' for prefix in sorted(prefixes))}")
-        print(f"Discovered {len(valid_commands)} valid Arcana-shipped skill(s).")
+        print(f"Discovered {len(valid_commands)} valid framework-shipped skill(s).")
         print()
 
     if human:
-        print("Scanning markdown for Arcana-shipped slash-command references...")
+        print("Scanning markdown for framework-shipped slash-command references...")
     dangling = []
     seen_pairs = set()
     reference_count = 0
@@ -207,13 +207,13 @@ def main():
             warn(f"{rel}:{lineno}  references {full}  (no source SKILL.md)")
 
     if human and not dangling:
-        ok("All Arcana-shipped skill references resolve to existing skills.")
+        ok("All framework-shipped skill references resolve to existing skills.")
     if human:
         print()
 
     if human:
         print("Checking public command-surface contract...")
-    surface_contract, surface_errors = command_surface_contract.validate_command_surface(ARCANA_ROOT)
+    surface_contract, surface_errors = command_surface_contract.validate_command_surface(FRAMEWORK_ROOT)
     for error in surface_errors:
         reporter.error(
             error["code"],
@@ -238,7 +238,7 @@ def main():
     if surface_contract is not None:
         try:
             rite_profile_list = rite_profiles_contract.profile_entries(
-                rite_profiles_contract.load_rite_profiles(ARCANA_ROOT)
+                rite_profiles_contract.load_rite_profiles(FRAMEWORK_ROOT)
             )
         except (OSError, json.JSONDecodeError) as exc:
             rite_profile_list = []

@@ -2,12 +2,12 @@
 type: hub
 title: "Meta Invocations"
 aliases: ["meta-invocations"]
-tags: [arcana/invocations, type/hub, scope/meta, hub/chapter]
+tags: [framework/invocations, type/hub, scope/meta, hub/chapter]
 ---
 
 # Meta Invocations
 
-Shared invocation fragments and templates. User-facing operations belong in their target root folders: `arc/` (maintainer and platform) or `grm/` (grimoire).
+Shared invocation fragments and templates. User-facing operations belong in their target root folders: `dev/` (maintainer and platform) or `grm/` (grimoire).
 
 ## Available
 
@@ -18,5 +18,5 @@ Shared invocation fragments and templates. User-facing operations belong in thei
 ## Related
 
 - Grimoire operations -> [[invocations/grm/grm|grm]]
-- Arcana maintenance -> [[invocations/arc/arc|arc]]
+- Framework maintenance -> [[invocations/dev/dev|dev]]
 - Canonical skill catalog -> [[docs/skills|skills]]

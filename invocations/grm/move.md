@@ -2,7 +2,7 @@
 type: playbook
 title: "Move or Rename Grimoire Content"
 aliases: ["move", "rename", "move-content"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-06-06
 ---
@@ -21,7 +21,7 @@ Rename or move a page or chapter within the active grimoire and keep the wiki co
 
 ## Preconditions
 
-!`cat ARCANA_HOME/invocations/meta/grimoire_directory_guard.md`
+!`cat FRAMEWORK_HOME/invocations/meta/grimoire_directory_guard.md`
 
 ## Workflow
 
@@ -32,7 +32,7 @@ Take `$source` and `$destination` as grimoire-relative paths under `chapters/` (
 ### 2. Plan the move
 
 ```bash
-ARCANA_HOME/bin/arcana restructure_grimoire --grimoire GRIMOIRE_ROOT --move SRC DST
+FRAMEWORK_HOME/bin/grimoire restructure_grimoire --grimoire GRIMOIRE_ROOT --move SRC DST
 ```
 
 Review the planned file moves and wikilink rewrites. The rite refuses when the destination already exists, the target is outside `chapters/`, or the target is a chapter hub on its own (move the whole chapter folder instead). Moving a chapter folder also renames its folder-named hub so the convention holds.
@@ -40,7 +40,7 @@ Review the planned file moves and wikilink rewrites. The rite refuses when the d
 ### 3. Apply
 
 ```bash
-ARCANA_HOME/bin/arcana restructure_grimoire --grimoire GRIMOIRE_ROOT --move SRC DST --apply
+FRAMEWORK_HOME/bin/grimoire restructure_grimoire --grimoire GRIMOIRE_ROOT --move SRC DST --apply
 ```
 
 ### 4. Wire the hubs and labels (judgment)
@@ -48,15 +48,15 @@ ARCANA_HOME/bin/arcana restructure_grimoire --grimoire GRIMOIRE_ROOT --move SRC 
 The rite retargets link paths but does not edit hubs or display labels. After the move:
 
 - **Source chapter hub**: remove the moved page's pointer if it left that chapter.
-- **Destination chapter hub**: add a full-path wikilink pointer to the moved page. If the destination chapter does not exist yet, create its hub from `ARCANA_HOME/formulae/chapter_hub.formula.md` and wire it into the parent hub.
+- **Destination chapter hub**: add a full-path wikilink pointer to the moved page. If the destination chapter does not exist yet, create its hub from `FRAMEWORK_HOME/formulae/chapter_hub.formula.md` and wire it into the parent hub.
 - **Display labels**: fix any label that named the old location (the rite preserves labels verbatim, so a renamed page may still read with its old label).
 
-### 5. Log and validate
+### 5. Validate
 
 Re-validate:
 
 ```bash
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT links orphans structure
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT links orphans structure
 ```
 
 ## Related

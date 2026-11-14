@@ -2,7 +2,7 @@
 type: reference
 title: "VS Code Setup"
 aliases: ["vscode", "vscode-setup", "editor-setup"]
-tags: [type/reference, arcana/docs]
+tags: [type/reference, framework/docs]
 authority: grimoire
 last_verified: 2026-05-19
 ---
@@ -48,7 +48,7 @@ code --install-extension foam.foam-vscode
 
 Foam indexes the workspace by full path and resolves wikilinks against the workspace root. Full-path wikilinks like `[[chapters/build_system/ci/gitlab_shell_ci|label]]` then Ctrl-click to the actual file rather than a recursive ghost.
 
-Foam's defaults work out of the box for Arcana's conventions; no extra Foam settings are required.
+Foam's defaults work out of the box for the framework's conventions; no extra Foam settings are required.
 
 ---
 
@@ -106,6 +106,6 @@ Either way — uninstall or user-level disable — workspace settings are not th
 
 ## Related
 
-- Obsidian-side config (parallel concern): `ARCANA_HOME/docs/obsidian.md` — "Required app.json settings"
+- Obsidian-side config (parallel concern): `FRAMEWORK_HOME/docs/obsidian.md` — "Required app.json settings"
 - Wikilink convention enforced by validators: same doc, "Full-path wikilinks" section
-- Bulk wikilink repair rite: `ARCANA_HOME/rites/repair_links.py`
+- Bulk wikilink repair rite: `FRAMEWORK_HOME/rites/repair_links.py`

@@ -33,7 +33,7 @@ def test_prompt_text_returns_default_when_stdin_and_tty_are_unavailable(monkeypa
     assert summon_core._prompt_text("Choice [1]: ", default="1") == "1"
 
 
-def test_prompt_cli_mode_defaults_to_arcana_only_without_interactive_input(monkeypatch):
+def test_prompt_cli_mode_defaults_to_framework_only_without_interactive_input(monkeypatch):
     monkeypatch.setattr(sys, "stdin", _NonInteractiveStdin(""))
 
     def fake_open(*_args, **_kwargs):
@@ -41,7 +41,7 @@ def test_prompt_cli_mode_defaults_to_arcana_only_without_interactive_input(monke
 
     monkeypatch.setattr("builtins.open", fake_open)
 
-    assert summon_core._prompt_cli_mode(scope_preselected=False) == "arcana_only"
+    assert summon_core._prompt_cli_mode(scope_preselected=False) == "framework_only"
 
 
 def test_grimoire_block_comes_from_canonical_template():
@@ -131,39 +131,39 @@ def test_git_returns_false_on_timeout(monkeypatch):
     assert out == ""
 
 
-def test_install_arcana_recovers_partial_working_tree(tmp_path, monkeypatch):
-    arcana_dir = tmp_path / "arcana"
-    (arcana_dir / ".git").mkdir(parents=True)  # repo present, working tree empty
-    monkeypatch.setattr(summon_core, "ARCANA_DIR", arcana_dir)
+def test_install_framework_recovers_partial_working_tree(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    (framework_dir / ".git").mkdir(parents=True)  # repo present, working tree empty
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
 
     calls = []
 
     def fake_git(*args, log=None, **_kwargs):
         calls.append(args)
         if "checkout" in args:
-            (arcana_dir / "arcana.json").write_text("{}", encoding="utf-8")
+            (framework_dir / "framework.json").write_text("{}", encoding="utf-8")
         return True, ""
 
-    result = summon_core.install_arcana("", _FullLog(), git_fn=fake_git)
+    result = summon_core.install_framework("", _FullLog(), git_fn=fake_git)
 
     assert result is True
     assert any("checkout" in c for c in calls)  # recovery attempted (the CLI-only path)
-    assert (arcana_dir / "arcana.json").exists()
+    assert (framework_dir / "framework.json").exists()
 
 
-def test_install_arcana_fails_when_recovery_cannot_populate(tmp_path, monkeypatch):
-    arcana_dir = tmp_path / "arcana"
-    (arcana_dir / ".git").mkdir(parents=True)
-    monkeypatch.setattr(summon_core, "ARCANA_DIR", arcana_dir)
+def test_install_framework_fails_when_recovery_cannot_populate(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    (framework_dir / ".git").mkdir(parents=True)
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
 
     def fake_git(*args, log=None, **_kwargs):
         return True, ""  # commands "succeed" but never populate a sentinel
 
-    result = summon_core.install_arcana("", _FullLog(), git_fn=fake_git)
+    result = summon_core.install_framework("", _FullLog(), git_fn=fake_git)
     assert result is False
 
 
-def test_install_arcana_respects_cancel_event():
+def test_install_framework_respects_cancel_event():
     class _Cancelled:
         def is_set(self):
             return True
@@ -174,7 +174,7 @@ def test_install_arcana_respects_cancel_event():
         called.append(args)
         return True, ""
 
-    result = summon_core.install_arcana(
+    result = summon_core.install_framework(
         "url", _FullLog(), git_fn=fake_git, cancel_event=_Cancelled()
     )
     assert result is False
@@ -259,7 +259,7 @@ def test_dispatcher_parses_install_flags():
     parser = summon.build_parser()
     args = parser.parse_args(["--scope", "https://example.com/org"])
     assert args.scope == "https://example.com/org"
-    assert args.arcana_url is None
+    assert args.framework_url is None
 
 
 def test_core_spawns_sister_scripts_with_the_running_interpreter():
@@ -267,41 +267,41 @@ def test_core_spawns_sister_scripts_with_the_running_interpreter():
     assert summon_core.system_python() == sys.executable
 
 
-def test_install_arcana_clones_the_ref_named_by_arcana_ref(tmp_path, monkeypatch):
-    arcana_dir = tmp_path / "arcana"
-    monkeypatch.setattr(summon_core, "ARCANA_DIR", arcana_dir)
-    monkeypatch.setenv("ARCANA_REF", "v1.8.0")
+def test_install_framework_clones_the_ref_named_by_framework_ref(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
+    monkeypatch.setenv("FRAMEWORK_REF", "v1.8.0")
     calls = []
 
     def fake_git(*args, log=None, **_kwargs):
         calls.append(args)
         if args[0] == "clone":
-            (arcana_dir / ".git").mkdir(parents=True)
-            (arcana_dir / "arcana.json").write_text("{}", encoding="utf-8")
+            (framework_dir / ".git").mkdir(parents=True)
+            (framework_dir / "framework.json").write_text("{}", encoding="utf-8")
         return True, ""
 
-    assert summon_core.install_arcana("https://example.com/arcana.git", _FullLog(), git_fn=fake_git) is True
+    assert summon_core.install_framework("https://example.com/grimoire.git", _FullLog(), git_fn=fake_git) is True
     assert calls[0][:3] == ("clone", "--branch", "v1.8.0")
 
 
-def test_install_arcana_clones_the_default_branch_without_arcana_ref(tmp_path, monkeypatch):
-    arcana_dir = tmp_path / "arcana"
-    monkeypatch.setattr(summon_core, "ARCANA_DIR", arcana_dir)
-    monkeypatch.delenv("ARCANA_REF", raising=False)
+def test_install_framework_clones_the_default_branch_without_framework_ref(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
+    monkeypatch.delenv("FRAMEWORK_REF", raising=False)
     calls = []
 
     def fake_git(*args, log=None, **_kwargs):
         calls.append(args)
-        (arcana_dir / ".git").mkdir(parents=True, exist_ok=True)
-        (arcana_dir / "arcana.json").write_text("{}", encoding="utf-8")
+        (framework_dir / ".git").mkdir(parents=True, exist_ok=True)
+        (framework_dir / "framework.json").write_text("{}", encoding="utf-8")
         return True, ""
 
-    summon_core.install_arcana("https://example.com/arcana.git", _FullLog(), git_fn=fake_git)
-    assert calls[0] == ("clone", "https://example.com/arcana.git", str(arcana_dir))
+    summon_core.install_framework("https://example.com/grimoire.git", _FullLog(), git_fn=fake_git)
+    assert calls[0] == ("clone", "https://example.com/grimoire.git", str(framework_dir))
 
 
-def test_discovery_never_lists_the_engine_as_a_grimoire():
-    assert summon_core._metadata_marks_grimoire("arcana", "A framework for building grimoires") is False
+def test_discovery_never_lists_the_framework_as_a_grimoire():
+    assert summon_core._metadata_marks_grimoire("grimoire", "A framework for building grimoires") is False
     assert summon_core._metadata_marks_grimoire("japan-grimoire", "") is True
     assert summon_core._metadata_marks_grimoire("notes", "team grimoire", []) is True
 
@@ -310,7 +310,7 @@ def test_github_user_discovery_adds_private_repos_the_token_can_see(monkeypatch)
     responses = {
         "https://api.github.com/orgs/jlavi/repos?per_page=100": (None, "404"),
         "https://api.github.com/users/jlavi/repos?per_page=100": (
-            [{"name": "arcana", "description": "A framework for building grimoires", "clone_url": "u1"}], None,
+            [{"name": "grimoire", "description": "A framework for building grimoires", "clone_url": "u1"}], None,
         ),
         "https://api.github.com/user/repos?per_page=100&affiliation=owner,organization_member": (
             [

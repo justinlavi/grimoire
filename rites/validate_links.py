@@ -50,7 +50,7 @@ SKIP_DIRS = {
 SKIP_FILES = set()
 
 PLACEHOLDER_TOKENS = ["{", "<", "invocation_name", "chapter_name", "file_name",
-                      "ARCANA_HOME", "GRIMOIRE_PATH", "ARCANA_PATH",
+                      "FRAMEWORK_HOME", "GRIMOIRE_PATH", "FRAMEWORK_PATH",
                       "Chapter Name", "Title", "Sub-topic", "filename",
                       "related_page", "sub_topic", "related_chapter",
                       "path/to/related", "path/url/system", "Source title"]
@@ -59,7 +59,7 @@ PLACEHOLDER_TOKENS = ["{", "<", "invocation_name", "chapter_name", "file_name",
 # content is flagged so /grm-check sweeps catch terminology drift instead of
 # relying on LLM judgment alone. Format: { legacy_token: current_token }.
 DEPRECATED_TOKENS = {
-    "GRIMOIRE_ARCANA": "ARCANA_HOME",
+    "GRIMOIRE_FRAMEWORK": "FRAMEWORK_HOME",
 }
 
 

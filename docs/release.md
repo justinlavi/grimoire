@@ -2,14 +2,14 @@
 type: reference
 title: "Release Workflow"
 aliases: ["release", "tag-release"]
-tags: [type/reference, arcana/docs]
+tags: [type/reference, framework/docs]
 authority: grimoire
 last_verified: 2026-11-11
 ---
 
-# Arcana Release Guide
+# Release Guide
 
-How to cut an Arcana release. Arcana ships as source: a release is a tag on
+How to cut a framework release. The framework ships as source: a release is a tag on
 the repository, and every install path (the summoning rite, `/grm-update`,
 manual clone) reads that source directly. There are no built binaries and no
 packaged artifacts to publish.
@@ -25,7 +25,7 @@ The canonical installer behavior contract lives in
 Decide the new `vMAJOR.MINOR.PATCH` number with the [Compatibility Rule](governance.md#the-compatibility-rule) **before** tagging - the bump is determined by compatibility, not by how big the release feels:
 
 - **PATCH** - fixes and wording only; no behavior change.
-- **MINOR** - existing grimoires stay valid (no migration), but Arcana now generates, validates, or guides future grimoires differently.
+- **MINOR** - existing grimoires stay valid (no migration), but the framework now generates, validates, or guides future grimoires differently.
 - **MAJOR** - a compatibility break: prior grimoires become invalid or must be migrated.
 
 Many backward-compatible releases (`v1.0.0 -> v1.17.0`) do not become `v2.0.0`; only a compatibility break does. The full policy and the agent decision procedure live in [governance -> Versioning](governance.md#versioning).
@@ -57,24 +57,24 @@ Many backward-compatible releases (`v1.0.0 -> v1.17.0`) do not become `v2.0.0`; 
    ```
 
 5. **Verify the install path.** From a machine or a scratch home directory
-   without Arcana, run the public one-liner and confirm it installs the tagged
+   without the framework, run the public one-liner and confirm it installs the tagged
    source, injects the routing block, and registers skills:
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/justinlavi/arcana/main/rites/summon.sh | bash
-   ~/grimoires/arcana/bin/arcana summon --check
+   curl -fsSL https://raw.githubusercontent.com/justinlavi/grimoire/main/rites/summon.sh | bash
+   ~/.grimoire/bin/grimoire summon --check
    ```
 
 6. **Announce.** Existing installs pick the release up with `/grm-update`
-   (or `/arc-update`), which pulls `main`, validates, re-registers skills,
+   (or `/grm-dev-update`), which pulls `main`, validates, re-registers skills,
    refreshes routing blocks, and heals every grimoire it confirmed current.
 
 ---
 
 ## Forks and Private Mirrors
 
-A company that mirrors Arcana into a private host releases the same way: tag
-the mirror and point installs at it with `ARCANA_URL`. See
+A company that mirrors the framework into a private host releases the same way: tag
+the mirror and point installs at it with `FRAMEWORK_URL`. See
 [installation](installation.md#summoning-rite) for the one-liner form and
 [summoning contract](summoning_contract.md#bootstrap-environment-controls)
 for the environment variables the bootstrap honors.

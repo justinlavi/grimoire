@@ -2,7 +2,7 @@
 type: reference
 title: "Obsidian Setup"
 aliases: ["obsidian", "obsidian-setup", "graph-view"]
-tags: [type/reference, arcana/docs]
+tags: [type/reference, framework/docs]
 authority: grimoire
 last_verified: 2026-05-12
 ---
@@ -11,7 +11,7 @@ last_verified: 2026-05-12
 
 How to open a grimoire as an Obsidian vault and configure the graph view so hubs, sources, and playbooks pop visually.
 
-Arcana ships a recommended `.obsidian/graph.json` in every grimoire scaffold and in Arcana itself. The page-schema tags (`hub/root`, `hub/chapter`, `hub/sub`, `type/source`, `type/playbook`, `type/reference`) drive the color groups.
+The framework ships a recommended `.obsidian/graph.json` in every grimoire scaffold and in the framework itself. The page-schema tags (`hub/root`, `hub/chapter`, `hub/sub`, `type/source`, `type/playbook`, `type/reference`) drive the color groups.
 
 ---
 
@@ -22,7 +22,7 @@ Arcana ships a recommended `.obsidian/graph.json` in every grimoire scaffold and
 3. Open the grimoire root hub (`<grimoire>.md`) - that's the routing entry point.
 4. Open the **Graph view** (icon in the left sidebar, or `Ctrl/Cmd+G`).
 
-If your vault doesn't already have `.obsidian/graph.json` or `.obsidian/app.json`, copy them from `ARCANA_HOME/formulae/grimoire/.obsidian/`.
+If your vault doesn't already have `.obsidian/graph.json` or `.obsidian/app.json`, copy them from `FRAMEWORK_HOME/formulae/grimoire/.obsidian/`.
 
 ### Required app.json settings
 
@@ -38,7 +38,7 @@ Every grimoire ships an `.obsidian/app.json` with:
 These two settings are **mandatory**, not preferences:
 
 - **`newLinkFormat: "absolute"`** - Obsidian's default is `"shortest"`, which interprets `[[chapters/foo/bar]]` as a path *relative to the current note*. From `chapters/foo/bar.md` that resolves to `chapters/foo/bar/chapters/foo/bar.md` - and if it doesn't exist, Ctrl-click **silently creates a recursive directory tree** matching the link path. Setting `"absolute"` makes Obsidian treat full-path wikilinks as vault-root relative, matching the convention `validate_links` enforces.
-- **`useMarkdownLinks: false`** - Keep wikilinks as `[[...]]` instead of having Obsidian rewrite them to `[label](path)` on save. The rest of Arcana (validators, repair rite, import skills) assumes wikilink syntax.
+- **`useMarkdownLinks: false`** - Keep wikilinks as `[[...]]` instead of having Obsidian rewrite them to `[label](path)` on save. The rest of the framework (validators, repair rite, import skills) assumes wikilink syntax.
 
 If you find a stray nested folder like `chapters/build_system/ci/chapters/build_system/ci/`, `newLinkFormat` was not set when someone Ctrl-clicked a wikilink. Delete the bogus tree, set the config, and reload the vault.
 
@@ -129,11 +129,11 @@ Stay opinionated about how many colors you ship - past ~8 groups the graph becom
 
 ---
 
-## What is *not* Arcana's job
+## What is *not* the framework's job
 
-- **Per-user UI state** - pane layout, recently opened files, plugin enablement choices. These live in `.obsidian/workspace.json` and friends, which the seeded scaffold `.gitignore` ignores by default (Arcana copies that file in when absent and never overwrites it).
+- **Per-user UI state** - pane layout, recently opened files, plugin enablement choices. These live in `.obsidian/workspace.json` and friends, which the seeded scaffold `.gitignore` ignores by default (the framework copies that file in when absent and never overwrites it).
 - **Graph node positioning** - Obsidian computes layout dynamically; we don't pin positions.
-- **Plugin recommendations beyond the schema** - Dataview and Folder Notes are useful but optional. Arcana doesn't depend on either.
+- **Plugin recommendations beyond the schema** - Dataview and Folder Notes are useful but optional. The framework doesn't depend on either.
 
 ---
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Load and validate Arcana's agent target registry."""
+"""Load and validate the framework's agent target registry."""
 
 from __future__ import annotations
 
@@ -76,13 +76,30 @@ def plugin_install_record(home: Path | None = None) -> dict[str, Any]:
     return plugins if isinstance(plugins, dict) else {}
 
 
-def installed_arcana_plugins(home: Path | None = None) -> set[str]:
-    """Arcana command families installed as Claude Code plugins (`grm`, `arc`)."""
+def family_plugins(root: Path) -> dict[str, str]:
+    """Map each Claude Code plugin name to the command family it carries (framework.json)."""
+    try:
+        manifest = json.loads((Path(root) / "framework.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    families = manifest.get("skill_families", {})
+    if not isinstance(families, dict):
+        return {}
+    return {
+        str(config.get("plugin", name)): name
+        for name, config in families.items()
+        if isinstance(config, dict)
+    }
+
+
+def installed_framework_plugins(root: Path, home: Path | None = None) -> set[str]:
+    """Command families (by family name) installed as Claude Code plugins."""
+    by_plugin = family_plugins(root)
     families = set()
     for key in plugin_install_record(home):
         name = key.split("@", 1)[0]
-        if name in {"grm", "arc"}:
-            families.add(name)
+        if name in by_plugin:
+            families.add(by_plugin[name])
     return families
 
 
@@ -106,7 +123,7 @@ def skill_registration_targets(root: Path) -> dict[str, dict[str, Any]]:
             "path": skill_path,
             "pointer_only": entry["skill_mode"] == "pointer",
             "deprecated_paths": [path for path in deprecated if path is not None],
-            "plugin_families": installed_arcana_plugins() if entry.get("plugin_marketplace") else set(),
+            "plugin_families": installed_framework_plugins(root) if entry.get("plugin_marketplace") else set(),
         }
     return targets
 

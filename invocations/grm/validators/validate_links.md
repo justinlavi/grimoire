@@ -2,7 +2,7 @@
 type: reference
 title: "Validate Grimoire Links"
 aliases: ["validate-grimoire-links"]
-tags: [arcana/invocations, type/reference, scope/grimoire]
+tags: [framework/invocations, type/reference, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-25
 ---
@@ -24,7 +24,7 @@ Validate that internal references resolve inside the active grimoire and that in
 Run against the resolved active grimoire:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_links --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_links --grimoire GRIMOIRE_ROOT
 ```
 
 Report broken links and layer-specific style violations with file and line citations. Exit code 0 means all checked links resolve and internal page references use the right syntax for their layer.
@@ -39,6 +39,6 @@ Report broken links and layer-specific style violations with file and line citat
 
 ## Related
 
-- Arcana link validator -> [[invocations/arc/validators/validate_links|validate links]]
+- Framework link validator -> [[invocations/dev/validators/validate_links|validate links]]
 - Obsidian wikilink standard -> [[docs/obsidian|obsidian]]
 - Operating model -> [[docs/operating_model|operating model]]

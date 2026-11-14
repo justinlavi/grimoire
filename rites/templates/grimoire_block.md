@@ -3,9 +3,9 @@
 
 **Library**: `~/grimoires/library.json` - read this file to resolve named grimoire keys and their on-disk paths.
 
-**Arcana key**: `ARCANA_HOME` - resolved from the library or defaults to `~/grimoires/arcana/`.
+**Framework**: `FRAMEWORK_HOME` - the Grimoire framework checkout: `~/.grimoire/`, or the `FRAMEWORK_HOME` environment variable when it is set.
 
-**Skills**: Arcana ships `/grm-*` grimoire verbs (`setup`, `create`, `add`, `save`, `update`, `check`, `publish`, `move`, `remove`, `help`) and `/arc-*` maintainer verbs (`update`, `validate`, `improve`, `clean`, `help`). Each grimoire ships its own `/<skill prefix>-*` skills declared in its `grimoire.json`.
+**Skills**: The framework ships `/grm-*` grimoire verbs (`setup`, `create`, `add`, `save`, `update`, `check`, `publish`, `move`, `remove`, `help`) and `/grm-dev-*` maintainer verbs (`update`, `validate`, `improve`, `clean`, `help`). Each grimoire ships its own `/<skill prefix>-*` skills declared in its `grimoire.json`.
 
 ### Hub convention
 
@@ -15,7 +15,7 @@ For any folder F that acts as a router, the hub file is `F/<basename(F)>.md`. Th
 
 - **`chapters/**/sources/`** - Immutable source artifacts and source wrappers (articles, transcripts, papers, screenshots) colocated with the chapter material they support. File during import, then read. Citation-stable: pages with `authority: external` cite paths under here.
 - **`inbox/`** - Optional transient drop zone for mixed content awaiting classification. Cleared by `/grm-add`. Pages must NOT cite `inbox/` paths (contents disappear once processed).
-- **`chapters/`** - LLM-authored knowledge pages. Every page carries YAML frontmatter (`type`, `title`, `tags`, `authority`, `sources`, `last_verified`); see `ARCANA_HOME/docs/page_schema.md`.
+- **`chapters/`** - LLM-authored knowledge pages. Every page carries YAML frontmatter (`type`, `title`, `tags`, `authority`, `sources`, `last_verified`); see `FRAMEWORK_HOME/docs/page_schema.md`.
 - **`publish/`** - Build/publishing-output layer (rendered site, exported bundle, generated artifacts); present in every grimoire, idle until you publish. Excluded from grimoire validation and from the knowledge graph; pages must NOT cite `publish/` paths. Build output under it is disposable and regenerable.
 
 ### Routing rules
@@ -23,14 +23,14 @@ For any folder F that acts as a router, the hub file is `F/<basename(F)>.md`. Th
 1. Resolve the active grimoire from the working directory (its key in the library) or project context.
 2. Open `<grimoire>/<grimoire>.md` for routing.
 3. Use full-path Obsidian wikilinks (`[[chapters/path/to/page|label]]`) for every in-grimoire Markdown-page pointer; aliases are metadata only and never link targets. Keep display labels to the target filename, normalized for reading.
-4. Cross-grimoire references use path placeholders (`ARCANA_HOME/...`, `<grimoire>/...`).
-5. For Grimoire meta-knowledge: read `ARCANA_HOME/arcana.md`.
-6. Do not modify Grimoire files unless a `/arc-*` skill, a grimoire skill, or explicit instruction asks for it.
+4. Cross-grimoire references use path placeholders (`FRAMEWORK_HOME/...`, `<grimoire>/...`).
+5. For Grimoire meta-knowledge: read `FRAMEWORK_HOME/grimoire.md`.
+6. Do not modify Grimoire files unless a `/grm-dev-*` skill, a grimoire skill, or explicit instruction asks for it.
 7. Name new files and folders in the grimoire's recorded convention (`naming` in `grimoire.json`, default `snake_case`). Any casing is valid, consistency is the goal, links must match on-disk spelling exactly, and imported material is never renamed without asking.
 
 ### Text file standard
 
-Arcana and grimoires use UTF-8 without BOM and LF line endings. Unicode is allowed when useful; mojibake and repair artifacts are not. Preserve this standard when editing files. In Arcana, run `/arc-validate encoding`; in a grimoire, run `/grm-check encoding`.
+The framework and grimoires use UTF-8 without BOM and LF line endings. Unicode is allowed when useful; mojibake and repair artifacts are not. Preserve this standard when editing files. In the framework, run `/grm-dev-validate encoding`; in a grimoire, run `/grm-check encoding`.
 
 ### Provenance
 

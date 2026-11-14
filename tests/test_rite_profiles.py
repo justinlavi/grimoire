@@ -1,4 +1,4 @@
-"""Contract tests for Arcana's mutating-rite profiles."""
+"""Contract tests for the framework's mutating-rite profiles."""
 
 import ast
 from pathlib import Path

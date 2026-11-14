@@ -48,8 +48,8 @@ def _run(validator: str, run_mode: str, root: Path) -> tuple[int, set]:
     env = dict(os.environ)
     if run_mode == "grimoire":
         cmd += ["--grimoire", str(root)]
-    else:  # arcana_home: point the Arcana-only validator at the fixture tree
-        env["ARCANA_HOME"] = str(root)
+    else:  # framework_home: point the framework-only validator at the fixture tree
+        env["FRAMEWORK_HOME"] = str(root)
     cmd += ["--format", "json"]
     result = subprocess.run(
         cmd, capture_output=True, text=True, env=env, timeout=60, cwd=str(REPO_ROOT)

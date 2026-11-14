@@ -2,16 +2,16 @@
 type: hub
 title: "Grimoire Validators"
 aliases: ["grimoire-validators"]
-tags: [arcana/invocations, type/hub, scope/grimoire, hub/sub]
+tags: [framework/invocations, type/hub, scope/grimoire, hub/sub]
 authority: grimoire
-last_verified: 2026-11-12
+last_verified: 2026-11-13
 ---
 
 # Grimoire Validators
 
 Mechanical validators that operate on the resolved active grimoire. The public
 entry point is `/grm-check`: `check quick` runs the full suite, `check
-<selector>` runs one or more validators. Each selector wraps a shared Arcana
+<selector>` runs one or more validators. Each selector wraps a shared framework
 rite with `--grimoire GRIMOIRE_ROOT`.
 
 | Invocation | Skill | Checks |

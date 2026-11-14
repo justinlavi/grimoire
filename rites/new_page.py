@@ -34,8 +34,8 @@ from pathlib import Path
 from _lib import add_grimoire_arg, resolve_grimoire_arg
 from diagnostics import ResultReporter, add_output_format_arg
 
-ARCANA_PATH = Path(__file__).resolve().parent.parent
-PAGE_FORMULA = ARCANA_PATH / "formulae" / "page.formula.md"
+FRAMEWORK_PATH = Path(__file__).resolve().parent.parent
+PAGE_FORMULA = FRAMEWORK_PATH / "formulae" / "page.formula.md"
 
 PAGE_TYPES = {"concept", "entity", "playbook", "reference"}
 VALID_AUTHORITIES = {"external", "grimoire", "hybrid"}

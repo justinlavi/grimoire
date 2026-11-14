@@ -17,13 +17,13 @@ If the user named a target, use it: **$target**
 
 ## Precondition
 
-!`cat {{ARCANA_PATH}}/invocations/meta/grimoire_directory_guard.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/meta/grimoire_directory_guard.md`
 
 ## Context
 
-- **Arcana**: `{{ARCANA_PATH}}`
-- **Invocation**: `{{ARCANA_PATH}}/invocations/grm/remove.md`
+- **Framework root**: `{{FRAMEWORK_PATH}}`
+- **Invocation**: `{{FRAMEWORK_PATH}}/invocations/grm/remove.md`
 
 ## Invocation
 
-!`cat {{ARCANA_PATH}}/invocations/grm/remove.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/grm/remove.md`

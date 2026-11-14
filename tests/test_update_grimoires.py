@@ -166,7 +166,7 @@ class HealSpy:
     def __init__(self):
         self.calls = []
 
-    def __call__(self, local_path, arcana_root):
+    def __call__(self, local_path, framework_root):
         self.calls.append(str(local_path))
         return {"status": "ok", "scaffold_synced": [], "readme_block": "unchanged", "messages": []}
 
@@ -315,7 +315,7 @@ def test_process_all_summary_and_needs_manual_pull(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-BLOCK = "<!-- BEGIN ARCANA UPDATE -->\n## Out of date? Update.\nbody\n<!-- END ARCANA UPDATE -->"
+BLOCK = "<!-- BEGIN GRIMOIRE UPDATE -->\n## Out of date? Update.\nbody\n<!-- END GRIMOIRE UPDATE -->"
 
 
 def _write(tmp_path, text):
@@ -402,3 +402,10 @@ def test_reconcile_runs_grimoire_step_before_skills(tmp_path):
     assert order == ["grimoires", "skills"]            # pull before re-register
     assert result["grimoires"] is not None
     assert any(step["id"] == "grimoires" for step in result["steps"])
+
+
+def test_readme_block_replaces_a_block_under_retired_markers():
+    old = "# G\n\n<!-- BEGIN ARCANA UPDATE -->\nstale\n<!-- END ARCANA UPDATE -->\n\n## Layout\n"
+    new = U._replace_readme_block(old, BLOCK)
+    assert new == f"# G\n\n{BLOCK}\n\n## Layout\n"
+    assert U._replace_readme_block(new, BLOCK) == new

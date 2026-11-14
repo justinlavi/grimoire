@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "title": "Arcana Agent Target Registry",
+  "title": "Grimoire Agent Target Registry",
   "description": "Authoritative registry for agent instruction files, skill registration behavior, and automatic configuration support.",
   "targets": [
     {
@@ -12,9 +12,9 @@
       "skill_mode": "full",
       "auto_configured": true,
       "supports_model_invocation": true,
-      "summary": "Arcana installs as the grm and arc plugins from the repository's own marketplace; the grm plugin's session-start hook keeps the engine checkout current and prints the routing context. Without the plugins, Arcana injects the Grimoire routing block and registers full skill folders. Grimoire skills register as full skill folders either way.",
+      "summary": "The framework installs as the grimoire and grimoire-dev plugins from the repository's own marketplace; the grimoire plugin's session-start hook keeps the framework checkout current and prints the routing context. Without the plugins, the framework injects the Grimoire routing block and registers full skill folders. Grimoire skills register as full skill folders either way.",
       "limitations": [],
-      "plugin_marketplace": "arcana"
+      "plugin_marketplace": "grimoire"
     },
     {
       "id": "codex",
@@ -25,7 +25,7 @@
       "skill_mode": "pointer",
       "auto_configured": true,
       "supports_model_invocation": false,
-      "summary": "Arcana injects the Grimoire routing block and registers pointer-only SKILL.md folders in ~/.agents/skills; Codex also reads ~/.codex/skills, so registration keeps managed skills out of it.",
+      "summary": "The framework injects the Grimoire routing block and registers pointer-only SKILL.md folders in ~/.agents/skills; Codex also reads ~/.codex/skills, so registration keeps managed skills out of it.",
       "limitations": [
         "Registered skill directories contain SKILL.md only."
       ],
@@ -44,7 +44,7 @@
       "supports_model_invocation": false,
       "summary": "Paste the Grimoire routing block manually into Custom Instructions.",
       "limitations": [
-        "No local skill directory is available to Arcana."
+        "No local skill directory is available to the framework."
       ]
     },
     {
@@ -73,7 +73,7 @@
       "supports_model_invocation": false,
       "summary": "Add the Grimoire routing block manually to Cursor rules.",
       "limitations": [
-        "Arcana does not manage Cursor rule files automatically."
+        "The framework does not manage Cursor rule files automatically."
       ]
     }
   ]

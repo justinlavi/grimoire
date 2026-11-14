@@ -2,9 +2,9 @@
 type: playbook
 title: "Check"
 aliases: ["check", "grm-check", "health-check", "validate-grimoire", "audit"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
-last_verified: 2026-11-12
+last_verified: 2026-11-13
 ---
 
 # Invocation: Check (evaluate the grimoire)
@@ -31,14 +31,14 @@ review, or to applying the mechanical repairs.
 ```
 
 Flags: `--since <window>` for the stale window (default 90 days);
-`--chapter=<name>` to narrow `naming`; `--arcana` to run `naming` or
-`boundaries` against Arcana itself.
+`--chapter=<name>` to narrow `naming`; `--framework` to run `naming` or
+`boundaries` against the framework itself.
 
 ## Preconditions
 
 1. Resolve `GRIMOIRE_ROOT` with the shared grimoire directory guard. Refuse
-   for Arcana itself unless the scope is `naming --arcana` or
-   `boundaries --arcana`.
+   for the framework itself unless the scope is `naming --framework` or
+   `boundaries --framework`.
 2. The grimoire must have `chapters/` and a root hub.
 
 ## Routing
@@ -62,12 +62,12 @@ active grimoire only.
 ## Mechanical validators
 
 ```bash
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT            # quick: the full mechanical suite
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT links frontmatter
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT smart     # which validators the current git changes need
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT auto      # run those
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT summary
-ARCANA_HOME/bin/arcana validate --grimoire GRIMOIRE_ROOT parallel
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT            # quick: the full mechanical suite
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT links frontmatter
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT smart     # which validators the current git changes need
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT auto      # run those
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT summary
+FRAMEWORK_HOME/bin/grimoire validate --grimoire GRIMOIRE_ROOT parallel
 ```
 
 | Selector | Rite | Checks |
@@ -158,7 +158,7 @@ Group findings by category and ask the user:
 ### Phase 7: Recent activity
 
 ```bash
-ARCANA_HOME/bin/arcana recent_changes --grimoire GRIMOIRE_ROOT --since 90d
+FRAMEWORK_HOME/bin/grimoire recent_changes --grimoire GRIMOIRE_ROOT --since 90d
 ```
 
 Relate findings to recent edits. If the grimoire is not a git repository the
@@ -191,19 +191,19 @@ Every page touched in Phase 6 is listed.
 
 Promote filename-only wikilinks (`[[foo]]`, `[[parent_sibling|sibling]]`)
 to canonical full-path form (`[[chapters/path/to/foo|foo]]`), and respell
-full-path wikilinks whose casing differs from the file on disk. The engine is
+full-path wikilinks whose casing differs from the file on disk. The rite is
 `rites/repair_links.py`; the agent dry-runs, surfaces, gets approval, applies,
 and resolves ambiguities by reading context. The grimoire should be under
 version control so the change set can be reviewed as a diff.
 
-1. **Dry run.** `ARCANA_HOME/bin/arcana repair_links --grimoire GRIMOIRE_ROOT`
+1. **Dry run.** `FRAMEWORK_HOME/bin/grimoire repair_links --grimoire GRIMOIRE_ROOT`
    reports four sections: repairs (unambiguous), ambiguous (several
    candidates; the rite never guesses), unresolvable (no file matches), and
    skipped (partial-path forms left alone).
 2. **Review.** Check bulk patterns resolve sensibly, sanity-check any
    `(via display-label fallback)` resolution, and look at ambiguous cases
    where neither candidate fits (the page may need splitting or moving first).
-3. **Apply.** `ARCANA_HOME/bin/arcana repair_links --grimoire GRIMOIRE_ROOT --apply`.
+3. **Apply.** `FRAMEWORK_HOME/bin/grimoire repair_links --grimoire GRIMOIRE_ROOT --apply`.
    Edits are per-file and atomic; existing display labels are preserved and a
    stem label is added where none exists.
 4. **Resolve ambiguities by hand.** Open each `[AMBI]` source line, read the
@@ -278,28 +278,28 @@ brevity, the recorded naming convention for paths.
 ## Boundary review
 
 Judgment-based scan of the magical/practical boundary: magical terminology
-(Invocation, Formula, Rite, `/arc-*`) is reserved for Arcana's system layer;
+(Invocation, Formula, Rite, Summoning) is reserved for the framework's system layer;
 grimoires use practical terminology (templates, scripts, snippets, guides).
 The canonical rules and term mapping are in [[docs/reference|reference]]
 under "The Magical Boundary"; read that section first, then apply it.
 
 Rules: no magical directories in a grimoire (`invocations/`, `formulae/`,
-`rites/` exist only in Arcana); no magical terminology in chapter prose
-(naming an Arcana command is fine); no platform-specific assumptions in
+`rites/` exist only in the framework); no magical terminology in chapter prose
+(naming a framework command is fine); no platform-specific assumptions in
 shared content (name the generic role, not the vendor, unless documenting an
 integration); no department buzzwords acting as scope assumptions about the
-reader; generic example names in Arcana (`cooking-grimoire`, `dnd-grimoire`,
+reader; generic example names in the framework (`cooking-grimoire`, `dnd-grimoire`,
 `Alice`/`Bob`, `Project Alpha`). `chapters/projects/` may name real platforms,
-teams, products, and people. Under `--arcana` every rule applies at zero
+teams, products, and people. Under `--framework` every rule applies at zero
 tolerance.
 
 1. Magical directories:
    `find . -type d \( -name invocations -o -name formulae -o -name rites \) -not -path './.git/*'`.
    Any hit inside a grimoire is critical: rename to the practical equivalent
-   or move genuine system logic to Arcana.
+   or move genuine system logic to the framework.
 2. Magical terminology in prose:
    `grep -rniE 'invoke .*invocation|consult .*formula|perform .*rite|cast .*spell' chapters/ templates/ scripts/`.
-   Skip references to Arcana itself; rewrite the rest in practical voice.
+   Skip references to the framework itself; rewrite the rest in practical voice.
 3. Platform and scope-assumption language outside `chapters/projects/`:
    `grep -rniE '\b(Slack|Teams|Discord|SharePoint|Confluence|Google Drive|Jira|Bitbucket)\b' chapters/`
    and `grep -rniE '\b(HR|Legal|Marketing|Sales|Finance)\b|\b(VP|Director|Manager) of\b' chapters/`.
@@ -307,14 +307,14 @@ tolerance.
    and are fine.
 4. Example names: real company, product, or person names used as examples
    outside an integration page are replaced with the generic placeholders.
-5. `--arcana`: run every step against `~/grimoires/arcana/`; any violation is
-   critical because Arcana must work for every domain.
+5. `--framework`: run every step against `~/.grimoire/`; any violation is
+   critical because the framework must work for every domain.
 
 Report `Magical Boundary Compliance: PASS | FAIL` with counts for magical
 directories, magical terminology, platform assumptions, team buzzwords, and
-example genericity (plus Arcana universality under `--arcana`); for each
+example genericity (plus framework universality under `--framework`); for each
 violation give file, line, offending text, and the fix. Severity: critical
-(magical directories in a grimoire; anything in Arcana), warning (magical
+(magical directories in a grimoire; anything in the framework), warning (magical
 terminology or unwarranted platform or scope language in shared chapters),
 info (example names that could be more generic).
 
@@ -323,6 +323,6 @@ info (example names that could be more generic).
 - Validator detail: [[invocations/grm/validators/validators|validators]]
 - Structure validator detail: [[invocations/grm/validate_structure|validate structure]]
 - Parallel analysis: [[invocations/meta/subagent_lanes|subagent lanes]]
-- Page schema: `ARCANA_HOME/docs/page_schema.md`
+- Page schema: `FRAMEWORK_HOME/docs/page_schema.md`
 - Boundary rules: [[docs/reference|reference]]
 - Bring the scaffold current: [[invocations/grm/update|update]]

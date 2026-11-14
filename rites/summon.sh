@@ -4,28 +4,28 @@
 #
 # Thin source bootstrap: find Python 3, fetch the dispatcher and its companion
 # files when run from the public one-liner (a local checkout uses its own
-# files), then hand off to rites/summon.py, which installs Arcana, configures
+# files), then hand off to rites/summon.py, which installs the framework, configures
 # agents, and registers skills in the terminal, from source on a stock Python.
 #
 # One-liner entry point:
-#   curl -fsSL https://raw.githubusercontent.com/justinlavi/arcana/main/rites/summon.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/justinlavi/grimoire/main/rites/summon.sh | bash
 
 set -euo pipefail
 
-DEFAULT_ARCANA_URL="https://github.com/justinlavi/arcana.git"
-DEFAULT_ARCANA_REF="main"
+DEFAULT_FRAMEWORK_URL="https://github.com/justinlavi/grimoire.git"
+DEFAULT_FRAMEWORK_REF="main"
 
-: "${ARCANA_URL:=$DEFAULT_ARCANA_URL}"
-: "${ARCANA_REF:=$DEFAULT_ARCANA_REF}"
+: "${FRAMEWORK_URL:=$DEFAULT_FRAMEWORK_URL}"
+: "${FRAMEWORK_REF:=$DEFAULT_FRAMEWORK_REF}"
 : "${GRIMOIRE_SUMMON_CONNECT_TIMEOUT:=20}"
 : "${GRIMOIRE_SUMMON_DOWNLOAD_ATTEMPTS:=3}"
 : "${GRIMOIRE_SUMMON_RETRY_DELAY:=2}"
-export ARCANA_URL
+export FRAMEWORK_URL
 
 TEMP_DIR=""
 SCRIPT_SOURCE="${BASH_SOURCE[0]:-$0}"
 
-echo "  [INFO]  Arcana Summoning Rite bootstrap starting"
+echo "  [INFO]  Grimoire Summoning Rite bootstrap starting"
 
 derive_raw_base() {
     local repo_url="$1"
@@ -34,11 +34,11 @@ derive_raw_base() {
     if [[ "$repo_url" =~ ^https://github.com/([^/]+)/([^/.]+)(\.git)?$ ]]; then
         echo "https://raw.githubusercontent.com/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/$ref"
     else
-        echo "https://raw.githubusercontent.com/justinlavi/arcana/$ref"
+        echo "https://raw.githubusercontent.com/justinlavi/grimoire/$ref"
     fi
 }
 
-: "${ARCANA_RAW_BASE:=$(derive_raw_base "$ARCANA_URL" "$ARCANA_REF")}"
+: "${FRAMEWORK_RAW_BASE:=$(derive_raw_base "$FRAMEWORK_URL" "$FRAMEWORK_REF")}"
 
 python_download_file() {
     local url="$1"
@@ -137,11 +137,11 @@ else
     # summon.py is the dispatcher and summon_core.py is the install engine.
     # The agent-target registry and the Grimoire routing block template must
     # travel with a source bootstrap install.
-    download_file "$ARCANA_RAW_BASE/rites/summon.py" "$SCRIPT_DIR/summon.py"
-    download_file "$ARCANA_RAW_BASE/rites/summon_core.py" "$SCRIPT_DIR/summon_core.py"
-    download_file "$ARCANA_RAW_BASE/rites/agent_targets.py" "$SCRIPT_DIR/agent_targets.py"
-    download_file "$ARCANA_RAW_BASE/rites/data/agent_targets.json" "$SCRIPT_DIR/data/agent_targets.json"
-    download_file "$ARCANA_RAW_BASE/rites/templates/grimoire_block.md" "$SCRIPT_DIR/templates/grimoire_block.md"
+    download_file "$FRAMEWORK_RAW_BASE/rites/summon.py" "$SCRIPT_DIR/summon.py"
+    download_file "$FRAMEWORK_RAW_BASE/rites/summon_core.py" "$SCRIPT_DIR/summon_core.py"
+    download_file "$FRAMEWORK_RAW_BASE/rites/agent_targets.py" "$SCRIPT_DIR/agent_targets.py"
+    download_file "$FRAMEWORK_RAW_BASE/rites/data/agent_targets.json" "$SCRIPT_DIR/data/agent_targets.json"
+    download_file "$FRAMEWORK_RAW_BASE/rites/templates/grimoire_block.md" "$SCRIPT_DIR/templates/grimoire_block.md"
 fi
 
 cleanup() {

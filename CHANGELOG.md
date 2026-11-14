@@ -1,9 +1,12 @@
 # Changelog
 
-## [1.8.0] - 2026-11-12
+## [1.8.0] - 2026-11-13
 
 MINOR. Existing grimoires stay valid; the update heals the managed scaffold,
-seeds the ignore file, and re-registers the consolidated commands.
+seeds the ignore file, and re-registers the consolidated commands. An install
+from before 1.8 moves over by running the installer once (see "Arcana is named
+Grimoire" under Changed). Entries below this release use the names of their
+time.
 
 ### Added
 
@@ -25,32 +28,33 @@ seeds the ignore file, and re-registers the consolidated commands.
   identity documents, authoring roots, unresolved sources) and reports
   warnings, with per-grimoire extensions in `publish/publish.json`.
   `formulae/publish/` carries `build.sh` (stage, audit, Quartz 5 build, audit
-  the output; clones the engine and Quartz when absent, so one script serves
+  the output; clones the framework and Quartz when absent, so one script serves
   local builds and CI), the Quartz configuration, and CI templates for GitLab
   Pages, GitHub Pages, and Cloudflare. `init <target>` copies them in; the
   seeded scaffold ignore file keeps generated output out of git.
-- **The `arcana` launcher.** `bin/arcana` (POSIX sh) and `bin/arcana.cmd`
-  run `rites/<rite>.py` with whatever Python 3.10+ the machine has (`python3`,
-  `python`, or the Windows `py` launcher), beside the engine or from the `grm`
-  plugin's `bin/`, which Claude Code puts on the Bash tool's PATH. Every
-  invocation, skill, formula, and update instruction says
-  `ARCANA_HOME/bin/arcana <rite>` instead of naming an interpreter.
-- **Arcana as Claude Code plugins.** The repository is its own marketplace
-  (`.claude-plugin/marketplace.json`) serving two plugins, `grm` and `arc`,
-  rendered under `plugins/` by `rites/build_plugins.py` from the same skill
-  sources the flat registration uses. Install with
-  `/plugin marketplace add justinlavi/arcana` and `/plugin install grm@arcana`;
-  a private mirror works by git URL; an administrator can force-install
-  through managed settings. The `grm` plugin's session-start hook clones or
-  fast-forwards the engine at `~/grimoires/arcana`, prints the routing block
-  when the instruction file lacks one, lists the installed grimoires with
-  their descriptions, and adds a drift note. With the plugins installed,
-  `sync_skills.py` registers only grimoire skills into `~/.claude/skills`.
+- **The `grimoire` launcher.** `bin/grimoire` (POSIX sh) and
+  `bin/grimoire.cmd` run `rites/<rite>.py` with whatever Python 3.10+ the
+  machine has (`python3`, `python`, or the Windows `py` launcher), beside the
+  framework or from the `grimoire` plugin's `bin/`, which Claude Code puts on
+  the Bash tool's PATH. Every invocation, skill, formula, and update
+  instruction says `FRAMEWORK_HOME/bin/grimoire <rite>` instead of naming an
+  interpreter.
+- **Grimoire as Claude Code plugins.** The repository is its own marketplace
+  (`.claude-plugin/marketplace.json`) serving two plugins, `grimoire` and
+  `grimoire-dev`, rendered under `plugins/` by `rites/build_plugins.py` from
+  the same skill sources the flat registration uses. Install with
+  `/plugin marketplace add justinlavi/grimoire` and
+  `/plugin install grimoire@grimoire`; a private mirror works by git URL; an
+  administrator can force-install through managed settings. The `grimoire`
+  plugin's session-start hook clones or fast-forwards the framework at
+  `~/.grimoire`, prints the routing block when the instruction file lacks
+  one, lists the installed grimoires with their descriptions, and adds a
+  drift note. With the plugins installed, `sync_skills.py` registers only
+  grimoire skills into `~/.claude/skills`.
 - **`/grm-setup`: the onboarding conversation.** Replaces the installer's
   menu. It reads `summon.py --check`, then joins a grimoire from a pasted
-  repository link, hands off to `/grm-create` for a new one, or to
-  `/grm-adopt` for a folder of notes, and ends by naming the day-to-day
-  verbs. The join path is the new rite `rites/install_grimoire.py`: clone or
+  repository link, hands off to `/grm-create` for a new one, or adopts a
+  folder of notes, and ends by naming the day-to-day verbs. The join path is the new rite `rites/install_grimoire.py`: clone or
   fast-forward into `~/grimoires/<name>`, require `grimoire.json`, record
   the library entry, sync skills. Credentials come from git's own helper;
   nothing ever asks for a token.
@@ -71,12 +75,12 @@ seeds the ignore file, and re-registers the consolidated commands.
   `naming` field (`snake_case` when absent, `preserve` for material that keeps
   its own casing, or another named style). Any casing is valid in page and
   folder names; consistency within a grimoire is the goal. `/grm-create` asks
-  for the convention with snake_case preselected, `/grm-add` and `/grm-import`
-  apply it to new material and ask once before renaming anything imported,
-  and `/grm-audit-semantics` reports deviations as advisory findings. Folder
+  for the convention with snake_case preselected, `/grm-add` applies it to new
+  material and asks once before renaming anything imported, and
+  `/grm-check naming` reports deviations as advisory findings. Folder
   roles (`sources/`, `templates/`, and the other asset folders) are now
   recognised case-insensitively, and `adopt_grimoire.py` takes `--naming`.
-  The routing block gains a naming rule; `/grm-sync agentfile` refreshes it.
+  The routing block gains a naming rule; `/grm-update agentfile` refreshes it.
 - **Case-exact link checks.** `validate_links` now reports a wikilink or
   Markdown link whose casing differs from the file on disk
   (`LINK_CASE_MISMATCH`, `LINK_MARKDOWN_CASE_MISMATCH`). Such links resolve
@@ -92,8 +96,37 @@ seeds the ignore file, and re-registers the consolidated commands.
 
 ### Changed
 
-- **Nine grimoire verbs, five maintainer verbs.** The command surface is
-  consolidated so each verb is one plain-language intent: `/grm-setup`
+- **Arcana is named Grimoire.** The product and its repository are Grimoire
+  (`justinlavi/grimoire`): a program that maintains grimoires. Inside the
+  system the software is "the framework". What changed with the name:
+  - The framework installs at `~/.grimoire/` (was `~/grimoires/arcana/`), so
+    `~/grimoires/` holds only grimoires and `library.json`.
+  - Placeholders and environment variables are `FRAMEWORK_*` (were
+    `ARCANA_*`): `FRAMEWORK_HOME`, `FRAMEWORK_URL`, `FRAMEWORK_REF`, and
+    `{{FRAMEWORK_PATH}}` in skill sources. `GRIMOIRE_ROOT` still names the
+    active grimoire.
+  - The root hub is `grimoire.md` (was `arcana.md`), the manifest is
+    `framework.json` (was `arcana.json`, `kind: framework`), and the launcher
+    is `bin/grimoire`.
+  - The maintainer verbs are `/grm-dev-update`, `/grm-dev-validate`,
+    `/grm-dev-improve`, `/grm-dev-clean`, `/grm-dev-help` (were `/arc-*`).
+    Their sources live in `skills/dev/` and `invocations/dev/`; the `dev`
+    family shares the `grm` prefix through `slug_prefix`, and each family
+    names its Claude Code plugin in `framework.json`.
+  - The Claude Code plugins are `grimoire` (`/grimoire:add`) and
+    `grimoire-dev`, from the `grimoire` marketplace.
+  - The grimoire README update block is marked `GRIMOIRE UPDATE`; the heal
+    replaces a block under the former `ARCANA UPDATE` markers in place.
+
+  Moving an existing install: run the one-line installer (or install the
+  `grimoire` plugin) and open a new session. Registration removes the `arc-*`
+  skills and refreshes the routing block; `/grm-update` then heals each
+  grimoire. The former checkout at `~/grimoires/arcana` is unused afterwards;
+  `summon.py --check` lists it as `retired_checkout_remove` until it is
+  deleted. A grimoire that publishes sets `FRAMEWORK_URL` / `FRAMEWORK_REF`
+  in its CI settings and ignores `publish/.framework/`.
+- **One verb per intent.** The command surface is consolidated so each verb
+  is one plain-language intent: `/grm-setup`
   (absorbs `/grm-adopt`: a link joins, a folder adopts), `/grm-add` (absorbs
   `/grm-import`: a topic or answer is authored, a file, folder, or the inbox
   is filed), `/grm-update` (absorbs `/grm-sync`: bare brings everything
@@ -102,11 +135,12 @@ seeds the ignore file, and re-registers the consolidated commands.
   `/grm-audit-semantics`, `/grm-audit-boundaries`, `/grm-repair-links`:
   bare is the full health pass, `quick` or a validator name is the mechanical
   subset, `naming` and `boundaries` are the judgment reviews, `fix` applies
-  the wikilink repairs). `/arc-update` absorbs `/arc-sync` with the same
-  scopes, and `/arc-adopt` is covered by `/grm-setup <folder>`. Removed
-  commands disappear from agent skill directories on the next registration.
-  Unchanged: `/grm-create`, `/grm-save`, `/grm-move`, `/grm-remove`,
-  `/grm-help`, `/arc-validate`, `/arc-improve`, `/arc-clean`, `/arc-help`.
+  the wikilink repairs). On the maintainer side `/grm-dev-update` absorbs
+  `/arc-sync` with the same scopes, and `/arc-adopt` is covered by
+  `/grm-setup <folder>`. Removed commands disappear from agent skill
+  directories on the next registration. Unchanged in behavior:
+  `/grm-create`, `/grm-save`, `/grm-move`, `/grm-remove`, `/grm-help`, and
+  the maintainer validate, improve, clean, and help verbs.
 - **`log.md` is retired.** No invocation reads the grimoire activity log;
   every mutating command only appended to it, and an append-only file at the
   grimoire root guarantees merge conflicts the moment two people share a
@@ -114,10 +148,10 @@ seeds the ignore file, and re-registers the consolidated commands.
   scaffolded without `log.md`; an existing file stays valid and untouched
   (validators keep their exemptions), and no command appends to it any more.
   The new read-only `rites/recent_changes.py` renders recent content commits
-  (`--since 90d`, JSON envelope) and `/grm-health-check` uses it for its
-  activity phase. `append_log.py`, the log-entry formula, and the `log-entry`
-  page type are removed. The routing block drops the log line; `/grm-sync
-  agentfile` refreshes it.
+  (`--since 90d`, JSON envelope) and `/grm-check` uses it for its activity
+  phase. `append_log.py`, the log-entry formula, and the `log-entry`
+  page type are removed. The routing block drops the log line;
+  `/grm-update agentfile` refreshes it.
 - **Codex skills register in `~/.agents/skills`.** Codex documents
   `~/.agents/skills` as its personal skill root and treats `~/.codex/skills`
   as deprecated. The agent target registry gains `deprecated_skill_targets`,
@@ -142,24 +176,24 @@ seeds the ignore file, and re-registers the consolidated commands.
 - **`/grm-check fix` respells wikilinks to the on-disk casing.** A full-path
   link that differs from the file only by case resolves on Windows and macOS
   and breaks on Linux and in site builds; the repair rite now rewrites it.
-- **`ARCANA_REF` selects the engine the bootstrap clones.** `summon.sh` and
+- **`FRAMEWORK_REF` selects the framework the bootstrap clones.** `summon.sh` and
   `summon.py` clone that branch or tag instead of the default branch, so a
   one-liner pinned to a release installs that release.
-- **Grimoire discovery skips the engine and sees private repositories.** A
-  scope listing never offers `arcana` itself as a grimoire, and a personal
+- **Grimoire discovery skips the framework and sees private repositories.** A
+  scope listing never offers the framework repository as a grimoire, and a personal
   GitHub scope with a token also lists the token holder's private repositories.
 - **The eval tier runs on Windows and may edit its scenario.** The `claude`
-  seam resolves the binary (`ARCANA_EVAL_CLAUDE` or PATH), feeds the prompt on
+  seam resolves the binary (`FRAMEWORK_EVAL_CLAUDE` or PATH), feeds the prompt on
   stdin, and grants edit and rite permissions inside the throwaway grimoire.
 - **Skills now load from any working directory.** Generated skills used to
   pull their invocation in at load time with a `cat` directive, which agents
   only honour for files inside the session's working directories. Every
-  session opened in a grimoire or a project repository therefore ran `/grm-*`
-  and `/arc-*` commands without their playbooks. `sync_skills.py` now inlines
+  session opened in a grimoire or a project repository therefore ran its
+  commands without their playbooks. `sync_skills.py` now inlines
   the invocation (and any nested include) into the generated `SKILL.md` at
-  registration, substitutes `ARCANA_HOME/` with the concrete engine path, and
-  writes forward-slash paths on every platform. Re-run `/grm-sync skills` (or
-  `/grm-update`) to regenerate installed skills.
+  registration, substitutes `FRAMEWORK_HOME/` with the concrete framework
+  path, and writes forward-slash paths on every platform. Re-run
+  `/grm-update skills` (or `/grm-update`) to regenerate installed skills.
 - **`repair_links.py` now writes POSIX wikilinks on every platform.** The
   promoted link was built from a `Path`, so on Windows the rite wrote
   `[[chapters\path\page|label]]` with backslashes. Those links validate on

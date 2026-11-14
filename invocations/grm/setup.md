@@ -2,19 +2,19 @@
 type: playbook
 title: "Setup"
 aliases: ["setup", "grm-setup", "onboarding", "join-grimoire", "adopt"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
-last_verified: 2026-11-12
+last_verified: 2026-11-13
 ---
 
 # Invocation: Setup (first grimoire, join one, or adopt a folder)
 
 ## Purpose
 
-Hold the onboarding conversation. A person who has just installed Arcana, or
+Hold the onboarding conversation. A person who has just installed Grimoire, or
 who has been told "we keep that in the Kutta grimoire", should be able to say
 "set me up" and end with a grimoire on disk, registered, and usable, without
-learning git or Arcana. A person with a folder of notes should be able to make
+learning git or the framework. A person with a folder of notes should be able to make
 it a grimoire in one exchange. Engineers get the same flow with fewer
 questions.
 
@@ -44,7 +44,7 @@ may appear and move on.
 ### 1. Look before asking
 
 ```bash
-ARCANA_HOME/bin/arcana summon --check --format json
+FRAMEWORK_HOME/bin/grimoire summon --check --format json
 ```
 
 Read the envelope. It tells you whether the library exists, which grimoires are
@@ -71,7 +71,7 @@ anything drifted. Do not ask the user for facts this envelope already holds.
 ### 3. Join: run the rite
 
 ```bash
-ARCANA_HOME/bin/arcana install_grimoire "<url>" --format json
+FRAMEWORK_HOME/bin/grimoire install_grimoire "<url>" --format json
 ```
 
 Accepts `https://...`, `git@host:path.git`, and local paths. The rite derives
@@ -105,9 +105,9 @@ gather, one question at a time:
   default or `preserve` when the material keeps its own casing.
 
 ```bash
-ARCANA_HOME/bin/arcana adopt_grimoire <directory> --skill-prefix <prefix> --description "<desc>" --naming <convention>
-ARCANA_HOME/bin/arcana sync_library --apply
-ARCANA_HOME/bin/arcana sync_skills
+FRAMEWORK_HOME/bin/grimoire adopt_grimoire <directory> --skill-prefix <prefix> --description "<desc>" --naming <convention>
+FRAMEWORK_HOME/bin/grimoire sync_library --apply
+FRAMEWORK_HOME/bin/grimoire sync_skills
 ```
 
 The adopt rite refuses to overwrite an existing `grimoire.json` and refuses a
@@ -127,7 +127,7 @@ anything still sitting loose.
    grimoire is in good shape.
 3. If the user is an engineer who mentioned a group or org URL, point out the
    terminal path for discovering many grimoires at once:
-   `bash ARCANA_HOME/rites/summon.sh --scope <org url>`.
+   `bash FRAMEWORK_HOME/rites/summon.sh --scope <org url>`.
 
 ## Rules
 
@@ -140,8 +140,8 @@ anything still sitting loose.
 
 ## Related
 
-- Join rite: `ARCANA_HOME/rites/install_grimoire.py`
-- Adopt rite: `ARCANA_HOME/rites/adopt_grimoire.py`
+- Join rite: `FRAMEWORK_HOME/rites/install_grimoire.py`
+- Adopt rite: `FRAMEWORK_HOME/rites/adopt_grimoire.py`
 - Start from scratch: [[invocations/grm/create_grimoire|create grimoire]]
 - Bring everything current: [[invocations/grm/update|update]]
 - Share changes: [[invocations/grm/save|save]]

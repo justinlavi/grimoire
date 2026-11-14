@@ -32,7 +32,7 @@ import summon_core
 from _lib import load_manifest
 from diagnostics import ResultReporter, add_output_format_arg
 
-ARCANA_PATH = Path(__file__).resolve().parent.parent
+FRAMEWORK_PATH = Path(__file__).resolve().parent.parent
 SAFE_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
@@ -59,7 +59,7 @@ def derive_key(url: str) -> str:
 
 
 def _run_sync_skills(home: Path) -> tuple[bool, str]:
-    cmd = [sys.executable, str(ARCANA_PATH / "rites" / "sync_skills.py"), "--format", "json"]
+    cmd = [sys.executable, str(FRAMEWORK_PATH / "rites" / "sync_skills.py"), "--format", "json"]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     except (OSError, subprocess.TimeoutExpired) as exc:

@@ -1,0 +1,12 @@
+{
+  "name": "grimoire",
+  "version": "1.8.0",
+  "description": "Grimoire: the ten grimoire verbs (setup, create, add, save, update, check, publish, move, remove, help) plus the session-start routing hook.",
+  "author": {
+    "name": "Justin Lavi",
+    "url": "https://github.com/justinlavi/grimoire"
+  },
+  "homepage": "https://github.com/justinlavi/grimoire",
+  "repository": "https://github.com/justinlavi/grimoire",
+  "license": "MIT"
+}

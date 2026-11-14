@@ -1,0 +1,20 @@
+{
+  "name": "grimoire",
+  "kind": "framework",
+  "skill_prefix": "grm",
+  "skill_families": {
+    "grm": {
+      "skill_prefix": "grm",
+      "path": "skills/grm",
+      "slug_prefix": "",
+      "plugin": "grimoire"
+    },
+    "dev": {
+      "skill_prefix": "grm",
+      "path": "skills/dev",
+      "slug_prefix": "dev",
+      "plugin": "grimoire-dev"
+    }
+  },
+  "description": "Framework for creating and maintaining grimoires"
+}

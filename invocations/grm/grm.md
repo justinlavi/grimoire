@@ -2,12 +2,12 @@
 type: hub
 title: "Grimoire Invocations"
 aliases: ["grimoire-invocations", "grimoire-ops"]
-tags: [arcana/invocations, type/hub, scope/grimoire, hub/chapter]
+tags: [framework/invocations, type/hub, scope/grimoire, hub/chapter]
 ---
 
 # Grimoire Invocations
 
-Grimoire operations: the ten `/grm-*` verbs. Arcana maintenance routes through [[invocations/arc/arc|arc]].
+Grimoire operations: the ten `/grm-*` verbs. Framework maintenance routes through [[invocations/dev/dev|dev]].
 
 ## Available
 
@@ -39,5 +39,5 @@ Validator detail behind `check`: [[invocations/grm/validators/validators|validat
 
 - Canonical skill catalog -> [[docs/skills|skills]]
 - Meta operations -> [[invocations/meta/meta|meta]]
-- Arcana maintenance -> [[invocations/arc/arc|arc]]
+- Framework maintenance -> [[invocations/dev/dev|dev]]
 - Operating model -> [[docs/operating_model|operating model]]

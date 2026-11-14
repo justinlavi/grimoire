@@ -7,7 +7,7 @@ reconciliation). This rite keeps the Grimoire routing block - the region between
 current in each agent instruction file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`).
 
 The BEGIN/END markers are the sole contract. Everything between them is
-Arcana-owned and the user never edits it; everything outside is the user's. The
+Framework-owned and the user never edits it; everything outside is the user's. The
 rite does only what is unambiguous from those markers:
 
   * absent file                 -> create it with a heading and the block
@@ -18,7 +18,7 @@ rite does only what is unambiguous from those markers:
 `review` covers every delicate case: a file with no block, a block with
 duplicate or malformed markers, or a pre-marker block from an old install. These
 are not mechanical decisions - the agentfile judgment edit (in the /grm-update and
-/arc-update invocations) reads the file, finds or upgrades the block caring only
+/grm-dev-update invocations) reads the file, finds or upgrades the block caring only
 about the marked region, and preserves all user content outside it. The rite
 never guesses and never duplicates.
 
@@ -29,7 +29,7 @@ Mutation profile: plan_apply. The default plans; `--apply` performs the
 deterministic create/refresh.
 
 Usage:
-    python3 inject_agent_file.py [--agent all|TARGET] [--apply] [--arcana-root PATH]
+    python3 inject_agent_file.py [--agent all|TARGET] [--apply] [--framework-root PATH]
 
 Exit codes: 0 = plan or apply completed, 2 = argparse invalid arguments.
 """
@@ -114,9 +114,9 @@ def apply_block(path: Path, title: str, *, apply: bool) -> dict[str, Any]:
     return result
 
 
-def resolve_targets(arcana_root: Path, agent: str) -> list[dict[str, Any]]:
+def resolve_targets(framework_root: Path, agent: str) -> list[dict[str, Any]]:
     """Return the automatic instruction targets, optionally filtered by agent id."""
-    targets = automatic_instruction_targets(arcana_root)
+    targets = automatic_instruction_targets(framework_root)
     if agent and agent != "all":
         targets = [t for t in targets if t.get("id") == agent]
     return targets
@@ -153,21 +153,21 @@ def main() -> int:
         help="Create or refresh the routing block (default: plan only)",
     )
     parser.add_argument(
-        "--arcana-root",
-        dest="arcana_root",
+        "--framework-root",
+        dest="framework_root",
         default=None,
-        help="Override Arcana root (default: detected)",
+        help="Override framework root (default: detected)",
     )
     add_output_format_arg(parser)
     args = parser.parse_args()
     human = args.format == "human"
 
-    arcana_root = (
-        Path(args.arcana_root).expanduser().resolve()
-        if args.arcana_root else summon_core.REPO_ROOT
+    framework_root = (
+        Path(args.framework_root).expanduser().resolve()
+        if args.framework_root else summon_core.REPO_ROOT
     )
     reporter = ResultReporter("inject_agent_file", mode="apply" if args.apply else "plan")
-    targets = resolve_targets(arcana_root, args.agent)
+    targets = resolve_targets(framework_root, args.agent)
 
     if human:
         print()

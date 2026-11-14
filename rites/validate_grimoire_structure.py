@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validates a grimoire's structure against Arcana conventions.
+"""Validates a grimoire's structure against framework conventions.
 
 Required at the grimoire root:
     <grimoire-name>.md   (root hub; folder-name convention)
@@ -27,7 +27,7 @@ import json
 import sys
 from pathlib import Path
 
-from _lib import default_arcana_root, is_inside_colocated_source_dir, load_manifest, parse_frontmatter
+from _lib import default_framework_root, is_inside_colocated_source_dir, load_manifest, parse_frontmatter
 from diagnostics import DiagnosticReporter, add_output_format_arg
 from scaffold_contract import (
     ScaffoldContractError,
@@ -56,8 +56,8 @@ def main():
     add_output_format_arg(parser)
     args = parser.parse_args()
     root = args.grimoire.expanduser().resolve()
-    arcana_root = default_arcana_root()
-    formula_root = arcana_root / "formulae" / "grimoire"
+    framework_root = default_framework_root()
+    formula_root = framework_root / "formulae" / "grimoire"
     human = args.format == "human"
     reporter = DiagnosticReporter("validate_grimoire_structure", root)
 
@@ -69,7 +69,7 @@ def main():
         print()
 
     try:
-        scaffold_contract = load_scaffold_contract(arcana_root)
+        scaffold_contract = load_scaffold_contract(framework_root)
     except ScaffoldContractError as exc:
         reporter.error("GRIMOIRE_STRUCTURE_CONTRACT_READ", str(exc))
         if not human:
@@ -233,25 +233,25 @@ def main():
                 if human:
                     print(f"  WARN     {rel} declares type: hub but is not a folder-named hub")
 
-    # 6. Managed scaffold files should match the current Arcana formulae.
+    # 6. Managed scaffold files should match the current framework formulae.
     # These files are operational support files, not grimoire-specific content.
     # Root README, root hub, and grimoire.json are intentionally not
     # compared because they are customized during grimoire creation.
     if formula_root.is_dir():
         if human:
             print()
-            print("Checking managed scaffold files against current Arcana formulae...")
+            print("Checking managed scaffold files against current framework formulae...")
         for rel in managed_scaffold_files(scaffold_contract):
             expected = formula_root / rel
             actual = root / rel
             if not expected.is_file():
                 reporter.error(
                     "GRIMOIRE_STRUCTURE_FORMULA_MISSING_MANAGED",
-                    f"Arcana formula missing managed scaffold: {rel}",
+                    f"Framework formula missing managed scaffold: {rel}",
                     path=rel,
                 )
                 if human:
-                    print(f"  WARN     Arcana formula missing managed scaffold: {rel}")
+                    print(f"  WARN     framework formula missing managed scaffold: {rel}")
             elif not actual.is_file():
                 reporter.error("GRIMOIRE_STRUCTURE_MISSING_MANAGED", f"missing managed scaffold: {rel}", path=rel)
                 if human:
@@ -259,19 +259,19 @@ def main():
             elif not filecmp.cmp(expected, actual, shallow=False):
                 reporter.error(
                     "GRIMOIRE_STRUCTURE_STALE_MANAGED",
-                    f"managed scaffold differs from Arcana formula: {rel}",
+                    f"managed scaffold differs from framework formula: {rel}",
                     path=rel,
-                    hint=f"Copy from ARCANA_HOME/formulae/grimoire/{rel}.",
+                    hint=f"Copy from FRAMEWORK_HOME/formulae/grimoire/{rel}.",
                 )
                 if human:
-                    print(f"  STALE    managed scaffold differs from Arcana formula: {rel}")
+                    print(f"  STALE    managed scaffold differs from framework formula: {rel}")
             else:
                 if human:
                     print(f"  OK       {rel}")
     else:
-        reporter.error("GRIMOIRE_STRUCTURE_FORMULA_ROOT_MISSING", f"Arcana formula root missing: {formula_root}")
+        reporter.error("GRIMOIRE_STRUCTURE_FORMULA_ROOT_MISSING", f"Framework formula root missing: {formula_root}")
         if human:
-            print(f"  WARN     Arcana formula root missing: {formula_root}")
+            print(f"  WARN     framework formula root missing: {formula_root}")
 
     # 6b. Seeded scaffold files: copied in when absent, owned by the grimoire
     #     after that, so absence is a warning the next heal fixes and presence
@@ -282,7 +282,7 @@ def main():
                 "GRIMOIRE_STRUCTURE_MISSING_SEEDED",
                 f"missing seeded scaffold: {rel}",
                 path=rel,
-                hint="Run /grm-update to seed it, or copy ARCANA_HOME/formulae/grimoire/ yourself.",
+                hint="Run /grm-update to seed it, or copy FRAMEWORK_HOME/formulae/grimoire/ yourself.",
             )
             if human:
                 print(f"  WARN     missing seeded scaffold: {rel} (heal seeds it)")

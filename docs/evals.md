@@ -2,7 +2,7 @@
 type: reference
 title: "Invocation Eval Tier"
 aliases: ["evals", "invocation-evals"]
-tags: [type/reference, arcana/docs, scope/testing]
+tags: [type/reference, framework/docs, scope/testing]
 authority: grimoire
 last_verified: 2026-06-01
 ---
@@ -11,7 +11,7 @@ last_verified: 2026-06-01
 
 ## Purpose
 
-The deterministic validators and mutating rites cover Arcana's mechanical floor.
+The deterministic validators and mutating rites cover the framework's mechanical floor.
 The **invocations** (`invocations/**/*.md`) are playbooks an AI agent follows to
 do *judgment* work — classifying a file into the right storage layer, surfacing a
 contradiction, placing a promoted answer. That judgment has no deterministic
@@ -32,7 +32,7 @@ eval tier keeps the floor deterministic in three ways:
 - The single model boundary is an **injectable seam**, `model_fn(prompt, cwd)`,
   mirroring the `git_fn` / `skill_runner` / `validate_runner` seams in
   `rites/summon_state.py`. The default seam shells to `claude` and **refuses
-  unless `ARCANA_EVAL_MODEL` is set**.
+  unless `FRAMEWORK_EVAL_MODEL` is set**.
 - The model-in-the-loop tests carry the `eval` marker, which `pyproject.toml`
   **deselects by default** (`-m "not eval"`). Only the deterministic *scaffolding*
   tests run in the fast gate.
@@ -44,10 +44,10 @@ eval tier keeps the floor deterministic in three ways:
 python -m pytest -q
 
 # Opt in to the model-in-the-loop tier:
-ARCANA_EVAL_MODEL=1 python -m pytest -m eval
+FRAMEWORK_EVAL_MODEL=1 python -m pytest -m eval
 ```
 
-Without `ARCANA_EVAL_MODEL`, the `eval`-marked tests skip cleanly, so the tier is
+Without `FRAMEWORK_EVAL_MODEL`, the `eval`-marked tests skip cleanly, so the tier is
 green-by-skip on any machine without model access.
 
 ## What an eval checks
@@ -100,7 +100,7 @@ scaffolding, and starter scenarios for `/grm-add` (layer classification),
 faithfulness). An always-on GitHub Actions job that runs the model evals is
 deferred: it needs a reliable model gateway and a secret, and a flaky required
 check would erode the "leave the tree green" discipline. When that exists, it is
-a zero-refactor upgrade — the workflow sets `ARCANA_EVAL_MODEL` and runs
+a zero-refactor upgrade — the workflow sets `FRAMEWORK_EVAL_MODEL` and runs
 `pytest -m eval`.
 
 ## Adding an eval
@@ -112,7 +112,7 @@ a zero-refactor upgrade — the workflow sets `ARCANA_EVAL_MODEL` and runs
    `assertions` over `judge_criteria` wherever the outcome is a closed set.
 3. Run `python -m pytest tests/test_eval_scaffolding.py` — it fails until the
    spec is well-formed, the invocation exists, and the fixture is validate-clean.
-4. Run `ARCANA_EVAL_MODEL=1 python -m pytest -m eval` to confirm the playbook
+4. Run `FRAMEWORK_EVAL_MODEL=1 python -m pytest -m eval` to confirm the playbook
    passes against a real model.
 
 ## Related

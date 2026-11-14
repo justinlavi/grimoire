@@ -2,7 +2,7 @@
 type: reference
 title: "Base Invocation"
 aliases: ["base-invocation", "investigate-extract-codify-route"]
-tags: [arcana/invocations, type/reference, scope/meta]
+tags: [framework/invocations, type/reference, scope/meta]
 authority: grimoire
 last_verified: 2026-05-13
 ---
@@ -20,7 +20,7 @@ The magical/practical boundary, page schema, hub convention, and storage layers 
 Anything you author following this template must conform to:
 
 - **Page schema** — every authored page carries YAML frontmatter (`type`, `title`, `tags`, `authority`, `sources`, `last_verified`). Required-fields matrix in [[docs/page_schema|page schema]].
-- **Magical boundary** — system terminology (invocation, formula, rite, hub) lives in Arcana only; chapter content uses domain-natural names (`templates/`, `scripts/`, `policies/`, `recipes/`). Full rules in [[invocations/grm/check|check]].
+- **Magical boundary** — system terminology (invocation, formula, rite, hub) lives in the framework only; chapter content uses domain-natural names (`templates/`, `scripts/`, `policies/`, `recipes/`). Full rules in [[invocations/grm/check|check]].
 - **Hub convention** — every folder F has a hub at `F/<basename(F)>.md`. Depth is open-ended. See [[docs/operating_model|operating model]].
 
 ---
@@ -89,7 +89,7 @@ Use this four-phase template when:
 6. **Minimize reads.** Hubs route depth-first to the answering leaf with no detours; the structure is as deep as the topic warrants.
 7. **Canonical source selection.** When multiple copies of the same authoritative material exist, prefer the system-of-record (top-level repo, original publication) over embedded or vendored copies, unless the user explicitly targets a derivative.
 8. **Never store implementation values; provide query instructions instead.** Forbidden: hard-coded version numbers, configuration values, or other facts that change at the source's pace. Required: provide a `grep`/`find`/`git`-style command the reader can run to extract the current value. Templates under `chapters/<chapter>/templates/` are exempt — they are prescriptive standards, not snapshots.
-9. **Magical boundary** — domain content uses practical folder names (`templates/`, `scripts/`, `snippets/`, `policies/`, `recipes/`, `playbooks/`); never `invocations/`, `formulae/`, or `rites/`. Those exist only in Arcana.
+9. **Magical boundary** — domain content uses practical folder names (`templates/`, `scripts/`, `snippets/`, `policies/`, `recipes/`, `playbooks/`); never `invocations/`, `formulae/`, or `rites/`. Those exist only in the framework.
 10. **Frontmatter required.** Every authored page declares its `type`, `title`, `tags`, `authority`, `sources` (when external/hybrid), and `last_verified`. See [[docs/page_schema|page schema]].
 11. **If blocked by missing pointers**, make a best-effort guess at the canonical entry point and proceed. Ask the user one targeted question only if you cannot continue responsibly.
 
@@ -149,7 +149,7 @@ last_verified: YYYY-MM-DD
 
 - Update the directly-containing chapter hub with a wikilink pointer to the new leaf.
 - Update the root hub only when introducing a top-level chapter.
-- Use full-path Obsidian wikilinks (`[[chapters/path/to/page|label]]`) for in-grimoire pointers. Display labels name only the target filename, normalized for reading. Aliases are metadata only and never link targets. Cross-grimoire references stay as path placeholders (`ARCANA_HOME/...`).
+- Use full-path Obsidian wikilinks (`[[chapters/path/to/page|label]]`) for in-grimoire pointers. Display labels name only the target filename, normalized for reading. Aliases are metadata only and never link targets. Cross-grimoire references stay as path placeholders (`FRAMEWORK_HOME/...`).
 - If the new page introduces a new sub-chapter, scaffold its hub at `<new-folder>/<new-folder>.md` (the hub convention recurses).
 
 ### Phase 5 — Validate before finishing
@@ -157,9 +157,9 @@ last_verified: YYYY-MM-DD
 Run from the grimoire root:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_frontmatter --grimoire .
-ARCANA_HOME/bin/arcana validate_links --grimoire .
-ARCANA_HOME/bin/arcana validate_provenance --grimoire .
+FRAMEWORK_HOME/bin/grimoire validate_frontmatter --grimoire .
+FRAMEWORK_HOME/bin/grimoire validate_links --grimoire .
+FRAMEWORK_HOME/bin/grimoire validate_provenance --grimoire .
 ```
 
 Confirm:
@@ -177,5 +177,4 @@ Confirm:
 - [ ] Hubs updated (paths and wikilinks added)
 - [ ] Page frontmatter complete and validator-clean
 - [ ] Provenance closed: external/hybrid pages cite real `chapters/**/sources/` artifacts
-- [ ] Log entry appended
 - [ ] Open TODOs (if any) with source pointers

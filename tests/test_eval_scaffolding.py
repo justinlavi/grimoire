@@ -221,7 +221,7 @@ def test_run_judge_fails_without_evidence_or_on_fail_verdict():
 
 
 def test_claude_seam_refuses_without_env(monkeypatch):
-    monkeypatch.delenv(H.ARCANA_EVAL_MODEL, raising=False)
+    monkeypatch.delenv(H.FRAMEWORK_EVAL_MODEL, raising=False)
     with pytest.raises(RuntimeError):
         H.claude_cli_seam("prompt", ".")
 

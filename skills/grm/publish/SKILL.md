@@ -14,15 +14,15 @@ You are turning the active grimoire into a website, or checking what would be pu
 
 ## Precondition
 
-!`cat {{ARCANA_PATH}}/invocations/meta/grimoire_directory_guard.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/meta/grimoire_directory_guard.md`
 
 ## Context
 
-- **Arcana**: `{{ARCANA_PATH}}`
-- **Staging rite**: `{{ARCANA_PATH}}/rites/stage_publish.py`
-- **Audit rite**: `{{ARCANA_PATH}}/rites/audit_publish.py`
-- **Formulae**: `{{ARCANA_PATH}}/formulae/publish/`
+- **Framework root**: `{{FRAMEWORK_PATH}}`
+- **Staging rite**: `{{FRAMEWORK_PATH}}/rites/stage_publish.py`
+- **Audit rite**: `{{FRAMEWORK_PATH}}/rites/audit_publish.py`
+- **Formulae**: `{{FRAMEWORK_PATH}}/formulae/publish/`
 
 ## Invocation
 
-!`cat {{ARCANA_PATH}}/invocations/grm/publish.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/grm/publish.md`

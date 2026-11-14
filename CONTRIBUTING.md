@@ -1,12 +1,12 @@
-# Contributing to Arcana
+# Contributing to Grimoire
 
-Thank you for your interest. Arcana is an opinionated framework with a small surface, so contributions land best when they fit the existing patterns. This guide is the fastest way to get from idea to a mergeable PR.
+Thank you for your interest. Grimoire is an opinionated framework with a small surface, so contributions land best when they fit the existing patterns. This guide is the fastest way to get from idea to a mergeable PR.
 
 ---
 
 ## Quick orientation
 
-Arcana has five working layers. Almost every PR touches exactly one of them:
+The framework has five working layers. Almost every PR touches exactly one of them:
 
 | Layer | What lives there | Read first |
 |---|---|---|
@@ -23,12 +23,12 @@ If you're unsure where a change belongs, [script vs ai](docs/script_vs_ai.md) ex
 ## Setting up a development environment
 
 ```bash
-git clone https://github.com/justinlavi/arcana
-cd arcana
+git clone https://github.com/justinlavi/grimoire
+cd grimoire
 python3 -m pip install -e '.[dev]'
 ```
 
-Arcana's runtime is pure Python stdlib - no install-time dependencies. The `[dev]` extra pulls in `pytest` for the test suite; there are no other extras. The installer is terminal-only and runs from source.
+The framework's runtime is pure Python stdlib - no install-time dependencies. The `[dev]` extra pulls in `pytest` for the test suite; there are no other extras. The installer is terminal-only and runs from source.
 
 ---
 
@@ -44,7 +44,7 @@ python3 rites/validate.py
 pytest
 ```
 
-Both must pass. The validators are the same ones the `/arc-validate` skill runs.
+Both must pass. The validators are the same ones the `/grm-dev-validate` skill runs.
 
 For faster feedback during iteration, run a single validator directly:
 
@@ -61,11 +61,11 @@ python3 rites/validate_links.py
 Every validator should:
 
 1. Import shared helpers from [rites/_lib.py](rites/_lib.py) - never reimplement frontmatter parsing, logging, manifest loading, or root resolution.
-2. Accept `--grimoire <path>` via `add_grimoire_arg(parser)`. Default to Arcana itself; allow grimoires too.
+2. Accept `--grimoire <path>` via `add_grimoire_arg(parser)`. Default to the framework itself; allow grimoires too.
 3. Exit `0` on clean, `1` on violations. Use `info` / `ok` / `warn` / `err` from `_lib` for output.
 4. Ship as a `validate_<aspect>.py` file under `rites/`.
 5. Be added to the validator selector registry in [rites/validate.py](rites/validate.py) / [validators.json](rites/data/validators.json) if it is part of a mechanical validation suite.
-6. Use the existing `/arc-validate` or `/grm-check quick` public skill; create a new skill only when the workflow is not mechanical validation (see [skill schema](docs/skill_schema.md)).
+6. Use the existing `/grm-dev-validate` or `/grm-check quick` public skill; create a new skill only when the workflow is not mechanical validation (see [skill schema](docs/skill_schema.md)).
 7. Get a covering test under `tests/test_validate_<aspect>.py` using the fixture grimoires under `tests/fixtures/`.
 
 The minimal skeleton:
@@ -88,9 +88,9 @@ def main():
 
 Skills are pointer files. The skill source contains no logic - it dispatches to an invocation or rite. Registration inlines the invocation into the generated copy, so a source `!`cat ...`` line is a build-time include, not a runtime read.
 
-1. Choose the command family first: `arcana`, `grimoire`, `library`, `agent`, `workspace`, or `help`. See [skill schema](docs/skill_schema.md).
+1. Choose the command family first: `grm` (grimoire verbs) or `dev` (maintainer verbs). See [skill schema](docs/skill_schema.md).
 2. Create `skills/<family>/<slug>/SKILL.md`. The folder name is the command suffix after that family's prefix.
-3. Use the `{{SKILL_PREFIX}}-<registered-slug>` template in the `name:` frontmatter - registration substitutes the command family's prefix from `arcana.json`.
+3. Use the `{{SKILL_PREFIX}}-<registered-slug>` template in the `name:` frontmatter (`{{SKILL_PREFIX}}-dev-<slug>` in the `dev` family) - registration substitutes the command family's prefix from `framework.json`.
 4. Mirror the frontmatter fields the surrounding skills use: `description`, `when_to_use`, `user-invocable`, `allowed-tools`. Add `disable-model-invocation: true` for destructive skills.
 5. Include the corresponding invocation under `invocations/` if the skill needs more than 5-10 lines of guidance.
 6. Run [rites/sync_docs.py](rites/sync_docs.py) to regenerate [skills](docs/skills.md).
@@ -100,7 +100,7 @@ Skills are pointer files. The skill source contains no logic - it dispatches to 
 ## Documentation changes
 
 - Each concept has one canonical home. Storage layers live in [operating model](docs/operating_model.md), the page schema lives in [page schema](docs/page_schema.md), and so on. Other docs link rather than duplicate.
-- Knowledge-routing markdown carries YAML frontmatter - see [page schema](docs/page_schema.md). [rites/validate_frontmatter.py](rites/validate_frontmatter.py) enforces it for `docs/`, `invocations/`, `formulae/`, `chapters/`, and grimoire root hubs. GitHub-facing root files such as `README.md`, `CONTRIBUTING.md`, and `CHANGELOG.md` are exempt unless Arcana explicitly adopts frontmatter for them.
+- Knowledge-routing markdown carries YAML frontmatter - see [page schema](docs/page_schema.md). [rites/validate_frontmatter.py](rites/validate_frontmatter.py) enforces it for `docs/`, `invocations/`, `formulae/`, `chapters/`, and grimoire root hubs. GitHub-facing root files such as `README.md`, `CONTRIBUTING.md`, and `CHANGELOG.md` are exempt unless the framework explicitly adopts frontmatter for them.
 - Every folder has a hub file named after the folder. New folders need a new hub.
 - Internal links are layer-aware: public docs use Markdown links for Git-host readability, while vault and AI-routing surfaces use full-path `[[wikilinks]]`. [rites/validate_links.py](rites/validate_links.py) checks both.
 
@@ -126,12 +126,12 @@ Skills are pointer files. The skill source contains no logic - it dispatches to 
 
 ## Reporting issues
 
-- For bugs: include the validator output, your Arcana version (`cat VERSION`), and Python version.
+- For bugs: include the validator output, your framework version (`cat VERSION`), and Python version.
 - For terminology or design questions: link the existing doc that confused you so it can be improved.
-- For new features: describe the use case before proposing an implementation. Arcana intentionally has a small surface and bias-to-shrink - additions need a clear earned-its-keep story.
+- For new features: describe the use case before proposing an implementation. The framework intentionally has a small surface and bias-to-shrink - additions need a clear earned-its-keep story.
 
 ---
 
 ## Maintainer notes
 
-The `/arc-improve` and `/arc-validate` skills are the canonical maintenance entry points. Run them before tagging a release. Release workflow lives in [release](docs/release.md).
+The `/grm-dev-improve` and `/grm-dev-validate` skills are the canonical maintenance entry points. Run them before tagging a release. Release workflow lives in [release](docs/release.md).

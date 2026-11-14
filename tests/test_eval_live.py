@@ -3,13 +3,13 @@
 These run a real agent (the `claude` CLI seam) against each seeded scenario and
 assert the playbook produced the right judgment. They are deselected by default
 (`addopts = -m "not eval"` in pyproject.toml) and additionally skip unless
-ARCANA_EVAL_MODEL is set, so the mechanical CI gate never reaches a model. Run
+FRAMEWORK_EVAL_MODEL is set, so the mechanical CI gate never reaches a model. Run
 the tier explicitly:
 
-    ARCANA_EVAL_MODEL=1 python -m pytest -m eval
+    FRAMEWORK_EVAL_MODEL=1 python -m pytest -m eval
 
 When `claude` is not on PATH (the VS Code extension keeps its binary under
-resources/native-binary/), point ARCANA_EVAL_CLAUDE at the executable.
+resources/native-binary/), point FRAMEWORK_EVAL_CLAUDE at the executable.
 """
 
 import os
@@ -19,8 +19,8 @@ import pytest
 import eval_harness as H
 
 requires_model = pytest.mark.skipif(
-    not os.environ.get(H.ARCANA_EVAL_MODEL),
-    reason=f"{H.ARCANA_EVAL_MODEL} not set; model-in-the-loop eval skipped",
+    not os.environ.get(H.FRAMEWORK_EVAL_MODEL),
+    reason=f"{H.FRAMEWORK_EVAL_MODEL} not set; model-in-the-loop eval skipped",
 )
 
 

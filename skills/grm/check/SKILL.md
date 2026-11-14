@@ -14,15 +14,15 @@ You are evaluating the active grimoire. The scope, if given, is: **$scope**. Fol
 
 ## Precondition
 
-!`cat {{ARCANA_PATH}}/invocations/meta/grimoire_directory_guard.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/meta/grimoire_directory_guard.md`
 
 ## Context
 
-- **Arcana**: `{{ARCANA_PATH}}`
+- **Framework root**: `{{FRAMEWORK_PATH}}`
 - **Grimoire root**: resolved active grimoire (`GRIMOIRE_ROOT`)
-- **Validator orchestrator**: `{{ARCANA_PATH}}/rites/validate.py`
-- **Wikilink repair engine**: `{{ARCANA_PATH}}/rites/repair_links.py`
+- **Validator orchestrator**: `{{FRAMEWORK_PATH}}/rites/validate.py`
+- **Wikilink repair rite**: `{{FRAMEWORK_PATH}}/rites/repair_links.py`
 
 ## Invocation
 
-!`cat {{ARCANA_PATH}}/invocations/grm/check.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/grm/check.md`

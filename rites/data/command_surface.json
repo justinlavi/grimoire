@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "title": "Arcana Public Command Surface",
-  "description": "Authoritative contract linking each public Arcana-shipped slash command to its skill source, invocation home, workflow owner, safety posture, and validation profile.",
+  "title": "Grimoire Public Command Surface",
+  "description": "Authoritative contract linking each public framework-shipped slash command to its skill source, invocation home, workflow owner, safety posture, and validation profile.",
   "commands": [
     {
       "command": "/grm-create",
@@ -53,7 +53,7 @@
         "Destination path under chapters/ that does not exist"
       ],
       "mutation_profile": "judgment_gated",
-      "mutation_behavior": "Renames or moves a page or chapter under chapters/ via restructure_grimoire.py, retargeting every full-path wikilink that pointed at the moved file(s) and renaming a moved chapter's folder-named hub; the invocation then wires the source and destination hubs, fixes display labels, and logs the move.",
+      "mutation_behavior": "Renames or moves a page or chapter under chapters/ via restructure_grimoire.py, retargeting every full-path wikilink that pointed at the moved file(s) and renaming a moved chapter's folder-named hub; the invocation then wires the source and destination hubs, and fixes display labels.",
       "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
       "validation_profile": "python rites/restructure_grimoire.py --grimoire GRIMOIRE_ROOT --move SRC DST; python rites/validate.py --grimoire GRIMOIRE_ROOT links orphans structure"
     },
@@ -71,7 +71,7 @@
         "Explicit user confirmation (destructive)"
       ],
       "mutation_profile": "judgment_gated",
-      "mutation_behavior": "Deletes a page or chapter under chapters/ via restructure_grimoire.py and reports every inbound wikilink that would break; the invocation confirms the deletion, drops the parent hub pointer, repairs or removes the broken inbound links, and logs the removal. Refuses to delete a chapter hub on its own.",
+      "mutation_behavior": "Deletes a page or chapter under chapters/ via restructure_grimoire.py and reports every inbound wikilink that would break; the invocation confirms the deletion, drops the parent hub pointer, and repairs or removes the broken inbound links. Refuses to delete a chapter hub on its own.",
       "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
       "validation_profile": "python rites/restructure_grimoire.py --grimoire GRIMOIRE_ROOT --remove PATH; python rites/validate.py --grimoire GRIMOIRE_ROOT links orphans structure"
     },
@@ -84,11 +84,11 @@
       "owner_type": "hybrid",
       "rite_owner": null,
       "preconditions": [
-        "Arcana Git checkout",
-        "Clean Arcana worktree before a bare update"
+        "Framework Git checkout",
+        "Clean framework worktree before a bare update"
       ],
       "mutation_profile": "judgment_gated",
-      "mutation_behavior": "Bare: follows the UPDATE.md procedure (pull Arcana with git --ff-only, then summon.py --update --apply to reconcile the library, pull every grimoire, reset and sync skills, refresh marked agent blocks, and heal grimoires confirmed current). Scoped: skills runs sync_skills.py, library runs sync_library.py, agentfile runs inject_agent_file.py plus the judgment edit for review targets.",
+      "mutation_behavior": "Bare: follows the UPDATE.md procedure (pull the framework with git --ff-only, then summon.py --update --apply to reconcile the library, pull every grimoire, reset and sync skills, refresh marked agent blocks, and heal grimoires confirmed current). Scoped: skills runs sync_skills.py, library runs sync_library.py, agentfile runs inject_agent_file.py plus the judgment edit for review targets.",
       "log_behavior": "Does not append grimoire logs.",
       "validation_profile": "python rites/validate.py --summary; python rites/summon.py --check --format json"
     },
@@ -102,94 +102,94 @@
       "rite_owner": null,
       "preconditions": [
         "Active grimoire",
-        "Arcana skill catalog"
+        "Framework skill catalog"
       ],
       "mutation_profile": "read_only",
-      "mutation_behavior": "Reads the generated Arcana skill catalog and the active grimoire's own skill frontmatter; presents the /grm-* family and the grimoire's own skills.",
-      "log_behavior": "Does not append grimoire or Arcana logs.",
-      "validation_profile": "python rites/sync_docs.py --apply when Arcana skill frontmatter or command-surface metadata changes."
+      "mutation_behavior": "Reads the generated framework skill catalog and the active grimoire's own skill frontmatter; presents the /grm-* family and the grimoire's own skills.",
+      "log_behavior": "Does not append grimoire or framework logs.",
+      "validation_profile": "python rites/sync_docs.py --apply when framework skill frontmatter or command-surface metadata changes."
     },
     {
-      "command": "/arc-validate",
-      "family": "arc",
-      "skill_source": "skills/arc/validate/SKILL.md",
-      "invocation": "invocations/arc/validators/validate.md",
+      "command": "/grm-dev-validate",
+      "family": "dev",
+      "skill_source": "skills/dev/validate/SKILL.md",
+      "invocation": "invocations/dev/validators/validate.md",
       "guard": null,
       "owner_type": "rite",
       "rite_owner": "rites/validate.py",
       "preconditions": [
-        "Arcana root"
+        "Framework root"
       ],
       "mutation_profile": "read_only",
-      "mutation_behavior": "Runs the deterministic Arcana validator suite, optionally narrowed by selector; parallel mode may refresh transient rite artifacts.",
-      "log_behavior": "Does not append grimoire or Arcana logs.",
+      "mutation_behavior": "Runs the deterministic framework validator suite, optionally narrowed by selector; parallel mode may refresh transient rite artifacts.",
+      "log_behavior": "Does not append grimoire or framework logs.",
       "validation_profile": "python rites/validate.py [all|smart|auto|summary|parallel|SELECTOR...]"
     },
     {
-      "command": "/arc-clean",
-      "family": "arc",
-      "skill_source": "skills/arc/clean/SKILL.md",
-      "invocation": "invocations/arc/clean.md",
+      "command": "/grm-dev-clean",
+      "family": "dev",
+      "skill_source": "skills/dev/clean/SKILL.md",
+      "invocation": "invocations/dev/clean.md",
       "guard": null,
       "owner_type": "rite",
       "rite_owner": "rites/clean_artifacts.py",
       "preconditions": [
-        "Arcana root or grimoire workspace"
+        "Framework root or grimoire workspace"
       ],
       "mutation_profile": "plan_apply",
       "mutation_behavior": "Deletes known temporary rite artifacts; dry-run previews removals.",
-      "log_behavior": "Does not append grimoire or Arcana logs.",
+      "log_behavior": "Does not append grimoire or framework logs.",
       "validation_profile": "python rites/clean_artifacts.py --dry-run"
     },
     {
-      "command": "/arc-update",
-      "family": "arc",
-      "skill_source": "skills/arc/update/SKILL.md",
-      "invocation": "invocations/arc/update.md",
+      "command": "/grm-dev-update",
+      "family": "dev",
+      "skill_source": "skills/dev/update/SKILL.md",
+      "invocation": "invocations/dev/update.md",
       "guard": null,
       "owner_type": "hybrid",
       "rite_owner": null,
       "preconditions": [
-        "Arcana Git checkout",
-        "Clean Arcana worktree before a bare update"
+        "Framework Git checkout",
+        "Clean framework worktree before a bare update"
       ],
       "mutation_profile": "judgment_gated",
-      "mutation_behavior": "Bare: follows the UPDATE.md procedure. Scoped: skills runs sync_skills.py for Arcana and every installed grimoire, library runs sync_library.py, agentfile runs inject_agent_file.py plus the judgment edit for review and project-level files.",
+      "mutation_behavior": "Bare: follows the UPDATE.md procedure. Scoped: skills runs sync_skills.py for the framework and every installed grimoire, library runs sync_library.py, agentfile runs inject_agent_file.py plus the judgment edit for review and project-level files.",
       "log_behavior": "Does not append grimoire logs.",
       "validation_profile": "python rites/validate.py --summary; python rites/summon.py --check --format json"
     },
     {
-      "command": "/arc-improve",
-      "family": "arc",
-      "skill_source": "skills/arc/improve/SKILL.md",
-      "invocation": "invocations/arc/improve_arcana.md",
+      "command": "/grm-dev-improve",
+      "family": "dev",
+      "skill_source": "skills/dev/improve/SKILL.md",
+      "invocation": "invocations/dev/improve_framework.md",
       "guard": null,
       "owner_type": "judgment",
       "rite_owner": null,
       "preconditions": [
-        "Arcana root",
+        "Framework root",
         "Maintainer intent"
       ],
       "mutation_profile": "judgment_gated",
-      "mutation_behavior": "May edit Arcana source, docs, tests, skills, and generated artifacts after reading current context.",
-      "log_behavior": "Updates CHANGELOG.md for user-visible Arcana changes.",
+      "mutation_behavior": "May edit framework source, docs, tests, skills, and generated artifacts after reading current context.",
+      "log_behavior": "Updates CHANGELOG.md for user-visible framework changes.",
       "validation_profile": "python rites/validate.py --parallel; python -m pytest; python rites/sync_docs.py --apply when generated docs change."
     },
     {
-      "command": "/arc-help",
-      "family": "arc",
-      "skill_source": "skills/arc/help/SKILL.md",
-      "invocation": "invocations/arc/help.md",
+      "command": "/grm-dev-help",
+      "family": "dev",
+      "skill_source": "skills/dev/help/SKILL.md",
+      "invocation": "invocations/dev/help.md",
       "guard": null,
       "owner_type": "judgment",
       "rite_owner": null,
       "preconditions": [
-        "Arcana skill catalog"
+        "Framework skill catalog"
       ],
       "mutation_profile": "read_only",
-      "mutation_behavior": "Reads generated Arcana skill catalog and locally registered grimoire skill frontmatter.",
-      "log_behavior": "Does not append grimoire or Arcana logs.",
-      "validation_profile": "python rites/sync_docs.py --apply when Arcana skill frontmatter or command-surface metadata changes."
+      "mutation_behavior": "Reads generated framework skill catalog and locally registered grimoire skill frontmatter.",
+      "log_behavior": "Does not append grimoire or framework logs.",
+      "validation_profile": "python rites/sync_docs.py --apply when framework skill frontmatter or command-surface metadata changes."
     },
     {
       "command": "/grm-setup",
@@ -200,7 +200,7 @@
       "owner_type": "hybrid",
       "rite_owner": "rites/install_grimoire.py",
       "preconditions": [
-        "Arcana installed",
+        "Framework installed",
         "git on PATH",
         "A repository URL (join) or a folder under the grimoire home (adopt)"
       ],

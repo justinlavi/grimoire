@@ -1,4 +1,4 @@
-"""Shared utilities for Arcana rites.
+"""Shared utilities for framework rites.
 
 Centralizes the patterns that every validator and library utility needs:
 frontmatter parsing, markdown link/code-fence helpers, the canonical logger,
@@ -158,27 +158,27 @@ def err(msg: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def default_arcana_root() -> Path:
-    """Return the Arcana root: ARCANA_HOME env var, else this file's parent.parent.
+def default_framework_root() -> Path:
+    """Return the framework root: FRAMEWORK_HOME env var, else this file's parent.parent.
 
-    Validators and rites that operate on Arcana itself use this as their fallback
+    Validators and rites that operate on the framework itself use this as their fallback
     when no `--grimoire` flag is supplied.
     """
-    return Path(os.environ.get("ARCANA_HOME", Path(__file__).resolve().parent.parent))
+    return Path(os.environ.get("FRAMEWORK_HOME", Path(__file__).resolve().parent.parent))
 
 
 def add_grimoire_arg(parser: argparse.ArgumentParser, flag: str = "--grimoire") -> None:
     """Register the standard `--grimoire <path>` flag on a parser.
 
-    The default is `default_arcana_root()`, so a script invoked without args
-    operates on Arcana itself; passing `--grimoire ~/grimoires/cooking-grimoire`
+    The default is `default_framework_root()`, so a script invoked without args
+    operates on the framework itself; passing `--grimoire ~/grimoires/cooking-grimoire`
     points the same script at any grimoire.
     """
     parser.add_argument(
         flag,
         type=Path,
-        default=default_arcana_root(),
-        help="Grimoire root (default: ARCANA_HOME env var or rites parent)",
+        default=default_framework_root(),
+        help="Grimoire root (default: FRAMEWORK_HOME env var or rites parent)",
     )
 
 
@@ -197,7 +197,7 @@ def parse_frontmatter(text: str) -> dict:
 
     Returns `{}` when no frontmatter block is present.
 
-    Supported syntax (the subset Arcana uses):
+    Supported syntax (the subset the framework uses):
 
         key: value
         key: "quoted value"
@@ -430,24 +430,25 @@ def read_frontmatter_name(skill_file: Path) -> str:
 
 
 def load_skill_families(root: Path, *, with_fallback: bool = False) -> list[dict]:
-    """Return Arcana command-family definitions from arcana.json (no validation).
+    """Return framework command-family definitions from framework.json (no validation).
 
-    Each entry is `{name, skill_prefix, path, slug_prefix}`. `with_fallback`
-    injects a single default `arcana` family when none are declared. Returns `[]`
-    when arcana.json is unreadable or `skill_families` is malformed. Callers that
+    Each entry is `{name, skill_prefix, path, slug_prefix, plugin}`; `plugin` is the
+    Claude Code plugin that carries the family (the family name when unset). `with_fallback`
+    injects a single default `framework` family when none are declared. Returns `[]`
+    when framework.json is unreadable or `skill_families` is malformed. Callers that
     need strict validation or reporter diagnostics wrap this (e.g. sync_skills,
     the skill validators).
     """
     try:
-        metadata = json.loads((Path(root) / "arcana.json").read_text(encoding="utf-8"))
+        metadata = json.loads((Path(root) / "framework.json").read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return []
-    default_prefix = metadata.get("skill_prefix", "arc")
+    default_prefix = metadata.get("skill_prefix", "grm")
     raw = metadata.get("skill_families", {})
     if not isinstance(raw, dict):
         raw = {}
     if with_fallback and not raw:
-        raw = {"arcana": {"skill_prefix": default_prefix, "path": "skills", "slug_prefix": ""}}
+        raw = {"framework": {"skill_prefix": default_prefix, "path": "skills", "slug_prefix": ""}}
     families: list[dict] = []
     for name, config in raw.items():
         if not isinstance(config, dict):
@@ -457,12 +458,13 @@ def load_skill_families(root: Path, *, with_fallback: bool = False) -> list[dict
             "skill_prefix": config.get("skill_prefix", default_prefix),
             "path": Path(root) / config.get("path", ""),
             "slug_prefix": config.get("slug_prefix", ""),
+            "plugin": config.get("plugin", name),
         })
     return families
 
 
 def discover_skill_commands(root: Path) -> dict:
-    """Return every Arcana-shipped public command keyed by slash command.
+    """Return every framework-shipped public command keyed by slash command.
 
     Value: `{family, skill_prefix, skill_source}`. Used to verify the command
     surface and to enumerate shipped commands.
@@ -546,7 +548,7 @@ def is_skipped(rel, skip_dirs: Iterable[str]) -> bool:
     `rel` may be a Path or a string. A skip entry matches as a leading path
     prefix at segment boundaries: a single-segment entry like ``sources`` skips
     ``sources/...`` but never a sibling like ``sources_extra/...``, and a
-    multi-segment entry like ``invocations/arc/validators`` skips only that
+    multi-segment entry like ``invocations/dev/validators`` skips only that
     subtree.
     """
     if isinstance(rel, Path):

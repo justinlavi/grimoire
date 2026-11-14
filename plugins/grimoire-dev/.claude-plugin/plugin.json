@@ -1,0 +1,12 @@
+{
+  "name": "grimoire-dev",
+  "version": "1.8.0",
+  "description": "Grimoire maintainer verbs (update, validate, improve, clean, help) for people who maintain the framework itself.",
+  "author": {
+    "name": "Justin Lavi",
+    "url": "https://github.com/justinlavi/grimoire"
+  },
+  "homepage": "https://github.com/justinlavi/grimoire",
+  "repository": "https://github.com/justinlavi/grimoire",
+  "license": "MIT"
+}

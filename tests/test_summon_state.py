@@ -52,16 +52,16 @@ def _skill_targets(tmp_path, registered=0):
     skills = tmp_path / ".claude" / "skills"
     skills.mkdir(parents=True)
     for i in range(registered):
-        d = skills / f"arc-skill-{i}"
+        d = skills / f"grm-skill-{i}"
         d.mkdir()
-        (d / "SKILL.md").write_text("ARCANA_SKILL_OWNERSHIP\n", encoding="utf-8")
+        (d / "SKILL.md").write_text("FRAMEWORK_SKILL_OWNERSHIP\n", encoding="utf-8")
     return [{"id": "claude", "label": "Claude", "path": str(skills)}]
 
 
-def _inspect(tmp_path, *, home=None, arcana_root=REPO_ROOT, block=None, registered=0):
+def _inspect(tmp_path, *, home=None, framework_root=REPO_ROOT, block=None, registered=0):
     return S.inspect_install(
         home or _make_home(tmp_path),
-        arcana_root,
+        framework_root,
         instruction_targets=_instruction_targets(tmp_path, block),
         skill_targets=_skill_targets(tmp_path, registered),
         git_fn=NO_GIT,
@@ -77,7 +77,7 @@ def test_inspect_reports_library_drift_against_disk(tmp_path):
     state = _inspect(tmp_path, registered=1)
     assert state["library"]["in_sync"] is False
     assert "cooking-grimoire" in state["library"]["missing"]
-    assert state["arcana"]["working_tree_populated"] is True  # real Arcana checkout
+    assert state["framework"]["working_tree_populated"] is True  # real framework checkout
 
 
 def test_inspect_in_sync_when_library_matches_disk(tmp_path):
@@ -125,7 +125,7 @@ def test_clean_marked_block_is_not_drift(tmp_path):
 
 def test_inspect_counts_registered_skills(tmp_path):
     state = _inspect(tmp_path, registered=3)
-    assert state["skills"][0]["arcana_managed_count"] == 3
+    assert state["skills"][0]["framework_managed_count"] == 3
 
 
 def test_inspect_network_pull_is_human_gated(tmp_path):
@@ -384,7 +384,7 @@ def test_write_transcript_roundtrips_atomically(tmp_path):
 
 def _args(**kw):
     base = dict(check=False, reconcile=False, apply=False, prune=False,
-                home=None, arcana_root=str(REPO_ROOT), format="json")
+                home=None, framework_root=str(REPO_ROOT), format="json")
     base.update(kw)
     return types.SimpleNamespace(**base)
 
@@ -540,3 +540,23 @@ def test_record_install_transcript_marks_skill_failure(tmp_path):
         now=lambda: "t", run_id="rid",
     )
     assert t["status"] == "error"
+
+
+def test_a_checkout_from_before_1_8_is_reported_for_removal_and_never_scanned_as_a_grimoire(tmp_path):
+    home = _make_home(tmp_path)
+    retired = home / "arcana"
+    retired.mkdir()
+    (retired / "arcana.json").write_text("{}", encoding="utf-8")
+
+    state = _inspect(tmp_path, home=home, registered=1)
+
+    assert state["framework"]["retired_checkout"] == str(retired)
+    assert "arcana" not in state["library"]["unmanaged"]
+    kinds = [action["kind"] for action in S.next_actions(state, REPO_ROOT)]
+    assert "retired_checkout_remove" in kinds
+
+
+def test_no_retired_checkout_means_no_removal_action(tmp_path):
+    state = _inspect(tmp_path, registered=1)
+    assert state["framework"]["retired_checkout"] == ""
+    assert "retired_checkout_remove" not in [a["kind"] for a in S.next_actions(state, REPO_ROOT)]

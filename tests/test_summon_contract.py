@@ -35,7 +35,7 @@ def test_summon_contract_names_required_pipeline():
 
     assert list(steps) == [
         "check_git",
-        "install_arcana",
+        "install_framework",
         "discover_grimoires",
         "install_grimoires",
         "update_library",

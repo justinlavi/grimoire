@@ -2,7 +2,7 @@
 type: reference
 title: "Invocation Formula"
 aliases: ["invocation-template"]
-tags: [type/reference, arcana/formula]
+tags: [type/reference, framework/formula]
 authority: grimoire
 last_verified: 2026-05-12
 ---
@@ -13,7 +13,7 @@ last_verified: 2026-05-12
 [What this invocation does, when to cast it]
 
 ## Invocation
-[How to trigger this invocation, e.g., "/arc-[skill-name]" via supported agent skills]
+[How to trigger this invocation, e.g., "/grm-dev-[skill-name]" via supported agent skills]
 
 ## Prerequisites
 - [What the user needs to have ready]

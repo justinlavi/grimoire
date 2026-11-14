@@ -2,15 +2,15 @@
 # Build this grimoire's site: stage, audit, generate, audit the output.
 #
 # Runs locally and in CI with the same steps. It needs git, Python 3.10+, and
-# Node.js 22+ (for Quartz). The Arcana engine is taken from $ARCANA_HOME,
-# then ~/grimoires/arcana, and otherwise cloned into publish/.engine/ (CI).
+# Node.js 22+ (for Quartz). The framework is taken from $FRAMEWORK_HOME,
+# then ~/.grimoire, and otherwise cloned into publish/.framework/ (CI).
 # Quartz is cloned into publish/quartz/ when absent; publish/quartz.config.yaml
 # is this grimoire's own configuration and is copied over the clone's.
 #
 #   bash publish/build.sh            # full build into publish/quartz/public
 #   bash publish/build.sh --check    # stage and audit only, no generator
 #
-# Environment: ARCANA_HOME, ARCANA_URL (engine clone source), ARCANA_REF (branch or tag, default main),
+# Environment: FRAMEWORK_HOME, FRAMEWORK_URL (framework clone source), FRAMEWORK_REF (branch or tag, default main),
 # QUARTZ_REPO (default https://github.com/jackyzha0/quartz.git), QUARTZ_REF (default v5.1.0).
 
 set -euo pipefail
@@ -19,29 +19,29 @@ PUBLISH_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GRIMOIRE_ROOT="$(cd "$PUBLISH_ROOT/.." && pwd)"
 CHECK_ONLY="${1:-}"
 
-: "${ARCANA_URL:=https://github.com/justinlavi/arcana.git}"
-: "${ARCANA_REF:=main}"
+: "${FRAMEWORK_URL:=https://github.com/justinlavi/grimoire.git}"
+: "${FRAMEWORK_REF:=main}"
 : "${QUARTZ_REPO:=https://github.com/jackyzha0/quartz.git}"
 : "${QUARTZ_REF:=v5.1.0}"
 
-# 1. Engine
-if [[ -n "${ARCANA_HOME:-}" && -d "${ARCANA_HOME}/rites" ]]; then
-    ENGINE="$ARCANA_HOME"
-elif [[ -d "$HOME/grimoires/arcana/rites" ]]; then
-    ENGINE="$HOME/grimoires/arcana"
+# 1. Framework
+if [[ -n "${FRAMEWORK_HOME:-}" && -d "${FRAMEWORK_HOME}/rites" ]]; then
+    FRAMEWORK="$FRAMEWORK_HOME"
+elif [[ -d "$HOME/.grimoire/rites" ]]; then
+    FRAMEWORK="$HOME/.grimoire"
 else
-    ENGINE="$PUBLISH_ROOT/.engine"
-    if [[ ! -d "$ENGINE/rites" ]]; then
-        echo "  [INFO]  Cloning the Arcana engine into publish/.engine/"
-        git clone --quiet --depth 1 --branch "$ARCANA_REF" "$ARCANA_URL" "$ENGINE"
+    FRAMEWORK="$PUBLISH_ROOT/.framework"
+    if [[ ! -d "$FRAMEWORK/rites" ]]; then
+        echo "  [INFO]  Cloning the framework into publish/.framework/"
+        git clone --quiet --depth 1 --branch "$FRAMEWORK_REF" "$FRAMEWORK_URL" "$FRAMEWORK"
     fi
 fi
-ARCANA="$ENGINE/bin/arcana"
-echo "  [OK]    Engine: $ENGINE"
+LAUNCHER="$FRAMEWORK/bin/grimoire"
+echo "  [OK]    Framework: $FRAMEWORK"
 
 # 2. Stage and audit the content
-"$ARCANA" stage_publish --grimoire "$GRIMOIRE_ROOT" --apply
-"$ARCANA" audit_publish --grimoire "$GRIMOIRE_ROOT" --mode content
+"$LAUNCHER" stage_publish --grimoire "$GRIMOIRE_ROOT" --apply
+"$LAUNCHER" audit_publish --grimoire "$GRIMOIRE_ROOT" --mode content
 
 if [[ "$CHECK_ONLY" == "--check" ]]; then
     echo "  [OK]    Check complete (no generator run)."
@@ -82,5 +82,5 @@ fi
 )
 
 # 4. Audit the generated site
-"$ARCANA" audit_publish --grimoire "$GRIMOIRE_ROOT" --mode static-output --target "$QUARTZ/public"
+"$LAUNCHER" audit_publish --grimoire "$GRIMOIRE_ROOT" --mode static-output --target "$QUARTZ/public"
 echo "  [OK]    Site built at $QUARTZ/public"

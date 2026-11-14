@@ -161,14 +161,14 @@ def test_iter_pages_respects_skip_dirs():
 
 
 def test_skill_prefix_regex_accepts_valid_slugs():
-    assert _lib.SKILL_PREFIX_RE.fullmatch("arc")
+    assert _lib.SKILL_PREFIX_RE.fullmatch("cook")
     assert _lib.SKILL_PREFIX_RE.fullmatch("oly2")
 
 
 def test_skill_prefix_regex_rejects_invalid_slugs():
-    assert not _lib.SKILL_PREFIX_RE.fullmatch("arc-bad")
-    assert not _lib.SKILL_PREFIX_RE.fullmatch("Arc")
-    assert not _lib.SKILL_PREFIX_RE.fullmatch("2arc")
+    assert not _lib.SKILL_PREFIX_RE.fullmatch("cook-bad")
+    assert not _lib.SKILL_PREFIX_RE.fullmatch("Cook")
+    assert not _lib.SKILL_PREFIX_RE.fullmatch("2cook")
 
 
 def test_skill_slug_regex_accepts_kebab_case():
@@ -177,8 +177,8 @@ def test_skill_slug_regex_accepts_kebab_case():
 
 
 def test_skill_slug_regex_rejects_mixed_case():
-    assert not _lib.SKILL_SLUG_RE.fullmatch("Arcana-Bad")
-    assert not _lib.SKILL_SLUG_RE.fullmatch("arcana_underscore")
+    assert not _lib.SKILL_SLUG_RE.fullmatch("Cook-Bad")
+    assert not _lib.SKILL_SLUG_RE.fullmatch("framework_underscore")
 
 
 def test_date_regex_basic():
@@ -203,9 +203,9 @@ def test_is_skipped_does_not_match_sibling_prefix():
 
 
 def test_is_skipped_matches_multi_segment_prefix():
-    skip = {"invocations/arc/validators"}
-    assert _lib.is_skipped("invocations/arc/validators/x.md", skip)
-    assert not _lib.is_skipped("invocations/arc/validators_extra/x.md", skip)
+    skip = {"invocations/dev/validators"}
+    assert _lib.is_skipped("invocations/dev/validators/x.md", skip)
+    assert not _lib.is_skipped("invocations/dev/validators_extra/x.md", skip)
 
 
 def test_is_skipped_is_anchored_at_path_start():

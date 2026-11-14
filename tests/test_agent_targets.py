@@ -1,4 +1,4 @@
-"""Contract tests for the Arcana agent target registry."""
+"""Contract tests for the framework agent target registry."""
 
 import json
 from pathlib import Path
@@ -49,3 +49,14 @@ def test_summon_source_bootstrap_downloads_agent_target_contract():
     assert "rites/data/agent_targets.json" in bootstrap
     assert '"$SCRIPT_DIR/data/agent_targets.json"' in bootstrap
 
+
+def test_installed_plugins_map_to_command_families(tmp_path):
+    import json
+
+    from agent_targets import family_plugins, installed_framework_plugins
+
+    assert family_plugins(REPO_ROOT) == {"grimoire": "grm", "grimoire-dev": "dev"}
+    record = tmp_path / "plugins" / "installed_plugins.json"
+    record.parent.mkdir(parents=True)
+    record.write_text(json.dumps({"plugins": {"grimoire@grimoire": [{}], "other@elsewhere": [{}]}}), encoding="utf-8")
+    assert installed_framework_plugins(REPO_ROOT, tmp_path) == {"grm"}

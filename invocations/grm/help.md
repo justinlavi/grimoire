@@ -2,16 +2,16 @@
 type: playbook
 title: "Grimoire Help"
 aliases: ["grimoire-help", "grm-skill-catalog"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
-last_verified: 2026-06-01
+last_verified: 2026-11-13
 ---
 
 # Invocation: Grimoire Help
 
 ## Purpose
 
-Show a grimoire author the commands they reach for from inside a grimoire: the `/grm-*` family (Arcana's grimoire operations) and the active grimoire's own skills. For the full platform catalog - every `/arc-*` command and every installed grimoire - use `/arc-help`.
+Show a grimoire author the commands they reach for from inside a grimoire: the `/grm-*` family (the framework's grimoire operations) and the active grimoire's own skills. For the full platform catalog - every `/grm-dev-*` command and every installed grimoire - use `/grm-dev-help`.
 
 ## Invocation
 
@@ -21,13 +21,13 @@ Show a grimoire author the commands they reach for from inside a grimoire: the `
 
 ## Preconditions
 
-!`cat ARCANA_HOME/invocations/meta/grimoire_directory_guard.md`
+!`cat FRAMEWORK_HOME/invocations/meta/grimoire_directory_guard.md`
 
 ## Workflow
 
 ### 1. Show the /grm-* command family
 
-Read [[docs/skills|skills]] and present its catalog rows for the `/grm-*` commands (Command / what it does) - the grimoire operations. Ignore the maintainer-facing "Command contract" section. It is the canonical, sync-generated list. If `docs/skills.md` is missing, fall back to scanning `skills/grm/*/SKILL.md` and warn that it should be regenerated with `python3 rites/sync_docs.py --apply`.
+Read [[docs/skills|skills]] and present its catalog rows for the `/grm-*` commands (Command / what it does) - the grimoire operations. Ignore the `/grm-dev-*` maintainer rows and the maintainer-facing "Command contract" section. It is the canonical, sync-generated list. If `docs/skills.md` is missing, fall back to scanning `skills/grm/*/SKILL.md` and warn that it should be regenerated with `python3 rites/sync_docs.py --apply`.
 
 ### 2. Show the active grimoire's own skills
 
@@ -55,10 +55,10 @@ Grimoire commands (/grm-*) - N skills
 
 ### 4. Point to the full catalog
 
-End with one line: `For every Arcana command and all installed grimoires, run /arc-help.`
+End with one line: `For every framework command and all installed grimoires, run /grm-dev-help.`
 
 ## Related
 
-- **Full Arcana + grimoire catalog**: [[invocations/arc/help|help]]
+- **Full framework + grimoire catalog**: [[invocations/dev/help|help]]
 - **Canonical skill catalog**: [[docs/skills|skills]]
 - **Active-grimoire skill sync**: [[invocations/grm/update|update]]

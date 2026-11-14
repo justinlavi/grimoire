@@ -2,9 +2,9 @@
 type: reference
 title: "Getting Started"
 aliases: ["getting-started", "start-here", "grimoire-for-everyone"]
-tags: [type/reference, arcana/docs, scope/onboarding]
+tags: [type/reference, framework/docs, scope/onboarding]
 authority: grimoire
-last_verified: 2026-11-12
+last_verified: 2026-11-13
 ---
 
 # Getting Started with Grimoire
@@ -13,7 +13,8 @@ A grimoire is a knowledge base your AI assistant reads and maintains with
 you: the things your team knows, written down once, routed so the assistant
 finds the right page instead of guessing. This page is for someone joining a
 team that already has one, or starting their own, without being an engineer.
-Arcana is the engine underneath; you never touch it.
+Grimoire is also the name of the program that does this: the framework
+underneath, which you install once and never touch.
 
 ## What you need
 
@@ -29,13 +30,13 @@ Arcana is the engine underneath; you never touch it.
 **Claude Code** (two commands, inside a Claude Code session):
 
 ```text
-/plugin marketplace add justinlavi/arcana
-/plugin install grm@arcana
+/plugin marketplace add justinlavi/grimoire
+/plugin install grimoire@grimoire
 ```
 
-Then start a new session. The first session installs the engine for you and
-tells you so. At a company that mirrors Arcana on its own GitLab, use that
-address instead: `/plugin marketplace add https://gitlab.example.com/tools/arcana.git`.
+Then start a new session. The first session installs the framework for you and
+tells you so. At a company that mirrors the framework on its own GitLab, use that
+address instead: `/plugin marketplace add https://gitlab.example.com/tools/grimoire.git`.
 If your IT team has preinstalled it, skip this step entirely.
 
 **Codex, or any other assistant**: in a terminal, run the one-line installer
@@ -56,8 +57,8 @@ notes you already have into one. If your host needs a sign-in the first time,
 git prompts you once, the way it does for any repository. When it finishes,
 open one more new session so the assistant sees the grimoire's commands.
 
-With the Claude Code plugin the commands are spelled `/grm:setup`,
-`/grm:add`, and so on. Everywhere else they are `/grm-setup`, `/grm-add`.
+With the Claude Code plugin the commands are spelled `/grimoire:setup`,
+`/grimoire:add`, and so on. Everywhere else they are `/grm-setup`, `/grm-add`.
 
 ## Day to day
 
@@ -88,7 +89,7 @@ same thing. You do not need to know git:
   description you approve, brings in what teammates saved meanwhile, and
   sends yours. If you and a teammate changed the same lines, it stops, keeps
   your work safe, names the file, and walks you through choosing.
-- `/grm-update` brings in everyone else's changes and keeps the engine and
+- `/grm-update` brings in everyone else's changes and keeps the framework and
   your commands current. With the Claude Code plugin this mostly happens on
   its own at the start of a session; the assistant tells you when something
   needs it.
@@ -113,5 +114,5 @@ for your host.
   a new session.
 
 Everything above is deterministic where it can be and conversational where
-it must be: the engine does the bookkeeping, the assistant does the asking,
+it must be: the framework does the bookkeeping, the assistant does the asking,
 and you decide.

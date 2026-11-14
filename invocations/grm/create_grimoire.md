@@ -2,7 +2,7 @@
 type: playbook
 title: "Create Grimoire"
 aliases: ["create-grimoire", "scaffold-grimoire"]
-tags: [arcana/invocations, type/playbook, scope/grimoire]
+tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-12
 ---
@@ -22,12 +22,12 @@ AI-guided conversational setup that scaffolds a complete grimoire from the scaff
 ## Non-Negotiable Rules
 
 1. One grimoire per domain.
-2. Reference universal invocations/formulae via Arcana — don't copy them.
+2. Reference universal invocations/formulae via the framework — don't copy them.
 3. Practical folder names only (`templates/`, `scripts/`, `snippets/`). Never `invocations/`, `formulae/`, or `rites/` inside a grimoire.
 4. No credentials, PII, or secrets.
 5. Link to source systems; don't duplicate their content.
 6. Designate an owner.
-7. Every page carries canonical frontmatter (see `ARCANA_HOME/docs/page_schema.md`).
+7. Every page carries canonical frontmatter (see `FRAMEWORK_HOME/docs/page_schema.md`).
 8. Hub naming: every folder F has a hub at `F/<basename(F)>.md`.
 
 ---
@@ -68,7 +68,7 @@ Let the user select, rename, drop, or add chapters and provide a one-line descri
 ## Step 3: Scaffold from Contract
 
 The scaffold inventory lives in
-`ARCANA_HOME/formulae/grimoire/scaffold_contract.json`. Load that contract
+`FRAMEWORK_HOME/formulae/grimoire/scaffold_contract.json`. Load that contract
 before creating files. It is the only source for scaffold directories,
 templated files, copied support files, managed Obsidian settings, and empty
 directory markers.
@@ -83,7 +83,7 @@ Create the grimoire by applying the contract:
    substituting scaffold placeholders in target paths.
 5. Replace placeholders in copied file contents during Step 4.
 
-The root hub file is named after the grimoire directory (folder-name convention). `grimoire.json` is the grimoire's self-declared identity (name, skill prefix, description). Chapter-local `sources/` folders are the immutable source layer; `inbox/` is the transient drop zone for mixed content awaiting classification; `publish/` (with a managed `publish/README.md`) is the build/publishing-output layer present in every grimoire, excluded from validation and the knowledge graph; it stays idle until you publish, and build output under it is disposable; `.obsidian/app.json` and `.obsidian/graph.json` are managed scaffold files that preserve safe full-path wikilink behavior and Arcana's graph-view color groups.
+The root hub file is named after the grimoire directory (folder-name convention). `grimoire.json` is the grimoire's self-declared identity (name, skill prefix, description). Chapter-local `sources/` folders are the immutable source layer; `inbox/` is the transient drop zone for mixed content awaiting classification; `publish/` (with a managed `publish/README.md`) is the build/publishing-output layer present in every grimoire, excluded from validation and the knowledge graph; it stays idle until you publish, and build output under it is disposable; `.obsidian/app.json` and `.obsidian/graph.json` are managed scaffold files that preserve safe full-path wikilink behavior and the framework's graph-view color groups.
 
 ---
 
@@ -117,7 +117,7 @@ Do not re-paste the long form into the manifest, the root hub, the log, or any s
 
 **`README.md`** (the canonical home for the long-form description):
 - `{{GRIMOIRE_NAME}}`, `{{GRIMOIRE_PURPOSE_DETAILED}}`, `{{GRIMOIRE_DIRECTORY}}`, `{{SKILL_PREFIX}}`
-- `{{GRIMOIRE_REPO_URL}}` — the git URL captured in Step 1; used in the README's `## Installation` section so downstream consumers who discover this grimoire on a git host know to summon Arcana first rather than clone the grimoire directly. Leave the literal placeholder `<set this when you push to a git host>` if unknown.
+- `{{GRIMOIRE_REPO_URL}}` — the git URL captured in Step 1; used in the README's `## Installation` section so downstream consumers who discover this grimoire on a git host know to summon the framework first rather than clone the grimoire directly. Leave the literal placeholder `<set this when you push to a git host>` if unknown.
 - `{{EXAMPLE_CHAPTER}}` — pick one chapter from the user's selection
 - `{{CHAPTER_LIST}}` — bulleted `**name** - description` per chapter
 - `{{CHAPTER_TREE}}` — ASCII tree of `chapters/<name>/<name>.md`
@@ -138,7 +138,7 @@ rm -f {{grimoire_directory}}/chapters/.gitkeep
 
 ## Step 5: Create Initial Chapters
 
-For each selected chapter, follow `ARCANA_HOME/invocations/grm/add.md` with these inputs auto-filled:
+For each selected chapter, follow `FRAMEWORK_HOME/invocations/grm/add.md` with these inputs auto-filled:
 
 - **name**: from selection
 - **purpose**: from selection
@@ -178,9 +178,9 @@ Bootstrap form (if creating from scratch):
 ```
 
 If an automatic or manual agent instruction target from
-`ARCANA_HOME/docs/agent_targets.md` lacks a `## Grimoire Knowledge Base`
+`FRAMEWORK_HOME/docs/agent_targets.md` lacks a `## Grimoire Knowledge Base`
 section, instruct the user to paste the canonical block from
-`ARCANA_HOME/rites/templates/grimoire_block.md`. That block is static across
+`FRAMEWORK_HOME/rites/templates/grimoire_block.md`. That block is static across
 new grimoires — only the library changes.
 
 ---
@@ -191,7 +191,7 @@ If the new grimoire declares a `skill_prefix` in `grimoire.json`, register its
 skills so its `/<prefix>-*` commands become available:
 
 ```bash
-ARCANA_HOME/bin/arcana sync_skills --grimoire .
+FRAMEWORK_HOME/bin/grimoire sync_skills --grimoire .
 ```
 
 Then tell the user to reopen their agent session - Claude Code and Codex cache
@@ -203,9 +203,9 @@ a restart.
 ## Step 8: Validate
 
 ```bash
-ARCANA_HOME/bin/arcana validate_grimoire_structure --grimoire .
-ARCANA_HOME/bin/arcana validate_frontmatter --grimoire .
-ARCANA_HOME/bin/arcana validate_links --grimoire .
+FRAMEWORK_HOME/bin/grimoire validate_grimoire_structure --grimoire .
+FRAMEWORK_HOME/bin/grimoire validate_frontmatter --grimoire .
+FRAMEWORK_HOME/bin/grimoire validate_links --grimoire .
 ```
 
 Or invoke `/grm-check quick` for the full mechanical pass.
@@ -217,8 +217,8 @@ If the relevant agent instruction file already includes the Grimoire routing blo
 ## Related
 
 - **Chapter creation**: [[invocations/grm/add|add]]
-- **Template formula**: `ARCANA_HOME/formulae/grimoire/`
-- **Page schema**: `ARCANA_HOME/docs/page_schema.md`
-- **Skill registration**: `/arc-update skills` (reads each grimoire's `grimoire.json`)
+- **Template formula**: `FRAMEWORK_HOME/formulae/grimoire/`
+- **Page schema**: `FRAMEWORK_HOME/docs/page_schema.md`
+- **Skill registration**: `/grm-dev-update skills` (reads each grimoire's `grimoire.json`)
 - **Structure validator**: `/grm-check structure`
-- **Agent block**: `ARCANA_HOME/rites/templates/grimoire_block.md`
+- **Agent block**: `FRAMEWORK_HOME/rites/templates/grimoire_block.md`

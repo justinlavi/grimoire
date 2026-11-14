@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate text encoding, newline, and mojibake safety.
 
-Arcana and grimoires may use Unicode, but every text file must be UTF-8
+The framework and grimoires may use Unicode, but every text file must be UTF-8
 without BOM, use LF line endings, and avoid common mojibake artifacts.
 
 Usage: python3 rites/validate_encoding.py [--grimoire <path>]

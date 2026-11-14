@@ -30,7 +30,7 @@ BAD_FRONT = FIXTURES / "bad_frontmatter"
 BAD_LINKS = FIXTURES / "bad_links"
 WARN_LABELS = FIXTURES / "warn_labels"
 
-ARCANA_VALIDATOR_NAMES = {Path(name).stem for name in validate.ARCANA_RITES}
+FRAMEWORK_VALIDATOR_NAMES = {Path(name).stem for name in validate.FRAMEWORK_RITES}
 GRIMOIRE_VALIDATOR_NAMES = {Path(name).stem for name in validate.GRIMOIRE_RITES}
 
 
@@ -480,12 +480,12 @@ def test_grimoire_structure_flags_misplaced_hub(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Arcana itself - meta-test that the suite still passes against the live tree
+# The framework itself - meta-test that the suite still passes against the live tree
 # ---------------------------------------------------------------------------
 
 
-def test_full_validator_suite_passes_against_arcana():
-    """The orchestrator should keep returning 0 on Arcana itself.
+def test_full_validator_suite_passes_against_framework():
+    """The orchestrator should keep returning 0 on the framework itself.
 
     This guards against any future _lib change that subtly breaks a validator.
     """
@@ -496,7 +496,7 @@ def test_full_validator_suite_passes_against_arcana():
         timeout=120,
     )
     assert result.returncode == 0, (
-        "Full validator suite failed against Arcana\n"
+        "Full validator suite failed against the framework\n"
         f"--- stdout (tail) ---\n{result.stdout[-2000:]}\n"
         f"--- stderr (tail) ---\n{result.stderr[-1000:]}"
     )
@@ -514,11 +514,11 @@ def test_full_validator_suite_emits_structured_aggregate_report():
     report = json.loads(result.stdout)
     assert report["validator"] == "validate"
     assert report["status"] == "pass"
-    assert report["checked"]["validators"] == len(validate.ARCANA_RITES)
-    assert len(report["reports"]) == len(validate.ARCANA_RITES)
+    assert report["checked"]["validators"] == len(validate.FRAMEWORK_RITES)
+    assert len(report["reports"]) == len(validate.FRAMEWORK_RITES)
     assert {
         validator_report["validator"] for validator_report in report["reports"]
-    } == ARCANA_VALIDATOR_NAMES
+    } == FRAMEWORK_VALIDATOR_NAMES
 
 
 def test_grimoire_validator_suite_passes_good_fixture():
@@ -564,14 +564,14 @@ def test_grimoire_validator_suite_fails_bad_fixture():
 
 def test_orchestrator_loads_validator_lists_from_contract():
     data = json.loads((RITES / "data" / "validators.json").read_text(encoding="utf-8"))
-    assert validate.ARCANA_RITES == data["arcana"]
+    assert validate.FRAMEWORK_RITES == data["framework"]
     assert validate.GRIMOIRE_RITES == data["grimoire"]
 
 
 def test_validators_contract_lists_only_real_validators():
     data = json.loads((RITES / "data" / "validators.json").read_text(encoding="utf-8"))
-    assert data["arcana"] and data["grimoire"]
-    for name in set(data["arcana"]) | set(data["grimoire"]):
+    assert data["framework"] and data["grimoire"]
+    for name in set(data["framework"]) | set(data["grimoire"]):
         assert (RITES / name).is_file(), (
             f"{name} is declared in validators.json but does not exist"
         )
@@ -582,14 +582,14 @@ def test_validators_contract_lists_only_real_validators():
 # ---------------------------------------------------------------------------
 
 
-def _run_arcana(script: str, arcana_home: Path, *extra_args: str) -> subprocess.CompletedProcess:
-    """Run an Arcana-profile validator against an alternate root via ARCANA_HOME."""
+def _run_framework(script: str, framework_home: Path, *extra_args: str) -> subprocess.CompletedProcess:
+    """Run a framework-profile validator against an alternate root via FRAMEWORK_HOME."""
     return subprocess.run(
         [sys.executable, str(RITES / script), *extra_args],
         capture_output=True,
         text=True,
         timeout=30,
-        env={**os.environ, "ARCANA_HOME": str(arcana_home)},
+        env={**os.environ, "FRAMEWORK_HOME": str(framework_home)},
     )
 
 
@@ -619,7 +619,7 @@ def test_validate_security_flags_exec_in_a_rite(tmp_path):
     (tmp_path / "rites").mkdir()
     (tmp_path / "rites" / "evil.py").write_text("def f():\n    exec(payload)\n", encoding="utf-8")
 
-    result = _run_arcana("validate_security.py", tmp_path, "--format", "json")
+    result = _run_framework("validate_security.py", tmp_path, "--format", "json")
 
     assert result.returncode != 0
     assert "SECURITY_EXEC" in _codes(result)

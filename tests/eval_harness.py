@@ -1,5 +1,5 @@
 """Harness for the invocation eval tier - behavioral coverage for the judgment
-half of Arcana.
+half of the framework.
 
 The deterministic validators and mutating rites cover the mechanical floor. The
 invocations (`invocations/**/*.md`) are playbooks an AI agent follows to do
@@ -11,7 +11,7 @@ It is NOT a rite: it is not pure-stdlib-constrained in spirit (it shells to a
 model) and it is never run by `rites/validate.py`. The single model boundary is
 an injectable `model_fn(prompt, cwd) -> str` seam, mirroring the `git_fn` /
 `skill_runner` / `validate_runner` seams in `rites/summon_state.py`. The default
-seam shells to `claude` and refuses unless `ARCANA_EVAL_MODEL` is set, so the
+seam shells to `claude` and refuses unless `FRAMEWORK_EVAL_MODEL` is set, so the
 fast pytest gate (which injects a fake seam, or never imports a model path) can
 never reach a model. Eval scenario file contents are base64-encoded in the spec
 JSON (the §5.5 inert-fixture rule) so deliberately-dirty fixtures never trip the
@@ -33,8 +33,8 @@ from typing import Any, Callable
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SPECS_PATH = REPO_ROOT / "tests" / "fixtures" / "invocation_eval_specs.json"
 SCHEMA_VERSION = 1
-ARCANA_EVAL_MODEL = "ARCANA_EVAL_MODEL"
-ARCANA_EVAL_CLAUDE = "ARCANA_EVAL_CLAUDE"
+FRAMEWORK_EVAL_MODEL = "FRAMEWORK_EVAL_MODEL"
+FRAMEWORK_EVAL_CLAUDE = "FRAMEWORK_EVAL_CLAUDE"
 
 # A model seam takes the assembled prompt and the grimoire working directory and
 # returns the agent's raw stdout (expected to contain a fenced json decision).
@@ -116,7 +116,7 @@ def assemble_prompt(spec: EvalSpec, repo_root: Path = REPO_ROOT) -> str:
     invocation_text = (Path(repo_root) / spec.invocation).read_text(encoding="utf-8")
     return (
         "You are an AI agent operating inside a grimoire rooted at your current "
-        "working directory. Arcana rites live at the path in the ARCANA_HOME "
+        "working directory. Framework rites live at the path in the FRAMEWORK_HOME "
         "environment variable. Follow the playbook below exactly for the user's "
         f"request, then report your decision.\n\n"
         f"USER REQUEST: {spec.user_request}\n\n"
@@ -263,19 +263,19 @@ def run_judge(criterion: dict, agent_output: str, model_fn: ModelFn, cwd: str) -
 def claude_cli_seam(prompt: str, cwd: str, *, timeout: int = 600) -> str:
     """Default seam: drive the `claude` CLI headlessly in `cwd`.
 
-    Refuses unless ARCANA_EVAL_MODEL is set, so it can never fire in the fast gate.
+    Refuses unless FRAMEWORK_EVAL_MODEL is set, so it can never fire in the fast gate.
     """
-    if not os.environ.get(ARCANA_EVAL_MODEL):
+    if not os.environ.get(FRAMEWORK_EVAL_MODEL):
         raise RuntimeError(
-            f"{ARCANA_EVAL_MODEL} is not set; refusing to call a model. "
+            f"{FRAMEWORK_EVAL_MODEL} is not set; refusing to call a model. "
             "Set it to opt into the model-in-the-loop eval tier."
         )
     env = dict(os.environ)
-    env.setdefault("ARCANA_HOME", str(REPO_ROOT))
+    env.setdefault("FRAMEWORK_HOME", str(REPO_ROOT))
     binary = claude_binary()
     if binary is None:
         return (
-            f"seam error: no `claude` executable on PATH; set {ARCANA_EVAL_CLAUDE} "
+            f"seam error: no `claude` executable on PATH; set {FRAMEWORK_EVAL_CLAUDE} "
             "to the Claude Code binary (the VS Code extension ships one under "
             "resources/native-binary/)."
         )
@@ -296,8 +296,8 @@ def claude_cli_seam(prompt: str, cwd: str, *, timeout: int = 600) -> str:
 
 
 def claude_binary() -> str | None:
-    """Path of the Claude Code executable: ARCANA_EVAL_CLAUDE, else `claude` on PATH."""
-    override = os.environ.get(ARCANA_EVAL_CLAUDE)
+    """Path of the Claude Code executable: FRAMEWORK_EVAL_CLAUDE, else `claude` on PATH."""
+    override = os.environ.get(FRAMEWORK_EVAL_CLAUDE)
     if override:
         return override
     return shutil.which("claude")

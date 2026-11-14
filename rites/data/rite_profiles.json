@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "title": "Arcana Mutating Rite Profiles",
+  "title": "Grimoire Mutating Rite Profiles",
   "description": "Authoritative contract for write-capable rites: whether they plan, apply, append, or only write through an explicit operation.",
   "profiles": [
     {
@@ -25,7 +25,7 @@
       "plan_command": "python rites/clean_artifacts.py --dry-run",
       "apply_command": "python rites/clean_artifacts.py",
       "writes": [
-        "rites/.artifacts directory under Arcana"
+        "rites/.artifacts directory under the framework"
       ],
       "idempotency": "After cleanup, rerun reports nothing to clean.",
       "validation_profile": "python rites/clean_artifacts.py --dry-run",
@@ -74,7 +74,7 @@
       "writes": [
         "supported agent skill directories under the user's home directory"
       ],
-      "idempotency": "Rerunning with the same inputs produces the same rendered skill files; stale cleanup removes any directory in a managed prefix (arc, grm, or a grimoire prefix) that is not in the current catalog. With --reset-managed, all managed namespace directories are removed before re-registration. Directories outside every managed prefix are never touched.",
+      "idempotency": "Rerunning with the same inputs produces the same rendered skill files; stale cleanup removes any directory in a managed prefix (grm or a grimoire prefix) that is not in the current catalog. With --reset-managed, all managed namespace directories are removed before re-registration. Directories outside every managed prefix are never touched.",
       "validation_profile": "python rites/sync_skills.py --dry-run; temp-target pytest coverage for dry-run, repeated apply, overwrite of an unmarked managed dir, stale cleanup, managed-namespace reset, outside-namespace preservation, and prefix collisions.",
       "tests": [
         "tests/test_sync_skills.py",
@@ -120,7 +120,7 @@
       "apply_command": "bash rites/summon.sh",
       "writes": [
         "companion-script download directory (temporary)",
-        "Arcana install tree",
+        "Framework install tree",
         "selected grimoire repositories",
         "agent instruction files",
         "agent skill directories"
@@ -139,7 +139,7 @@
       "plan_command": null,
       "apply_command": "python rites/summon.py",
       "writes": [
-        "Arcana install tree",
+        "Framework install tree",
         "selected grimoire repositories",
         "library.json",
         "agent instruction files",
@@ -189,7 +189,7 @@
       "plan_command": "python rites/summon.py --update",
       "apply_command": "python rites/summon.py --update --apply",
       "writes": [
-        "grimoire working trees (fast-forward-only pulls) and Arcana-owned managed scaffold during heal"
+        "grimoire working trees (fast-forward-only pulls) and framework-owned managed scaffold during heal"
       ],
       "idempotency": "Pulls are fast-forward-only and heals are idempotent: a second run on a current, clean library pulls nothing and heals nothing new. Grimoires that are dirty, diverged, or unreachable are reported and left untouched.",
       "validation_profile": "python rites/summon.py --update; python rites/validate.py --grimoire <path> --summary after apply.",
@@ -207,7 +207,7 @@
       "writes": [
         "transient validator reports under rites/.artifacts when parallel mode is used"
       ],
-      "idempotency": "Validation does not change durable Arcana or grimoire content; transient reports may be refreshed.",
+      "idempotency": "Validation does not change durable framework or grimoire content; transient reports may be refreshed.",
       "validation_profile": "python rites/validate.py --parallel",
       "tests": [
         "tests/test_rite_profiles.py",
@@ -257,7 +257,7 @@
       "writes": [
         "plugins/<family>/.claude-plugin/plugin.json",
         "plugins/<family>/skills/<slug>/SKILL.md",
-        "plugins/grm/scripts/grimoire_block.md"
+        "plugins/grimoire/scripts/grimoire_block.md"
       ],
       "idempotency": "Rendering is a pure function of the skill sources, the routing block template, and VERSION; a second apply is a noop.",
       "validation_profile": "python rites/build_plugins.py (exit 0 when the committed render matches the sources); python -m pytest tests/test_build_plugins.py",

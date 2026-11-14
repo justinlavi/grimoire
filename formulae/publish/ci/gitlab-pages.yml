@@ -3,8 +3,8 @@
 # URL; keep "Pages access control" set to project members so only people who
 # can see the repository can see the site.
 #
-# The job clones the Arcana engine and Quartz itself, so the runner needs
-# outbound access to the Arcana repository (set ARCANA_URL to your mirror)
+# The job clones the framework and Quartz itself, so the runner needs
+# outbound access to the framework repository (set FRAMEWORK_URL to your mirror)
 # and to github.com for Quartz (or mirror Quartz and set QUARTZ_REPO).
 
 stages:
@@ -14,8 +14,8 @@ stages:
 image: node:22
 
 variables:
-  ARCANA_URL: "https://github.com/justinlavi/arcana.git"
-  ARCANA_REF: "main"
+  FRAMEWORK_URL: "https://github.com/justinlavi/grimoire.git"
+  FRAMEWORK_REF: "main"
   QUARTZ_REPO: "https://github.com/jackyzha0/quartz.git"
   QUARTZ_REF: "v5.1.0"
 

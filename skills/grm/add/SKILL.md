@@ -16,16 +16,16 @@ If the user provided material or a path, it is: **$material**
 
 ## Precondition
 
-!`cat {{ARCANA_PATH}}/invocations/meta/grimoire_directory_guard.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/meta/grimoire_directory_guard.md`
 
 ## Context
 
-- **Arcana**: `{{ARCANA_PATH}}`
-- **Page formula**: `{{ARCANA_PATH}}/formulae/page.formula.md`
-- **Source formula**: `{{ARCANA_PATH}}/formulae/source.formula.md`
-- **Chapter hub formula**: `{{ARCANA_PATH}}/formulae/chapter_hub.formula.md`
-- **Page stamping rite**: `{{ARCANA_PATH}}/rites/new_page.py`
+- **Framework root**: `{{FRAMEWORK_PATH}}`
+- **Page formula**: `{{FRAMEWORK_PATH}}/formulae/page.formula.md`
+- **Source formula**: `{{FRAMEWORK_PATH}}/formulae/source.formula.md`
+- **Chapter hub formula**: `{{FRAMEWORK_PATH}}/formulae/chapter_hub.formula.md`
+- **Page stamping rite**: `{{FRAMEWORK_PATH}}/rites/new_page.py`
 
 ## Invocation
 
-!`cat {{ARCANA_PATH}}/invocations/grm/add.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/grm/add.md`

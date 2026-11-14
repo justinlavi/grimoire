@@ -14,13 +14,13 @@ You are sharing the user's grimoire changes with their team: validate, record wi
 
 ## Precondition
 
-!`cat {{ARCANA_PATH}}/invocations/meta/grimoire_directory_guard.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/meta/grimoire_directory_guard.md`
 
 ## Context
 
-- **Arcana**: `{{ARCANA_PATH}}`
-- **Invocation**: `{{ARCANA_PATH}}/invocations/grm/save.md`
+- **Framework root**: `{{FRAMEWORK_PATH}}`
+- **Invocation**: `{{FRAMEWORK_PATH}}/invocations/grm/save.md`
 
 ## Invocation
 
-!`cat {{ARCANA_PATH}}/invocations/grm/save.md`
+!`cat {{FRAMEWORK_PATH}}/invocations/grm/save.md`

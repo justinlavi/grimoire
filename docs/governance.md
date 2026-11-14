@@ -1,37 +1,37 @@
 ---
 type: reference
-title: "Arcana Governance"
+title: "Governance"
 aliases: ["governance", "release-policy"]
-tags: [type/reference, arcana/docs]
+tags: [type/reference, framework/docs]
 authority: grimoire
 last_verified: 2026-05-25
 ---
 
-# Arcana Governance
+# Governance
 
 ## Purpose
 
-Defines how **Arcana** itself is maintained, versioned, and updated to keep all installed grimoires in sync.
+Defines how **the framework** itself is maintained, versioned, and updated to keep all installed grimoires in sync.
 
-This is for the *Arcana maintainer* - the person who owns the Arcana fork your grimoires reference. If you are only writing chapters in a grimoire, you don't need this document.
+This is for the *framework maintainer* - the person who owns the framework fork your grimoires reference. If you are only writing chapters in a grimoire, you don't need this document.
 
 ---
 
 ## Core Principle
 
-**Arcana is the single source of truth for the system.** Grimoires *reference* Arcana - they don't copy from it.
+**The framework is the single source of truth for the system.** Grimoires *reference* the framework - they don't copy from it.
 
-Updates to Arcana propagate to every grimoire that points at the same installation. Breaking changes follow a deprecation protocol so downstream grimoires can adapt.
+Updates to the framework propagate to every grimoire that points at the same installation. Breaking changes follow a deprecation protocol so downstream grimoires can adapt.
 
 ---
 
-## Arcana Maintainer
+## Framework Maintainer
 
-The Arcana maintainer is whoever owns the Arcana fork others reference. For a personal install that's you; for a shared fork it's whoever the contributors agreed on.
+The framework maintainer is whoever owns the framework fork others reference. For a personal install that's you; for a shared fork it's whoever the contributors agreed on.
 
 **Responsibilities**:
 - Maintain universal invocations, formulae, rites, and documentation.
-- Review and approve changes to Arcana.
+- Review and approve changes to the framework.
 - Cut versioned releases and maintain `CHANGELOG.md`.
 - Provide migration guides for breaking changes (see [Deprecation](#deprecation-policy)).
 - Triage feedback from grimoire authors and incorporate improvements.
@@ -42,14 +42,14 @@ The role is transferable — record handovers in the CHANGELOG.
 
 ## Autonomous Maintainer
 
-Arcana is built to be kept current by an agent, not only a person. The
+The framework is built to be kept current by an agent, not only a person. The
 machine-readable signals the system emits — validator diagnostics, the
 mutating-rite result envelopes (`--format json`), and the contract-coherence
 audit — let an agent **verify its own work**, which is what makes unattended
 maintenance safe.
 
 "Autonomous" means *no prior approval is needed*, never *invisible*: every
-unattended action is recorded (an Arcana-visible change in `CHANGELOG.md` under
+unattended action is recorded (a framework-visible change in `CHANGELOG.md` under
 `[Unreleased]`; a grimoire operation in the grimoire's git history), and the rite
 envelopes leave a machine-readable trail.
 
@@ -59,7 +59,7 @@ An agent may act **unattended** only when all four conditions hold:
 
 1. **Deterministic** — the change is mechanical (a fix with one correct form), or
    a prose-wrong contract fix the
-   [contract-coherence audit](../invocations/arc/quality/audit_contract_coherence.md)
+   [contract-coherence audit](../invocations/dev/quality/audit_contract_coherence.md)
    flagged: a verifiable claim about the code, edited in contract data only, with
    code-wrong findings deferred. A content change that needs a judgment call is
    not deterministic — propose it instead.
@@ -77,8 +77,8 @@ human maintainer.
 
 | Action | Rite / command | Verification |
 |---|---|---|
-| Run the validator suite | `/arc-validate` (`python3 rites/validate.py`) | exit 0 |
-| Apply mechanical fixes (broken links the rite located, format, frontmatter, encoding, snake_case) | an `/arc-validate` finding plus a direct edit | re-run the validator to exit 0 |
+| Run the validator suite | `/grm-dev-validate` (`python3 rites/validate.py`) | exit 0 |
+| Apply mechanical fixes (broken links the rite located, format, frontmatter, encoding, snake_case) | a `/grm-dev-validate` finding plus a direct edit | re-run the validator to exit 0 |
 | Repair unambiguous wikilinks | `/grm-check fix` | envelope `status` `ok`; ambiguous links are surfaced, never guessed |
 | Regenerate generated indexes | `python3 rites/sync_docs.py --apply` | drift gate clean afterward |
 | Correct prose-wrong contract drift | the contract-coherence audit | the originating probe plus a validator pass |
@@ -91,7 +91,7 @@ Reversible but judgment-bearing, or writing outside the repo:
 - Orphan wiring, terminology standardization, page promotion, merging duplicates.
 - Any change touching more than ten files.
 - Reconciling the grimoire library or registering skills into agent directories
-  under the user's home (`/arc-update library`, `/arc-update skills`,
+  under the user's home (`/grm-dev-update library`, `/grm-dev-update skills`,
   `/grm-update`).
 
 ### Human sign-off required
@@ -111,7 +111,7 @@ Reversible but judgment-bearing, or writing outside the repo:
 ### In every tier
 
 - **Never auto-delete content outside a managed namespace.** Skill cleanup only
-  touches directories under an Arcana-managed prefix (`arc-`, `grm-`, or a
+  touches directories under a framework-managed prefix (`grm-` or a
   grimoire's `skill_prefix`) - inside those namespaces prefix membership is the
   ownership signal, so any directory not in the current catalog is removed or
   overwritten; directories outside every managed prefix are never touched.
@@ -130,27 +130,27 @@ contracts.
 
 ---
 
-## What Belongs in Arcana
+## What Belongs in the Framework
 
-### ✅ Universal content (Arcana)
+### ✅ Universal content (framework)
 
-Include in Arcana if it applies to **every** grimoire that references it:
+Include in the framework if it applies to **every** grimoire that references it:
 
 - **Documentation**: README, installation, operating model, reference, governance.
-- **Invocations**: grimoire operations (`invocations/grm/`), Arcana maintenance (`invocations/arc/`, with sync, adopt, clean, validators, and quality sub-areas), and shared meta fragments (`invocations/meta/`).
+- **Invocations**: grimoire operations (`invocations/grm/`), framework maintenance (`invocations/dev/`, with update, clean, validators, and quality sub-areas), and shared meta fragments (`invocations/meta/`).
 - **Formulae**: grimoire scaffold, chapter hubs, pages, sources, log entries, and invocation skeletons.
 - **Rites**: validation, registration, library sync, etc.
 - **Resources**: branding assets.
 
 ### ❌ Domain-specific content
 
-Do **not** include in Arcana:
+Do **not** include in the framework:
 
 - Chapters specific to one subject area (recipes, campaign lore, codebase structure, ...).
 - Skills specific to one domain (those live under `<grimoire>/skills/`, prefixed by the grimoire's manifest).
 - Custom rites only one grimoire uses.
 - Real-world data: company names, project names, employee data, customer data, credentials.
-- Grimoire storage layers (`chapters/`, chapter-local `sources/`, `inbox/`, and the `publish/` build-output layer present in every grimoire, excluded from validation and the knowledge graph). Arcana keeps their templates under `formulae/grimoire/`.
+- Grimoire storage layers (`chapters/`, chapter-local `sources/`, `inbox/`, and the `publish/` build-output layer present in every grimoire, excluded from validation and the knowledge graph). The framework keeps their templates under `formulae/grimoire/`.
 
 **Where these belong**: in the relevant `<grimoire>-grimoire/chapters/` or `<grimoire>-grimoire/skills/`.
 
@@ -158,14 +158,14 @@ Do **not** include in Arcana:
 
 ## Versioning
 
-Arcana follows [Semantic Versioning 2.0.0](https://semver.org/) — `MAJOR.MINOR.PATCH` — read through a framework-specific lens. Arcana is a **grimoire-generation framework**, so a change is judged by its effect on grimoires — both the ones already on disk and the future ones an AI agent will generate — not by how large, ambitious, or impactful the change feels.
+The framework follows [Semantic Versioning 2.0.0](https://semver.org/) — `MAJOR.MINOR.PATCH` — read through a framework-specific lens. It is a **grimoire-generation framework**, so a change is judged by its effect on grimoires — both the ones already on disk and the future ones an AI agent will generate — not by how large, ambitious, or impactful the change feels.
 
 ### The Compatibility Rule
 
 **Compatibility decides the bump — not the size or perceived importance of the change.** Answer two questions, in order:
 
 1. **Do existing grimoires stay valid?** Does any grimoire already on disk break, fail validation, or need a hand-migration self-healing cannot perform because of this change? (See [Self-healing and the compatibility line](#self-healing-and-the-compatibility-line) — an auto-healable transition does not count as a break.)
-2. **Does future generation behavior change?** Will Arcana now generate, validate, or guide grimoires differently going forward?
+2. **Does future generation behavior change?** Will the framework now generate, validate, or guide grimoires differently going forward?
 
 The answers map straight to the bump:
 
@@ -173,27 +173,27 @@ The answers map straight to the bump:
 |---|---|---|
 | stay valid (no migration) | unchanged | **PATCH** |
 | stay valid (no migration) | improves or changes | **MINOR** |
-| would break, but Arcana can **auto-heal** them (a rite, `/grm-update`, or a documented [Update](../UPDATE.md) step) | (either) | **MINOR** — ship the heal |
+| would break, but the framework can **auto-heal** them (a rite, `/grm-update`, or a documented [Update](../UPDATE.md) step) | (either) | **MINOR** — ship the heal |
 | break and need **manual, judgment-bearing** migration that self-healing cannot perform | (either) | **MAJOR** |
 
-"Existing grimoires" means **every grimoire the change could affect, not only the ones you can currently see** — compatibility is about the validation *outcome*, so a grimoire that validated yesterday and fails today is broken even if no file or schema changed. On a shared Arcana fork you often cannot enumerate downstream private grimoires; when that coverage is unknown, treat a newly-enforcing check as potentially breaking (ship it warn-only first, or lean MAJOR) rather than assuming MINOR.
+"Existing grimoires" means **every grimoire the change could affect, not only the ones you can currently see** — compatibility is about the validation *outcome*, so a grimoire that validated yesterday and fails today is broken even if no file or schema changed. On a shared framework fork you often cannot enumerate downstream private grimoires; when that coverage is unknown, treat a newly-enforcing check as potentially breaking (ship it warn-only first, or lean MAJOR) rather than assuming MINOR.
 
 Two consequences of this rule are easy to get wrong:
 
-- **Many minors do not add up to a major.** A long run of backward-compatible releases — `v1.0.0 → v1.17.0` — can leave Arcana dramatically more capable than it started and it is still `1.x`, as long as every existing grimoire stayed valid the whole way. A major version is **not** "enough minors accumulated"; it is a specific event — a compatibility break. Signal a big leap in the `CHANGELOG` / release notes, never by inflating MAJOR.
+- **Many minors do not add up to a major.** A long run of backward-compatible releases — `v1.0.0 → v1.17.0` — can leave the framework dramatically more capable than it started and it is still `1.x`, as long as every existing grimoire stayed valid the whole way. A major version is **not** "enough minors accumulated"; it is a specific event — a compatibility break. Signal a big leap in the `CHANGELOG` / release notes, never by inflating MAJOR.
 - **Smarter future grimoires are usually MINOR.** Better formulae, improved standards, smarter AI guidance, new or additively-stricter validators, refined generation behavior — these change what *future* grimoires look like while leaving *existing* ones valid. That is the textbook MINOR, not a MAJOR.
 
 ### Self-healing and the compatibility line
 
-Arcana is built to be **self-healing**: a grimoire is brought current not by hand but by Arcana's own update path — the mechanical repair rites, `/grm-update` (which re-syncs the managed scaffold), and, when the installed skills are themselves too old to run, the skill-less [Update](../UPDATE.md) procedure. The update first **pulls every grimoire in the library** and heals only the ones it confirmed current, so a grimoire whose fix already exists upstream is fast-forwarded rather than re-derived locally. That sharpens where the MINOR/MAJOR line falls, and it is *why* "must migrate" in the table above means **must migrate by hand**:
+The framework is built to be **self-healing**: a grimoire is brought current not by hand but by the framework's own update path — the mechanical repair rites, `/grm-update` (which re-syncs the managed scaffold), and, when the installed skills are themselves too old to run, the skill-less [Update](../UPDATE.md) procedure. The update first **pulls every grimoire in the library** and heals only the ones it confirmed current, so a grimoire whose fix already exists upstream is fast-forwarded rather than re-derived locally. That sharpens where the MINOR/MAJOR line falls, and it is *why* "must migrate" in the table above means **must migrate by hand**:
 
-- A transition Arcana can perform **automatically and deterministically** — re-syncing managed scaffold, refreshing the README update block, or repairing wikilinks — is **not** a manual migration. If every existing grimoire can be healed to current with no human judgment, the change is **MINOR**, even though grimoire files change in the heal.
+- A transition the framework can perform **automatically and deterministically** — re-syncing managed scaffold, refreshing the README update block, or repairing wikilinks — is **not** a manual migration. If every existing grimoire can be healed to current with no human judgment, the change is **MINOR**, even though grimoire files change in the heal.
 - **The obligation rides with the change author: ship the heal with the change.** A change that would otherwise break grimoires must land together with the heal that fixes them — the update rite's mechanical pass and/or the grimoire formula, so the update converges any grimoire to current. An un-shipped heal is theoretical — without it, the change is a real break (MAJOR).
 - A change is **MAJOR** only when bringing grimoires current needs **human judgment** — content or semantics a rite cannot supply. If you can automate the heal, automate it and ship MINOR; if you genuinely cannot, it is MAJOR.
 
 **Whenever a change alters what a current grimoire must look like, make the update rite bring it there** — extend the mechanical heal and the formula so any grimoire converges to current from the source tree alone, even when its installed skills are too stale to run. Record *what* changed in [the changelog](../CHANGELOG.md), not as steps in the update procedure.
 
-### What each bump means for Arcana
+### What each bump means for the framework
 
 **PATCH** (`v1.0.0 → v1.0.1`) — no behavior change; neither existing nor future grimoires change in substance.
 - Typo and wording fixes, broken-link repairs, small documentation clarifications.
@@ -216,10 +216,10 @@ A version bump is **human-sign-off territory** (see [Autonomous Maintainer](#aut
 
 1. **Inspect the nature of the change**, not its size. What actually changed in framework behavior?
 2. **Ask: do existing grimoires stay valid?** If none break, you are in PATCH/MINOR territory.
-3. **If some would break, ask: can Arcana auto-heal them** through the update rite's mechanical pass (scaffold re-sync, README block, link repair) or the formula? If yes, **ship the heal** → **MINOR**. If healing needs human judgment → **MAJOR**.
+3. **If some would break, ask: can the framework auto-heal them** through the update rite's mechanical pass (scaffold re-sync, README block, link repair) or the formula? If yes, **ship the heal** → **MINOR**. If healing needs human judgment → **MAJOR**.
 4. If **no migration** is required but **future generation behavior improves or changes** → **MINOR**.
 5. If only wording or fixes changed with **no behavior change** → **PATCH**.
-6. When torn between MINOR and MAJOR, the deciding test is **how the heal happens**: *no migration, or one Arcana can auto-heal (the update rite / formula), ⇒ MINOR; a migration needing human judgment ⇒ MAJOR*.
+6. When torn between MINOR and MAJOR, the deciding test is **how the heal happens**: *no migration, or one framework can auto-heal (the update rite / formula), ⇒ MINOR; a migration needing human judgment ⇒ MAJOR*.
 
 The current version lives in three places that must agree:
 - `VERSION` (single source of truth)
@@ -234,7 +234,7 @@ Decide the bump with the [Compatibility Rule](#the-compatibility-rule) first, th
 
 ### Patch / Minor
 
-1. Make changes; run `/arc-validate` (or `python3 rites/validate.py`).
+1. Make changes; run `/grm-dev-validate` (or `python3 rites/validate.py`).
 2. Update `CHANGELOG.md`. Before the first tag for a version, edit that version's entry as the current state. After a version is tagged, collect future changes under `[Unreleased]` until the next release entry is cut.
 3. Commit (`fix:` for patch, `feat:` for minor).
 4. Tag and push when cutting the release.
@@ -252,7 +252,7 @@ Decide the bump with the [Compatibility Rule](#the-compatibility-rule) first, th
 
 ## Deprecation Policy
 
-When removing or replacing Arcana content:
+When removing or replacing framework content:
 
 1. **Mark deprecated** in a minor release. Add a note at the top of the file (or a `Deprecated:` row in the relevant table) stating the replacement and the planned removal version.
 2. **Announce** in the `CHANGELOG.md` entry under `### Deprecated`. Include the migration path.
@@ -264,15 +264,15 @@ When removing or replacing Arcana content:
 
 ## Quality Standards
 
-Arcana files must:
+Framework files must:
 
-- ✅ Apply universally — no domain-specific content (see [What Belongs in Arcana](#what-belongs-in-arcana)).
+- ✅ Apply universally — no domain-specific content (see [What Belongs in the Framework](#what-belongs-in-the-framework)).
 - ✅ Use generic example names (`cooking-grimoire`, `dnd-grimoire`, `Domain A`, `Project Alpha`, `Alice/Bob`). Real product/company/person names appear only when documenting an actual integration.
-- ✅ Use relative paths inside the repo. Use `{{ARCANA_PATH}}` / `{{GRIMOIRE_PATH}}` placeholders in skill files; the registration rite resolves them.
+- ✅ Use relative paths inside the repo. Use `{{FRAMEWORK_PATH}}` / `{{GRIMOIRE_PATH}}` placeholders in skill files; the registration rite resolves them.
 - ✅ Preserve the text file standard: UTF-8 without BOM, LF line endings, and no mojibake or repair artifacts. Unicode is allowed when it improves readability.
-- ✅ Pass the full validator suite (`/arc-validate`) before commit.
+- ✅ Pass the full validator suite (`/grm-dev-validate`) before commit.
 
-Arcana files must **not**:
+Framework files must **not**:
 
 - ❌ Contain hardcoded user paths or machine-specific values.
 - ❌ Reference real grimoire content (chapter contents, real policy text, real recipes).
@@ -285,28 +285,28 @@ Arcana files must **not**:
 
 Each grimoire is responsible for:
 
-1. **Its own content**: chapters, skills, manifest. Use Arcana's `/grm-add` and the page formula for new pages.
-2. **Staying in step with Arcana**: pull updates periodically; run `/grm-check quick` after pulling.
-3. **Reporting issues** in Arcana itself (broken invocations, formula bugs, validator false positives).
+1. **Its own content**: chapters, skills, manifest. Use the framework's `/grm-add` and the page formula for new pages.
+2. **Staying in step with the framework**: pull updates periodically; run `/grm-check quick` after pulling.
+3. **Reporting issues** in the framework itself (broken invocations, formula bugs, validator false positives).
 
 Grimoires must **not**:
 
-- ❌ Copy Arcana files into their own repo (reference instead).
-- ❌ Modify Arcana files directly. Propose changes to the maintainer of the Arcana fork they use.
-- ❌ Create chapters / formulae / rites in Arcana folder names (`invocations/`, `formulae/`, `rites/`) inside their own grimoire — those folder names are reserved for Arcana.
-- ❌ Ignore breaking-change announcements. Re-run `/grm-check quick` after a major Arcana version bump.
+- ❌ Copy framework files into their own repo (reference instead).
+- ❌ Modify framework files directly. Propose changes to the maintainer of the framework fork they use.
+- ❌ Create chapters / formulae / rites in framework folder names (`invocations/`, `formulae/`, `rites/`) inside their own grimoire — those folder names are reserved for the framework.
+- ❌ Ignore breaking-change announcements. Re-run `/grm-check quick` after a major framework version bump.
 
 ---
 
 ## Security
 
-Arcana is meant to be public-friendly. Whether a fork lives on github.com, a private GitLab, or a corporate-internal git host, the same rules apply:
+The framework is meant to be public-friendly. Whether a fork lives on github.com, a private GitLab, or a corporate-internal git host, the same rules apply:
 
-- ❌ Never commit credentials, tokens, API keys, PII, customer data, or proprietary information to Arcana.
+- ❌ Never commit credentials, tokens, API keys, PII, customer data, or proprietary information to the framework.
 - ✅ When pages need to reference where sensitive data lives, point to the external system *by name and location*, never with the data inline:
   ```markdown
   ## Primary Sources
   - Production credentials: secrets manager → path/to/secret (auth required)
   - User contact data: CRM / identity provider (auth required)
   ```
-- Read/write access to the Arcana repo is whatever your fork's git host enforces. The maintainer decides who can merge.
+- Read/write access to the framework repo is whatever your fork's git host enforces. The maintainer decides who can merge.

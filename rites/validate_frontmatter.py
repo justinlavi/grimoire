@@ -3,7 +3,7 @@
 
 Schema: docs/page_schema.md
 
-Walks every authored markdown file in the grimoire (Arcana or domain) and
+Walks every authored markdown file in the grimoire (the framework or domain) and
 checks:
 
   1. YAML frontmatter is present, delimited by `---` on the first line and a
@@ -69,7 +69,7 @@ VALID_AUTHORITIES = {"external", "grimoire", "hybrid"}
 # pass as a valid ISO date and report a page as verified when it never was. The
 # floor is a fixed constant, never the current date: comparing against "today"
 # would make validation depend on wall-clock time and break reproducibility.
-# No grimoire can predate Arcana, so 2020-01-01 clears every real date.
+# No grimoire can predate the framework, so 2020-01-01 clears every real date.
 EARLIEST_PLAUSIBLE_VERIFIED = datetime.date(2020, 1, 1)
 
 

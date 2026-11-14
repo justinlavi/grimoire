@@ -2,14 +2,14 @@
 type: reference
 title: "Mutating Rite Profiles"
 aliases: ["rite-profiles", "mutation-profiles", "plan-apply-profile"]
-tags: [type/reference, arcana/docs, scope/rites]
+tags: [type/reference, framework/docs, scope/rites]
 authority: grimoire
 last_verified: 2026-05-25
 ---
 
 # Mutating Rite Profiles
 
-Arcana's write-capable rite contract lives in
+The framework's write-capable rite contract lives in
 [`../rites/data/rite_profiles.json`](../rites/data/rite_profiles.json).
 That file names each rite that writes durable state or managed transient
 artifacts, the mode it uses, what it writes, and how to validate it.
@@ -18,7 +18,7 @@ artifacts, the mode it uses, what it writes, and how to validate it.
 
 | Profile | Meaning |
 |---|---|
-| `read_only` | Does not change durable Arcana, grimoire, or user state. Managed transient artifacts must be named. |
+| `read_only` | Does not change durable framework, grimoire, or user state. Managed transient artifacts must be named. |
 | `plan_apply` | Has a planning command and an apply command. The plan must be specific enough to summarize before writing. |
 | `apply_only` | Writes only through an explicit operation where a separate plan is not useful. The scope and refusal behavior must be clear. |
 | `append_only` | Appends one record to an append-only target. Invocation workflows own when one append is warranted. |
@@ -42,7 +42,7 @@ artifacts, the mode it uses, what it writes, and how to validate it.
 | `rites/stage_publish.py` | `plan_apply` | `python rites/stage_publish.py --grimoire <path>` | `python rites/stage_publish.py --grimoire <path> --apply` | `<grimoire>/publish/content/` |
 | `rites/sync_docs.py` | `plan_apply` | `python rites/sync_docs.py` | `python rites/sync_docs.py --apply` | `docs/skills.md` |
 | `rites/sync_library.py` | `plan_apply` | `python rites/sync_library.py` | `python rites/sync_library.py --apply` | `~/grimoires/library.json` |
-| `rites/update_grimoires.py` | `plan_apply` | `python rites/summon.py --update` | `python rites/summon.py --update --apply` | grimoire working trees (fast-forward-only pulls) and Arcana-owned managed scaffold during heal |
+| `rites/update_grimoires.py` | `plan_apply` | `python rites/summon.py --update` | `python rites/summon.py --update --apply` | grimoire working trees (fast-forward-only pulls) and framework-owned managed scaffold during heal |
 | `rites/validate.py` | `read_only` | none | `python rites/validate.py --parallel` | transient validator reports under `rites/.artifacts` |
 
 ## Rules
@@ -59,13 +59,13 @@ artifacts, the mode it uses, what it writes, and how to validate it.
 - A `read_only` rite may refresh named transient artifacts, but it must not
   change durable source, grimoire, agent, library, or install state.
 - `rites/sync_skills.py` stamps generated `SKILL.md` files with
-  `ARCANA_SKILL_OWNERSHIP` as provenance metadata only. Cleanup and overwrite
-  decisions are made purely by managed-prefix membership (`arc-`, `grm-`, or a
+  `FRAMEWORK_SKILL_OWNERSHIP` as provenance metadata only. Cleanup and overwrite
+  decisions are made purely by managed-prefix membership (`grm-` or a
   grimoire's `skill_prefix`); the marker is never read to decide writes, and
   directories outside every managed prefix are never touched.
 
 ## Related
 
 - Script vs AI split: [script vs ai](script_vs_ai.md)
-- Rite quality review: [validate rites](../invocations/arc/quality/validate_rites.md)
+- Rite quality review: [validate rites](../invocations/dev/quality/validate_rites.md)
 - Rite profile helper: [`../rites/rite_profiles.py`](../rites/rite_profiles.py)

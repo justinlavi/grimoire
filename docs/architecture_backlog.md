@@ -2,7 +2,7 @@
 type: reference
 title: "S-tier Architecture Backlog"
 aliases: ["architecture-backlog", "s-tier-backlog", "deferred-architecture-items"]
-tags: [type/reference, arcana/docs, scope/quality]
+tags: [type/reference, framework/docs, scope/quality]
 authority: grimoire
 last_verified: 2026-11-11
 ---
@@ -12,8 +12,8 @@ last_verified: 2026-11-11
 ## Purpose
 
 Durable queue for architecture work that needs maintainer review, sequencing,
-or explicit approval before implementation: items found during `/arc-improve`
-and `invocations/arc/quality/review_architecture.md`, and the open items of
+or explicit approval before implementation: items found during `/grm-dev-improve`
+and `invocations/dev/quality/review_architecture.md`, and the open items of
 the current release program.
 
 This file is not a release note and is not a substitute for `CHANGELOG.md`.
@@ -22,7 +22,7 @@ that implements or rejects it.
 
 ## How To Use This Backlog
 
-- Add items only when the change is too broad for the current `/arc-improve`
+- Add items only when the change is too broad for the current `/grm-dev-improve`
   pass, affects public command behavior, touches release/install behavior, or
   needs a new contract before implementation.
 - Keep each item stable enough that a maintainer can name its ID and an agent
@@ -57,7 +57,7 @@ Facts the open items are designed against:
 - Claude Code copies a plugin from a directory marketplace into a versioned
   cache keyed by commit, so a grimoire cannot be a plugin without duplicating
   its whole content on every commit. Grimoire skills register as flat skill
-  directories; only Arcana itself can be a plugin.
+  directories; only the framework itself can be a plugin.
 - A Claude Code `SessionStart` command hook's stdout is injected as session
   context (10,000-character cap).
 - Claude Code honours a skill's `!cat` directive only for files inside the
@@ -72,7 +72,7 @@ Facts the open items are designed against:
 
 | ID | Decision | Position |
 |---|---|---|
-| D1 | Distribution of the engine to agents | Claude Code: Arcana is a plugin (`grm` and `arc` command families), installed from a marketplace, with namespaced skill names (`/grm:add`). Codex, Cursor, Copilot: flat skill registration rendered from the same skill sources by the same rite. The engine checkout stays at `~/grimoires/arcana` for every agent; the plugin is a thin carrier. |
+| D1 | Distribution of the framework to agents | Claude Code: the framework installs as the `grimoire` and `grimoire-dev` plugins from its own marketplace, with namespaced skill names (`/grimoire:add`). Codex, Cursor, Copilot: flat skill registration rendered from the same skill sources by the same rite. The framework checkout stays at `~/.grimoire` for every agent; the plugin is a thin carrier. |
 
 ### Open Items
 
@@ -88,7 +88,7 @@ No open implementation items.
 
 Update this backlog when:
 
-- `/arc-improve` defers an item with P1 or P2 impact.
+- `/grm-dev-improve` defers an item with P1 or P2 impact.
 - An item is implemented, rejected, or split.
 - A new release changes one of the primary owner surfaces.
 - A future architecture review finds the same drift risk again.

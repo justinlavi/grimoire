@@ -1,23 +1,23 @@
 {
-  "name": "arcana",
+  "name": "grimoire",
   "owner": {
     "name": "Justin Lavi",
-    "url": "https://github.com/justinlavi/arcana"
+    "url": "https://github.com/justinlavi/grimoire"
   },
   "metadata": {
-    "description": "Grimoire: AI-navigable knowledge bases, powered by the Arcana engine."
+    "description": "Grimoire: knowledge bases your AI assistant reads and maintains with you."
   },
   "plugins": [
     {
-      "name": "grm",
-      "description": "Grimoire: the nine grimoire verbs (setup, create, add, save, update, check, move, remove, help) plus the session-start routing hook.",
-      "source": "./plugins/grm",
+      "name": "grimoire",
+      "description": "Grimoire: the ten grimoire verbs (setup, create, add, save, update, check, publish, move, remove, help) plus the session-start routing hook.",
+      "source": "./plugins/grimoire",
       "category": "productivity"
     },
     {
-      "name": "arc",
-      "description": "Arcana maintainer verbs (update, validate, improve, clean, help) for people who maintain the engine itself.",
-      "source": "./plugins/arc",
+      "name": "grimoire-dev",
+      "description": "Grimoire maintainer verbs (update, validate, improve, clean, help) for people who maintain the framework itself.",
+      "source": "./plugins/grimoire-dev",
       "category": "development"
     }
   ]

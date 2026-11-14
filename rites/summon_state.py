@@ -13,7 +13,7 @@ summon-family operation can be diffed against intent without parsing prose.
 Design rules (mirrors the deferred-fragility and autonomy boundaries):
 
 * Pure stdlib. Every entry point is root-parameterized - it takes `home` and
-  `arcana_root` explicitly and never reads `summon_core`'s import-time
+  `framework_root` explicitly and never reads `summon_core`'s import-time
   `Path.home()` constants for logic (those serve only as production defaults
   in `run_state_command`). Instruction/skill target paths resolve through
   `agent_targets`, which reads `Path.home()` at call time, so they are passed
@@ -29,7 +29,7 @@ Design rules (mirrors the deferred-fragility and autonomy boundaries):
   never deletes a library entry unless `--prune` is given.
 * `--check` and `--reconcile` stay offline; the network-aware `--update` (in
   `update_grimoires.py`) pulls every library grimoire before healing. Pulling
-  Arcana itself stays the human/RED step from `UPDATE.md`.
+  The framework itself stays the human/RED step from `UPDATE.md`.
 """
 
 from __future__ import annotations
@@ -92,24 +92,24 @@ def _detect_block_marker(content: str) -> str:
     return "review"
 
 
-def _instruction_targets(arcana_root: Path, override: Any) -> list[dict[str, Any]]:
+def _instruction_targets(framework_root: Path, override: Any) -> list[dict[str, Any]]:
     if override is not None:
         return list(override)
-    return automatic_instruction_targets(arcana_root)
+    return automatic_instruction_targets(framework_root)
 
 
-def _skill_targets(arcana_root: Path, override: Any) -> list[dict[str, Any]]:
+def _skill_targets(framework_root: Path, override: Any) -> list[dict[str, Any]]:
     if override is not None:
         return list(override)
     targets = []
-    for tid, config in skill_registration_targets(arcana_root).items():
+    for tid, config in skill_registration_targets(framework_root).items():
         targets.append({"id": tid, "label": config["label"], "path": config["path"]})
     return targets
 
 
 def inspect_install(
     home: Path,
-    arcana_root: Path,
+    framework_root: Path,
     *,
     instruction_targets: list | None = None,
     skill_targets: list | None = None,
@@ -122,22 +122,23 @@ def inspect_install(
     snapshot never reaches the real home directory.
     """
     home = Path(home)
-    arcana_root = Path(arcana_root)
+    framework_root = Path(framework_root)
     git_fn = git_fn or summon_core.git
 
-    # Arcana itself
-    is_git_repo = (arcana_root / ".git").is_dir()
-    populated = summon_core.working_tree_populated(arcana_root) if arcana_root.is_dir() else False
+    # The framework itself
+    is_git_repo = (framework_root / ".git").is_dir()
+    populated = summon_core.working_tree_populated(framework_root) if framework_root.is_dir() else False
     toplevel = None
     if is_git_repo:
-        ok, out = git_fn("-C", str(arcana_root), "rev-parse", "--show-toplevel")
+        ok, out = git_fn("-C", str(framework_root), "rev-parse", "--show-toplevel")
         toplevel = out if ok and out else None
-    arcana_state = {
-        "root": str(arcana_root),
-        "present": arcana_root.is_dir(),
+    framework_state = {
+        "root": str(framework_root),
+        "present": framework_root.is_dir(),
         "git_repo": is_git_repo,
         "working_tree_populated": populated,
         "git_toplevel": toplevel,
+        "retired_checkout": str(sync_library.retired_checkout(home) or ""),
     }
 
     # Local library vs disk (reuses sync_library's drift classification)
@@ -162,7 +163,7 @@ def inspect_install(
 
     # Agent routing blocks
     agent_state = []
-    for target in _instruction_targets(arcana_root, instruction_targets):
+    for target in _instruction_targets(framework_root, instruction_targets):
         path = Path(target["path"])
         exists = path.is_file()
         content = ""
@@ -184,19 +185,19 @@ def inspect_install(
 
     # Registered skills per target
     skill_state = []
-    for target in _skill_targets(arcana_root, skill_targets):
+    for target in _skill_targets(framework_root, skill_targets):
         path = Path(target["path"])
         skill_state.append({
             "id": target.get("id"),
             "label": target.get("label"),
             "path": str(path),
             "exists": path.is_dir(),
-            "arcana_managed_count": summon_core._registered_skill_count(path),
+            "framework_managed_count": summon_core._registered_skill_count(path),
             "plugin_families": sorted(target.get("plugin_families") or ()),
         })
 
     return {
-        "arcana": arcana_state,
+        "framework": framework_state,
         "library": library_state,
         "agent_targets": agent_state,
         "skills": skill_state,
@@ -214,15 +215,15 @@ def _library_has_fixable_drift(library: dict[str, Any]) -> bool:
 
 
 def _skills_absent(state: dict[str, Any]) -> bool:
-    """True when Arcana is installed but no managed skills are registered anywhere.
+    """True when the framework is installed but no managed skills are registered anywhere.
 
     A target served by the Claude Code plugins counts as registered.
     """
-    if not state["arcana"]["working_tree_populated"]:
+    if not state["framework"]["working_tree_populated"]:
         return False
     if any(s.get("plugin_families") for s in state["skills"]):
         return False
-    return sum(s["arcana_managed_count"] for s in state["skills"]) == 0
+    return sum(s["framework_managed_count"] for s in state["skills"]) == 0
 
 
 def _missing_block_ids(state: dict[str, Any]) -> list[str]:
@@ -249,7 +250,7 @@ def _grimoire_drift(grimoire_result: dict[str, Any] | None) -> bool:
     )
 
 
-def next_actions(state: dict[str, Any], arcana_root: Path) -> list[dict[str, Any]]:
+def next_actions(state: dict[str, Any], framework_root: Path) -> list[dict[str, Any]]:
     """Structured, tier-tagged remediation - never free-text the orchestrator must parse."""
     actions: list[dict[str, Any]] = []
     lib = state["library"]
@@ -283,18 +284,26 @@ def next_actions(state: dict[str, Any], arcana_root: Path) -> list[dict[str, Any
             "kind": "skill_sync",
             "tier": "amber",
             "command": "python3 rites/sync_skills.py --agent all",
-            "reason": "no Arcana-managed skills registered in any agent skill directory",
+            "reason": "no framework-managed skills registered in any agent skill directory",
         })
-    if not state["arcana"]["working_tree_populated"]:
-        # Update remedy: pull Arcana to current. Distinct from summon_core's
+    retired = state["framework"].get("retired_checkout")
+    if retired:
+        actions.append({
+            "kind": "retired_checkout_remove",
+            "tier": "red",
+            "command": f"delete {retired}",
+            "reason": "a framework checkout from before 1.8 is still in the grimoire home; nothing reads it and it can be deleted",
+        })
+    if not state["framework"]["working_tree_populated"]:
+        # Update remedy: pull the framework to current. Distinct from summon_core's
         # working-tree recovery (git checkout HEAD -- .), which repairs an
-        # interrupted clone in place; this brings the engine to the current
+        # interrupted clone in place; this brings the framework to the current
         # version.
         actions.append({
-            "kind": "arcana_update",
+            "kind": "framework_update",
             "tier": "red",
-            "command": f"git -C {arcana_root} pull --ff-only",
-            "reason": "Arcana working tree is missing or partial; pull to bring it current (network/human step)",
+            "command": f"git -C {framework_root} pull --ff-only",
+            "reason": "Framework working tree is missing or partial; pull to bring it current (network/human step)",
         })
     return actions
 
@@ -315,11 +324,11 @@ def residual(state: dict[str, Any], *, prune: bool) -> list[dict[str, Any]]:
             "tier": "amber",
             "reason": f"agent routing block must be refreshed via /grm-update agentfile for: {', '.join(missing_blocks)}",
         })
-    if not state["arcana"]["working_tree_populated"]:
+    if not state["framework"]["working_tree_populated"]:
         items.append({
-            "kind": "arcana_base",
+            "kind": "framework_base",
             "tier": "red",
-            "reason": "Arcana working tree not populated; reconcile cannot repair the base",
+            "reason": "Framework working tree not populated; reconcile cannot repair the base",
         })
     return items
 
@@ -330,7 +339,7 @@ def residual(state: dict[str, Any], *, prune: bool) -> list[dict[str, Any]]:
 
 
 def _default_skill_runner(register_script: Path) -> tuple[int, str]:
-    # --reset-managed replaces the owned Arcana/grimoire skill namespaces, then
+    # --reset-managed replaces the owned framework and grimoire skill namespaces, then
     # writes fresh skills from current source. Plain registration leaves stale
     # skills behind (renamed/removed sources keep their old registration), so the
     # deterministic update path always resets - the reliable path is not optional.
@@ -356,8 +365,8 @@ def _default_agent_injector(path: Path, title: str, *, apply: bool) -> dict[str,
     return inject_agent_file.apply_block(Path(path), title, apply=apply)
 
 
-def _default_validate_runner(arcana_root: Path) -> tuple[bool, str]:
-    script = Path(arcana_root) / "rites" / "validate.py"
+def _default_validate_runner(framework_root: Path) -> tuple[bool, str]:
+    script = Path(framework_root) / "rites" / "validate.py"
     if not script.is_file():
         return False, f"validate.py not found at {script}"
     result = subprocess.run(
@@ -448,7 +457,7 @@ def _reconcile_library(
 
 
 def _reconcile_skills(
-    arcana_root: Path,
+    framework_root: Path,
     state: dict[str, Any],
     *,
     apply: bool,
@@ -457,10 +466,10 @@ def _reconcile_skills(
 ) -> dict[str, Any]:
     step = {"id": "skills", "label": "Sync agent skills", "status": "noop",
             "mutations": [], "messages": []}
-    register_script = Path(arcana_root) / "rites" / "sync_skills.py"
+    register_script = Path(framework_root) / "rites" / "sync_skills.py"
 
-    if not state["arcana"]["working_tree_populated"]:
-        text = "skills: skipped - Arcana working tree not populated (run summon install / git pull first)"
+    if not state["framework"]["working_tree_populated"]:
+        text = "skills: skipped - framework working tree not populated (run summon install / git pull first)"
         reporter.message("error", text)
         step["messages"].append({"severity": "error", "message": text})
         step["status"] = "blocked"
@@ -468,7 +477,7 @@ def _reconcile_skills(
 
     if not apply:
         if _skills_absent(state):
-            text = "skills: no Arcana-managed skills registered (run sync_skills --agent all)"
+            text = "skills: no framework-managed skills registered (run sync_skills --agent all)"
             reporter.message("warning", text)
             step["messages"].append({"severity": "warning", "message": text})
             step["status"] = "drift"
@@ -483,7 +492,7 @@ def _reconcile_skills(
 
     rc, _out = skill_runner(register_script)
     if rc == 0:
-        reporter.mutation("register", detail="synced Arcana and grimoire skills")
+        reporter.mutation("register", detail="synced the framework and grimoire skills")
         step["mutations"] = [{"action": "register", "path": None, "detail": "synced skills"}]
         step["status"] = "ok"
     else:
@@ -534,7 +543,7 @@ def _reconcile_agent_blocks(
     canonical block, a block-less file gets one inserted, and a single clean
     marked region is refreshed in place. A file with duplicate or malformed
     markers is left untouched and reported for the `/grm-update agentfile` (or
-    `/arc-update agentfile`) judgment edit, since its boundaries are ambiguous.
+    `/grm-dev-update agentfile`) judgment edit, since its boundaries are ambiguous.
     Plan mode writes nothing and reports what `--apply` would do.
     """
     injector = injector or _default_agent_injector
@@ -563,7 +572,7 @@ def _reconcile_agent_blocks(
         elif action == "review":
             text = (
                 f"agent_blocks: {tid} - {result.get('reason', 'needs review')}; resolve with "
-                "/grm-update agentfile (or /arc-update agentfile). Not auto-written: there is no "
+                "/grm-update agentfile (or /grm-dev-update agentfile). Not auto-written: there is no "
                 "clean routing block to create or refresh mechanically."
             )
             reporter.message("warning", text)
@@ -579,7 +588,7 @@ def _reconcile_agent_blocks(
 
 def reconcile(
     home: Path,
-    arcana_root: Path,
+    framework_root: Path,
     *,
     apply: bool = False,
     prune: bool = False,
@@ -602,31 +611,31 @@ def reconcile(
     `--check` currency snapshot: classify only, never pull or heal).
     """
     home = Path(home)
-    arcana_root = Path(arcana_root)
+    framework_root = Path(framework_root)
     skill_runner = skill_runner or _default_skill_runner
     validate_runner = validate_runner or _default_validate_runner
 
     reporter = ResultReporter("summon", root=home, mode="apply" if apply else "plan")
     state_before = inspect_install(
-        home, arcana_root,
+        home, framework_root,
         instruction_targets=instruction_targets, skill_targets=skill_targets, git_fn=git_fn,
     )
     steps: list[dict[str, Any]] = []
 
     # Green-base gate: never repair on a tree that fails validation.
     if apply:
-        ok, detail = validate_runner(arcana_root)
+        ok, detail = validate_runner(framework_root)
         if not ok:
-            text = "validate: Arcana fails validate.py - refusing to reconcile on a broken base (UPDATE.md step 4)"
+            text = "validate: the framework fails validate.py - refusing to reconcile on a broken base (UPDATE.md step 4)"
             reporter.message("error", text)
             reporter.set_status("blocked")
-            steps.append({"id": "validate", "label": "Validate Arcana base", "status": "blocked",
+            steps.append({"id": "validate", "label": "Validate framework base", "status": "blocked",
                           "mutations": [], "messages": [{"severity": "error", "message": text,
                                                           "detail": detail}]})
             state_after = state_before
             return _reconcile_result(reporter, steps, state_before, state_after, prune,
-                                     arcana_root, grimoire_result=None)
-        steps.append({"id": "validate", "label": "Validate Arcana base", "status": "ok",
+                                     framework_root, grimoire_result=None)
+        steps.append({"id": "validate", "label": "Validate framework base", "status": "ok",
                       "mutations": [], "messages": []})
 
     steps.append(_reconcile_library(home, _diff_from_state(state_before), apply=apply,
@@ -638,21 +647,21 @@ def reconcile(
     grimoire_result = None
     if pull_grimoires:
         processor = grimoire_processor or update_grimoires.process_all
-        grimoire_result = processor(home, arcana_root, apply=apply, fetch=grimoire_fetch)
+        grimoire_result = processor(home, framework_root, apply=apply, fetch=grimoire_fetch)
         steps.append(_grimoire_step(grimoire_result, reporter=reporter))
 
-    steps.append(_reconcile_skills(arcana_root, state_before, apply=apply,
+    steps.append(_reconcile_skills(framework_root, state_before, apply=apply,
                                    reporter=reporter, skill_runner=skill_runner))
     steps.append(_reconcile_agent_blocks(state_before, apply=apply, reporter=reporter,
                                          injector=agent_injector))
 
     # Verify against post-write reality so the transcript reflects convergence.
     state_after = inspect_install(
-        home, arcana_root,
+        home, framework_root,
         instruction_targets=instruction_targets, skill_targets=skill_targets, git_fn=git_fn,
     ) if apply else state_before
 
-    return _reconcile_result(reporter, steps, state_before, state_after, prune, arcana_root,
+    return _reconcile_result(reporter, steps, state_before, state_after, prune, framework_root,
                              grimoire_result=grimoire_result)
 
 
@@ -665,7 +674,7 @@ def _diff_from_state(state: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _reconcile_result(reporter, steps, state_before, state_after, prune, arcana_root,
+def _reconcile_result(reporter, steps, state_before, state_after, prune, framework_root,
                       *, grimoire_result=None):
     return {
         "reporter": reporter,
@@ -673,7 +682,7 @@ def _reconcile_result(reporter, steps, state_before, state_after, prune, arcana_
         "state_before": state_before,
         "state_after": state_after,
         "residual": residual(state_after, prune=prune),
-        "next_actions": next_actions(state_after, arcana_root),
+        "next_actions": next_actions(state_after, framework_root),
         "grimoires": grimoire_result,
     }
 
@@ -696,7 +705,7 @@ def build_summary(state, *, operation, drift, res, actions, extra=None):
             "ok": len(state["library"]["ok"]),
         },
         "agent_blocks_missing": _missing_block_ids(state),
-        "skills_registered": sum(s["arcana_managed_count"] for s in state["skills"]),
+        "skills_registered": sum(s["framework_managed_count"] for s in state["skills"]),
         "next_actions": actions,
         "residual": res,
     }
@@ -726,7 +735,7 @@ def write_transcript(path: Path, transcript: dict[str, Any]) -> None:
 
 def record_install_transcript(
     home: Path,
-    arcana_root: Path,
+    framework_root: Path,
     installed_keys: list,
     skills_ok: bool,
     *,
@@ -742,23 +751,23 @@ def record_install_transcript(
     """
     now = now or _real_now
     started_at = now()
-    state = inspect_install(home, arcana_root, git_fn=git_fn)
+    state = inspect_install(home, framework_root, git_fn=git_fn)
     installed_keys = list(installed_keys or [])
-    arcana_ok = state["arcana"]["working_tree_populated"]
-    status = "ok" if (arcana_ok and skills_ok) else "error"
+    framework_ok = state["framework"]["working_tree_populated"]
+    status = "ok" if (framework_ok and skills_ok) else "error"
 
     reporter = ResultReporter("summon", root=Path(home), mode="apply")
     reporter.set_status(status)
     for key in installed_keys:
         reporter.mutation("clone", detail=f"grimoire {key}")
-    if not arcana_ok:
-        reporter.message("error", "Arcana working tree not populated after install")
+    if not framework_ok:
+        reporter.message("error", "Framework working tree not populated after install")
     if not skills_ok:
         reporter.message("error", "skill registration reported a problem")
 
     steps = [
-        {"id": "arcana", "label": "Install or update Arcana",
-         "status": "ok" if arcana_ok else "error", "mutations": [], "messages": []},
+        {"id": "framework", "label": "Install or update the framework",
+         "status": "ok" if framework_ok else "error", "mutations": [], "messages": []},
         {"id": "grimoires", "label": "Clone selected grimoires",
          "status": "ok" if installed_keys else "noop",
          "mutations": [{"action": "clone", "path": k, "detail": None} for k in installed_keys],
@@ -768,7 +777,7 @@ def record_install_transcript(
     ]
     summary = build_summary(
         state, operation="install", drift=drift_detected(state),
-        res=residual(state, prune=False), actions=next_actions(state, arcana_root),
+        res=residual(state, prune=False), actions=next_actions(state, framework_root),
         extra={"installed": installed_keys, "skills_ok": bool(skills_ok)},
     )
     transcript = build_transcript(
@@ -789,11 +798,11 @@ def _print_human(operation: str, state: dict[str, Any], result_steps, drift, tra
     log = summon_core.Logger()
     print()
     print("============================================")
-    print(f"  Arcana Summon - {operation}")
+    print(f"  Grimoire Summon - {operation}")
     print("============================================")
-    arcana = state["arcana"]
-    (log.ok if arcana["working_tree_populated"] else log.err)(
-        f"Arcana: {'populated' if arcana['working_tree_populated'] else 'NOT populated'} at {arcana['root']}"
+    framework = state["framework"]
+    (log.ok if framework["working_tree_populated"] else log.err)(
+        f"Framework: {'populated' if framework['working_tree_populated'] else 'NOT populated'} at {framework['root']}"
     )
     lib = state["library"]
     if lib["in_sync"]:
@@ -808,7 +817,7 @@ def _print_human(operation: str, state: dict[str, Any], result_steps, drift, tra
             log.ok(f"Routing block present: {a['id']}")
         else:
             log.warn(f"Routing block {a['block_marker']}: {a['id']} ({a['path']})")
-    total_skills = sum(s["arcana_managed_count"] for s in state["skills"])
+    total_skills = sum(s["framework_managed_count"] for s in state["skills"])
     (log.ok if total_skills else log.warn)(f"Synced skills: {total_skills}")
     if grimoires is not None:
         for r in grimoires["grimoires"]:
@@ -849,8 +858,8 @@ def add_state_args(parser: argparse.ArgumentParser) -> None:
                         help="With --reconcile/--update --apply, remove stale library entries (deletes them)")
     parser.add_argument("--home", dest="home", default=None,
                         help="Override grimoires home (default: ~/grimoires)")
-    parser.add_argument("--arcana-root", dest="arcana_root", default=None,
-                        help="Override Arcana root (default: detected)")
+    parser.add_argument("--framework-root", dest="framework_root", default=None,
+                        help="Override framework root (default: detected)")
     parser.add_argument("--transcript-path", dest="transcript_path", default=None,
                         help="Override the transcript path (default: ~/.cache/grimoire/summon-last.json)")
     add_output_format_arg(parser)
@@ -878,9 +887,9 @@ def run_state_command(
     now = now or _real_now
     started_at = now()
     home = Path(args.home).expanduser().resolve() if getattr(args, "home", None) else summon_core.GRIMOIRES_HOME
-    arcana_root = (
-        Path(args.arcana_root).expanduser().resolve()
-        if getattr(args, "arcana_root", None) else summon_core.REPO_ROOT
+    framework_root = (
+        Path(args.framework_root).expanduser().resolve()
+        if getattr(args, "framework_root", None) else summon_core.REPO_ROOT
     )
     fmt = getattr(args, "format", "human")
     do_update = bool(getattr(args, "update", False))
@@ -896,7 +905,7 @@ def run_state_command(
     grimoire_fetch = do_update
 
     outcome = reconcile(
-        home, arcana_root, apply=apply, prune=prune,
+        home, framework_root, apply=apply, prune=prune,
         pull_grimoires=pull_grimoires, grimoire_fetch=grimoire_fetch,
         instruction_targets=instruction_targets, skill_targets=skill_targets,
         git_fn=git_fn, skill_runner=skill_runner, validate_runner=validate_runner,

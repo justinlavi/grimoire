@@ -2,7 +2,7 @@
 type: reference
 title: "Summoning Rite Contract"
 aliases: ["summon-contract", "summoning-contract", "installer-contract"]
-tags: [type/reference, arcana/docs, scope/install]
+tags: [type/reference, framework/docs, scope/install]
 authority: grimoire
 last_verified: 2026-11-11
 ---
@@ -11,7 +11,7 @@ last_verified: 2026-11-11
 
 ## Purpose
 
-The Summoning Rite installs Arcana, optionally discovers and clones grimoires,
+The Summoning Rite installs the framework, optionally discovers and clones grimoires,
 updates local routing state, configures supported agents, and registers skills.
 It is terminal-only and runs from source on a stock Python; the agent holds
 the onboarding conversation through `/grm-setup`.
@@ -26,7 +26,7 @@ This page is the human reading path for that contract.
 |---|---|---|
 | `rites/summon.sh` | Shell bootstrap | Find Python 3.10+ (install only with consent), fetch the dispatcher and its companion files when run from the public one-liner, and pass arguments to Python. A local checkout uses its own files. |
 | `rites/summon.py` | Dispatcher | Run the terminal installer; route `--check`, `--reconcile`, and `--update` to the state surface when it is available. |
-| `rites/summon_core.py` | Install engine | Own git checks, discovery, Arcana install/update, grimoire install/update, library writes, agent block injection, skill registration, and the terminal summary. |
+| `rites/summon_core.py` | Install engine | Own git checks, discovery, framework install/update, grimoire install/update, library writes, agent block injection, skill registration, and the terminal summary. |
 | `rites/summon_state.py` | Agent-legible state surface | Own `--check`/`--reconcile`/`--update`, the install/check/reconcile transcript, and the offline reconciliation that backs [Update](../UPDATE.md). |
 
 ## Required Pipeline
@@ -34,12 +34,12 @@ This page is the human reading path for that contract.
 Every install path must preserve this order:
 
 1. Check `git`.
-2. Install or update Arcana.
+2. Install or update the framework.
 3. Optionally discover grimoires from a GitHub/GitLab scope.
 4. Optionally install selected grimoires.
 5. Update `~/grimoires/library.json` for installed grimoires.
 6. Inject supported agent routing blocks.
-7. Register Arcana and grimoire skills.
+7. Register the framework and grimoire skills.
 8. Report completion or update instructions.
 
 ## Source Selection
@@ -47,7 +47,7 @@ Every install path must preserve this order:
 The public piped one-liner downloads the dispatcher, the install engine, the
 agent-target registry, and the routing block template into a temporary
 directory and runs them. A local checkout (`bash rites/summon.sh` from inside
-Arcana) uses the working tree, which keeps development loops pointed at it.
+the framework) uses the working tree, which keeps development loops pointed at it.
 
 ## Bootstrap Environment Controls
 
@@ -57,8 +57,8 @@ links here rather than restating these.
 
 | Variable | Purpose |
 |---|---|
-| `ARCANA_URL` | Override the Arcana repository URL. |
-| `ARCANA_REF` | Branch or tag of Arcana to bootstrap: the companion-script downloads and the engine clone both use it. |
+| `FRAMEWORK_URL` | Override the framework repository URL. |
+| `FRAMEWORK_REF` | Branch or tag of the framework to bootstrap: the companion-script downloads and the framework clone both use it. |
 | `GRIMOIRE_SUMMON_DOWNLOAD_ATTEMPTS` | Companion-script download retry count. |
 | `GRIMOIRE_SUMMON_RETRY_DELAY` | Delay (seconds) between download attempts. |
 | `GRIMOIRE_SUMMON_CONNECT_TIMEOUT` | Connection timeout (seconds) for downloads. |
@@ -71,12 +71,12 @@ tries a Python `urllib` download fallback if Python is already on PATH.
 `rites/summon.py --check`, `--reconcile`, and `--update` route to
 `rites/summon_state.py` instead of the interactive installer, giving an
 orchestrator a machine-readable view of an installation. These run against the
-installed Arcana checkout (`python3 rites/summon.py --check`), not the shell
+installed framework checkout (`python3 rites/summon.py --check`), not the shell
 bootstrap.
 
 | Command | Effect | Exit code |
 |---|---|---|
-| `--check` (alias `--plan`) | Read-only: report Arcana, library, agent-block, and skill drift. | `0` in sync, `1` drift |
+| `--check` (alias `--plan`) | Read-only: report the framework, library, agent-block, and skill drift. | `0` in sync, `1` drift |
 | `--reconcile` | Propose the offline repair (no writes). | `0` in sync, `1` drift |
 | `--reconcile --apply` | Reconcile the library additively, sync skills, and create/insert/refresh the marked Grimoire routing block in each agent instruction file. | `0` converged, `1` error/blocked/residual |
 | `--reconcile --apply --prune` | Also remove stale library entries (deletes them). | as above |
@@ -85,7 +85,7 @@ bootstrap.
 
 Add `--format json` (or `jsonl`) for the shared
 [`ResultReporter`](../rites/diagnostics.py) envelope; `--home` and
-`--arcana-root` override the defaults.
+`--framework-root` override the defaults.
 
 `--home` scopes only the library scan and inspection. The transcript still lands
 at `~/.cache/grimoire/summon-last.json` unless `--transcript-path` redirects it,
@@ -101,7 +101,7 @@ later session can diff intent against outcome.
 Boundaries the surface keeps:
 
 - **Refuses to reconcile a broken base** - `--apply` runs `validate.py` first and
-  reports `blocked` if Arcana is red (mirrors [Update](../UPDATE.md) step 2).
+  reports `blocked` if the framework is red (mirrors [Update](../UPDATE.md) step 2).
 - **No silent deletion** - stale library entries are preserved unless `--prune`;
   each removal is recorded as a mutation.
 - **Agent blocks are reconciled deterministically** - a routing block is matched
@@ -109,9 +109,9 @@ Boundaries the surface keeps:
   a block inserted, and one clean marked region is refreshed in place. A
   block-like file that is not one clean region (duplicate or malformed markers, or
   a pre-marker heading-only block) is left untouched and reported for the
-  `/grm-update agentfile` (maintainer: `/arc-update agentfile`) judgment edit, so a
+  `/grm-update agentfile` (maintainer: `/grm-dev-update agentfile`) judgment edit, so a
   second block is never appended.
-- **Network pull is out of scope** - updating Arcana itself stays the human step
+- **Network pull is out of scope** - updating the framework itself stays the human step
   from [Update](../UPDATE.md).
 
 ## Review Checklist

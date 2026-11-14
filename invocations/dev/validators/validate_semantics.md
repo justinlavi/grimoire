@@ -1,0 +1,57 @@
+---
+type: reference
+title: "Validate Semantics"
+aliases: ["validate-semantics"]
+tags: [framework/invocations, type/reference, scope/validators]
+authority: grimoire
+last_verified: 2026-05-15
+---
+
+# Invocation: Validate Framework Semantics
+
+## Purpose
+
+Mechanical scan of the framework for **hyphenated path examples** written in prose. Fast, deterministic, no judgment required.
+
+For *intelligent* semantic analysis (naming quality, organizational discoverability, terminology design), use `/grm-check naming` - this rite is intentionally not that. Filename validation lives in [[invocations/dev/validators/validate_naming|validate naming]].
+
+## Invocation
+
+```
+/grm-dev-validate semantics
+```
+
+Also runs as part of `/grm-dev-improve` (alongside the other validators).
+
+## What the Rite Checks
+
+The rite is `rites/validate_semantics.py`.
+
+**Hyphenated path examples** - paths like `chapters/example-name/` or `file-name.md` written in markdown body text are flagged. Framework convention is `snake_case` for filesystem paths. Headings and code fences are exempt; the check applies only to prose lines that aren't headers.
+
+## Workflow
+
+```bash
+python3 rites/validate_semantics.py
+```
+
+Exit code: 0 if no violations, 1 if any violation is found.
+
+## Exclusions
+
+- `validate_semantics.md` (this file)
+- `validate_naming.md` (documents naming-violation examples)
+- `script_vs_ai.md` (demos validator behavior)
+- `invocations/dev/quality/` (quality docs may discuss historical terms)
+- chapter-local `sources/` folders (imported source artifacts may have hyphens in their original names)
+
+## Fixing Violations
+
+Convert each hyphenated example to snake_case (`chapters/example_name/`, `file_name.md`). If the path appears inside a code block, no fix is needed - only prose lines are flagged.
+
+## Related
+
+- **Rite**: [`rites/validate_semantics.py`](../../../rites/validate_semantics.py)
+- **Naming counterpart**: [[invocations/dev/validators/validate_naming|validate naming]] (snake_case enforcement on actual filenames)
+- **Smart analysis**: `/grm-check naming` (judgment-based, not mechanical)
+- **Orchestrator**: [[invocations/dev/improve_framework|improve framework]]

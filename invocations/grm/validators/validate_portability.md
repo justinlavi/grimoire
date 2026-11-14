@@ -2,7 +2,7 @@
 type: reference
 title: "Validate Grimoire Portability"
 aliases: ["validate-grimoire-portability"]
-tags: [arcana/invocations, type/reference, scope/grimoire]
+tags: [framework/invocations, type/reference, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-25
 ---
@@ -24,7 +24,7 @@ Validate that every active-grimoire path is safe to clone on Windows, Linux, and
 Run against the resolved active grimoire:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_portability --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_portability --grimoire GRIMOIRE_ROOT
 ```
 
 Any violation should be fixed before sharing the grimoire with other machines.

@@ -2,7 +2,7 @@
 type: reference
 title: "Validate Grimoire Provenance"
 aliases: ["validate-grimoire-provenance"]
-tags: [arcana/invocations, type/reference, scope/grimoire]
+tags: [framework/invocations, type/reference, scope/grimoire]
 authority: grimoire
 last_verified: 2026-05-25
 ---
@@ -28,7 +28,7 @@ artifact, and avoid self-citation.
 Run against the resolved active grimoire:
 
 ```bash
-ARCANA_HOME/bin/arcana validate_provenance --grimoire GRIMOIRE_ROOT
+FRAMEWORK_HOME/bin/grimoire validate_provenance --grimoire GRIMOIRE_ROOT
 ```
 
 Pages must not cite transient `inbox/` paths. Stable source artifacts and

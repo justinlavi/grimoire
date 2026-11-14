@@ -44,13 +44,25 @@ from diagnostics import ResultReporter, add_output_format_arg
 # ---------------------------------------------------------------------------
 
 DEFAULT_HOME = Path.home() / "grimoires"
-ARCANA_NAME = "arcana"
-ARCANA_MANIFEST = "arcana.json"
+# A folder holding a framework checkout is never a grimoire. `arcana.json` marks
+# a checkout of a release before 1.8, which lived inside the grimoire home.
+FRAMEWORK_MANIFESTS = ("framework.json", "arcana.json")
+RETIRED_CHECKOUT = ("arcana", "arcana.json")
 
 
 # ---------------------------------------------------------------------------
 # Disk discovery
 # ---------------------------------------------------------------------------
+
+
+def retired_checkout(home: Path) -> Path | None:
+    """The pre-1.8 framework checkout inside the grimoire home, when one is still on disk."""
+    folder, manifest = RETIRED_CHECKOUT
+    candidate = Path(home) / folder
+    try:
+        return candidate if (candidate / manifest).is_file() else None
+    except OSError:
+        return None
 
 
 def detect_origin_url(directory):
@@ -100,7 +112,7 @@ def scan_grimoire_home(home):
         try:
             if not child.is_dir():
                 continue
-            if child.name == ARCANA_NAME and (child / ARCANA_MANIFEST).is_file():
+            if any((child / name).is_file() for name in FRAMEWORK_MANIFESTS):
                 continue
         except OSError as exc:
             warnings.append(f"{child.name}: could not access ({exc}); skipped")
@@ -307,7 +319,7 @@ def apply_synced_library(scan, library_path, home, retries=5):
     """Reconcile the library against disk and write it under compare-and-swap.
 
     Reading and writing library.json is a read-modify-write: a concurrent
-    `/arc-update library` or `/grm-setup` could otherwise be clobbered.
+    `/grm-dev-update library` or `/grm-setup` could otherwise be clobbered.
     Each attempt re-reads the current file, rebuilds from it plus the disk scan,
     and writes only if the file is unchanged; a conflict re-reads and retries so
     the concurrent change is incorporated rather than lost.
@@ -326,7 +338,7 @@ def apply_synced_library(scan, library_path, home, retries=5):
             return True
     raise LibraryWriteConflict(
         f"{library_path} kept changing during {retries} sync attempts; "
-        "re-run /arc-update library"
+        "re-run /grm-dev-update library"
     )
 
 

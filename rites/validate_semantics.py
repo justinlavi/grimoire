@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Validates Arcana semantics: hyphenated path examples in body text.
+"""Validates framework semantics: hyphenated path examples in body text.
 
 What this rite checks (mechanical, deterministic):
 - Hyphenated path examples - paths like `chapters/example-name/` or
-  `file-name.md` written in prose should use snake_case (Arcana convention).
+  `file-name.md` written in prose should use snake_case (framework convention).
 
 What this rite does NOT do: intelligent semantic analysis (naming quality,
 discoverability, organization). For that, use /grm-check naming.
@@ -17,10 +17,10 @@ import re
 import sys
 from pathlib import Path
 
-from _lib import default_arcana_root, is_skipped, ok, warn
+from _lib import default_framework_root, is_skipped, ok, warn
 from diagnostics import DiagnosticReporter, add_output_format_arg
 
-ARCANA_ROOT = default_arcana_root()
+FRAMEWORK_ROOT = default_framework_root()
 
 # Files exempt from scanning. These either *define* the patterns the rite
 # checks (and so necessarily mention them) or are docs whose explicit purpose
@@ -32,7 +32,7 @@ SKIP_FILES = {
 }
 
 SKIP_DIRS = {
-    "invocations/arc/quality",  # quality docs may discuss historical terms
+    "invocations/dev/quality",  # quality docs may discuss historical terms
     "sources",  # imported source artifacts may have hyphens in their original names
 }
 
@@ -70,7 +70,7 @@ def check_hyphenated_examples(reporter, human):
             return False
         return HYPHEN_PATTERN.search(line) is not None
 
-    for rel, lineno, _line in scan_markdown_files(ARCANA_ROOT, is_hyphenated_body_line):
+    for rel, lineno, _line in scan_markdown_files(FRAMEWORK_ROOT, is_hyphenated_body_line):
         reporter.error(
             "SEMANTICS_HYPHENATED_EXAMPLE",
             "hyphenated path example should use snake_case",
@@ -91,17 +91,17 @@ def check_hyphenated_examples(reporter, human):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Validate Arcana semantics")
+    parser = argparse.ArgumentParser(description="Validate framework semantics")
     add_output_format_arg(parser)
     args = parser.parse_args()
     human = args.format == "human"
-    reporter = DiagnosticReporter("validate_semantics", ARCANA_ROOT)
+    reporter = DiagnosticReporter("validate_semantics", FRAMEWORK_ROOT)
 
     if human:
         print()
-        print("Validate Arcana Semantics")
+        print("Validate Framework Semantics")
         print("====================================")
-        print(f"Arcana root: {ARCANA_ROOT}")
+        print(f"Framework root: {FRAMEWORK_ROOT}")
         print()
 
     hyphen_count = check_hyphenated_examples(reporter, human)

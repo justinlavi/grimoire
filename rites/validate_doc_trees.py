@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validates that ASCII directory-tree diagrams in markdown match the filesystem.
 
-Many grimoire and Arcana pages embed file-tree diagrams in fenced code blocks
+Many grimoire and framework pages embed file-tree diagrams in fenced code blocks
 using the box-drawing characters:
 
     project/
@@ -13,7 +13,7 @@ using the box-drawing characters:
 
 These diagrams drift when folders are renamed, added, or removed and the doc
 isn't updated to match. This validator parses every such diagram in the
-grimoire (or Arcana), resolves it to a real filesystem anchor when possible,
+grimoire (or the framework), resolves it to a real filesystem anchor when possible,
 and reports:
 
 - DOC_TREE_MISSING_ENTRY     — the diagram lists a path that doesn't exist
@@ -34,7 +34,7 @@ Entries inside an otherwise-real diagram that are themselves placeholders
 is still validated.
 
 Usage:
-    python3 rites/validate_doc_trees.py                       # arcana mode
+    python3 rites/validate_doc_trees.py                       # framework mode
     python3 rites/validate_doc_trees.py --grimoire <path>     # grimoire mode
 
 Exit codes: 0 = clean, 1 = drift found
@@ -49,7 +49,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator
 
-from _lib import default_arcana_root, walk_files
+from _lib import default_framework_root, walk_files
 from diagnostics import DiagnosticReporter, add_output_format_arg
 
 
@@ -449,12 +449,12 @@ def main() -> int:
         "--grimoire",
         type=Path,
         default=None,
-        help="Grimoire root (default: Arcana root)",
+        help="Grimoire root (default: framework root)",
     )
     add_output_format_arg(parser)
     args = parser.parse_args()
 
-    root = (args.grimoire or default_arcana_root()).expanduser().resolve()
+    root = (args.grimoire or default_framework_root()).expanduser().resolve()
     if not root.is_dir():
         print(f"error: root not found: {root}", file=sys.stderr)
         return 2

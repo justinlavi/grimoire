@@ -2,14 +2,14 @@
 type: reference
 title: "Public Command Surface"
 aliases: ["command-surface", "command-matrix", "skill-command-contract"]
-tags: [type/reference, arcana/docs, scope/skills]
+tags: [type/reference, framework/docs, scope/skills]
 authority: grimoire
 last_verified: 2026-05-25
 ---
 
 # Public Command Surface
 
-Arcana's public slash-command contract lives in
+The framework's public slash-command contract lives in
 [`../rites/data/command_surface.json`](../rites/data/command_surface.json).
 That file is the source of truth for the operational matrix:
 
@@ -19,8 +19,8 @@ guard/preconditions -> mutation/log behavior -> validation profile ->
 generated docs impact
 ```
 
-`/arc-validate skill-refs` validates the matrix. It checks that every
-Arcana-shipped public skill appears exactly once, that each listed skill,
+`/grm-dev-validate skill-refs` validates the matrix. It checks that every
+Framework-shipped public skill appears exactly once, that each listed skill,
 invocation, guard, and rite path exists, and that every contract entry uses a
 known owner and mutation profile. It also cross-checks that each rite-owned
 command's `mutation_profile` agrees with the rite-profile contract
@@ -35,7 +35,7 @@ The "Command contract" section of `docs/skills.md` renders the same matrix as a 
 | Field | Meaning |
 |---|---|
 | `command` | Public slash command, such as `/grm-add`. |
-| `family` | Command family from `arcana.json`. |
+| `family` | Command family from `framework.json`. |
 | `skill_source` | Source `SKILL.md` that registers the command. |
 | `invocation` | Primary workflow home. |
 | `guard` | Shared guard fragment, or `null` when no shared guard applies. |
@@ -49,7 +49,7 @@ The "Command contract" section of `docs/skills.md` renders the same matrix as a 
 
 ## Maintenance
 
-When adding, removing, or renaming a public Arcana-shipped command:
+When adding, removing, or renaming a public framework-shipped command:
 
 1. Update `skills/<family>/<slug>/SKILL.md`.
 2. Update or create the invocation leaf.
@@ -61,4 +61,4 @@ When adding, removing, or renaming a public Arcana-shipped command:
 
 - Skill schema: [skill schema](skill_schema.md)
 - Generated skill catalog: [skills](skills.md)
-- Validator: [validate skill refs](../invocations/arc/validators/validate_skill_refs.md)
+- Validator: [validate skill refs](../invocations/dev/validators/validate_skill_refs.md)

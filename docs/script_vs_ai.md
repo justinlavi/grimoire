@@ -2,7 +2,7 @@
 type: reference
 title: "Script vs AI"
 aliases: ["script-vs-ai", "rites-vs-invocations"]
-tags: [type/reference, arcana/docs, principle]
+tags: [type/reference, framework/docs, principle]
 authority: grimoire
 last_verified: 2026-05-12
 ---
@@ -112,7 +112,7 @@ if diff file1.md file2.md > /dev/null; then
 fi
 
 ✅ GOOD: AI detects semantic duplication
-"Both README.md and arcana.md explain 'What is a Grimoire' but with different
+"Both README.md and grimoire.md explain 'What is a Grimoire' but with different
 wording. The README version is more user-friendly, while the root hub's is more technical.
 Suggest keeping README's version and having the root hub reference it."
 ```
@@ -218,7 +218,7 @@ idempotency before its behavior is broadened.
 
 ---
 
-## The Arcana Pattern
+## The Framework Pattern
 
 ### Current Architecture (Correct):
 
@@ -235,7 +235,7 @@ idempotency before its behavior is broadened.
                     │ Provides data to
                     ▼
 ┌─────────────────────────────────────────────┐
-│  INVOCATION: improve_arcana.md              │
+│  INVOCATION: improve_framework.md              │
 │  ────────────────────────────────────────   │
 │  • Runs rites to gather data                │
 │  • AI analyzes the results                  │
@@ -324,18 +324,18 @@ Ask: "Does this require understanding context and meaning?"
 
 ## Applying this to skills
 
-Every Arcana skill delegates to one of two backing implementations:
+Every framework skill delegates to one of two backing implementations:
 
-- **Rite-backed**: `SKILL.md` body says `{{ARCANA_PATH}}/bin/arcana <name>`. The AI reads the skill, runs the rite, reports the rite's output. No judgment in between.
-- **Invocation-backed**: `SKILL.md` body says `` `!cat {{ARCANA_PATH}}/invocations/<area>/<name>.md` `` and the registration rite inlines that guide into the generated skill. The AI receives the invocation with the skill and follows its workflow, applying judgment.
+- **Rite-backed**: `SKILL.md` body says `{{FRAMEWORK_PATH}}/bin/grimoire <name>`. The AI reads the skill, runs the rite, reports the rite's output. No judgment in between.
+- **Invocation-backed**: `SKILL.md` body says `` `!cat {{FRAMEWORK_PATH}}/invocations/<area>/<name>.md` `` and the registration rite inlines that guide into the generated skill. The AI receives the invocation with the skill and follows its workflow, applying judgment.
 
 Pick by the same rule that applies to rites vs invocations themselves:
 
 | If the skill's job is | Pick this backing | Examples |
 |---|---|---|
-| Mechanical, deterministic, no judgment required | Rite-backed | `/arc-update skills`, `/arc-update library`, `/arc-clean`, `/arc-validate` selectors |
-| Conversational, judgment-driven, or multi-step exploratory | Invocation-backed | `/grm-create`, `/grm-check`, `/arc-improve`, `/arc-help` |
-| Both — the rite gathers data, the AI interprets | **Both, in that order**: skill body runs the rite first, then loads an invocation that reads the rite's output | `/arc-validate semantics` could evolve into this if/when the analysis judgment grows beyond the rite's pattern check |
+| Mechanical, deterministic, no judgment required | Rite-backed | `/grm-dev-update skills`, `/grm-dev-update library`, `/grm-dev-clean`, `/grm-dev-validate` selectors |
+| Conversational, judgment-driven, or multi-step exploratory | Invocation-backed | `/grm-create`, `/grm-check`, `/grm-dev-improve`, `/grm-dev-help` |
+| Both — the rite gathers data, the AI interprets | **Both, in that order**: skill body runs the rite first, then loads an invocation that reads the rite's output | `/grm-dev-validate semantics` could evolve into this if/when the analysis judgment grows beyond the rite's pattern check |
 
 Two anti-patterns to avoid:
 

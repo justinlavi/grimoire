@@ -1,5 +1,5 @@
 {
-  "arcana": [
+  "framework": [
     "validate_structure.py",
     "validate_encoding.py",
     "validate_portability.py",
