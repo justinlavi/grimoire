@@ -1,0 +1,24 @@
+{
+  "name": "grimoire",
+  "owner": {
+    "name": "Justin Lavi",
+    "url": "https://github.com/justinlavi/grimoire"
+  },
+  "metadata": {
+    "description": "Grimoire: knowledge bases your AI assistant reads and maintains with you."
+  },
+  "plugins": [
+    {
+      "name": "grimoire",
+      "description": "Grimoire verbs (setup, create, add, save, update, check, publish, move, remove, help) and the session-start routing hook.",
+      "source": "./plugins/grimoire",
+      "category": "productivity"
+    },
+    {
+      "name": "grimoire-dev",
+      "description": "Grimoire maintenance verbs (validate, improve) for working on the framework itself.",
+      "source": "./plugins/grimoire-dev",
+      "category": "development"
+    }
+  ]
+}

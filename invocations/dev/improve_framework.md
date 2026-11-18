@@ -1,0 +1,209 @@
+---
+type: playbook
+title: "Improve the Framework"
+aliases: ["improve-framework", "framework-improve"]
+tags: [framework/invocations, type/playbook, scope/framework]
+authority: grimoire
+last_verified: 2026-11-14
+---
+
+# Invocation: Improve the Framework
+
+Runs the mechanical validators and the four judgment reviews over the framework, applies the low-risk fixes, validates again, and reports the design work it deferred.
+
+## Trigger
+
+```
+/grm-dev-improve
+```
+
+Run it from the framework directory. It is safe to rerun at any time. It fits these moments:
+
+- Before a framework release or a version bump.
+- After bulk changes to documentation or features.
+- After a change to a command family, the grimoire scaffold, the installer or a validator.
+- When something reads as stale, repetitive or out of sync.
+- When the framework is correct but harder to explain or navigate than it should be.
+
+Requests that go elsewhere:
+
+| Request | Command |
+|---|---|
+| Check a grimoire | `/grm-check` |
+| Run the validators and nothing else | `/grm-dev-validate` |
+| Bring the framework and the grimoires current | `/grm-update` |
+
+## Inputs
+
+| Input | Read it with | Missing or invalid when |
+|---|---|---|
+| The framework checkout, named `FRAMEWORK_HOME` on this page | The current directory; run every command from it | It holds no `framework.json` |
+| The git state | `git status --short` | It prints paths: the pass starts from a committed tree, so that its own changes can be reviewed alone |
+| Recent changes and the rules that bind them | `CHANGELOG.md` (its newest entry and `[Unreleased]`) and [[docs/governance|governance]] | - |
+| Open deferred work | [[docs/architecture_backlog|architecture backlog]] | - |
+| The four review playbooks | [[invocations/dev/quality/quality|quality]]; read each one when its step starts | - |
+
+When the checkout or the git state is invalid, stop before step 1 and tell the user which one; for uncommitted changes, ask whether to commit them first.
+
+The scope is every file in the checkout, by the surfaces that step 1 of [[invocations/dev/quality/review_architecture|review architecture]] lists. Grimoires are out of scope.
+
+## Never
+
+- Never apply, in this pass, a change that touches more than ten files, a public command name, a file path, release behaviour or generated output. A change that wide cannot be reviewed inside a quality pass. Defer it: report its benefit, the files and surfaces it affects, and a first step, and add it to the [[docs/architecture_backlog|architecture backlog]] when it must outlive this conversation.
+- Never change `VERSION` or create a tag. A version bump needs the user's sign-off; propose it and stop. [[docs/governance|governance]] owns the rule.
+- Never break an existing grimoire. A deliberate break needs a major version and a deprecation cycle, both in [[docs/governance|governance]].
+- Never add content that serves one domain. The framework must work for every grimoire; [[docs/governance|governance]] lists what belongs in it.
+- Never use an example name other than `cooking-grimoire`, `dnd-grimoire`, `Alice`, `Bob`, `Project Alpha` and `{your-grimoire}`. A real product or company name narrows the framework to one reader.
+- Never write a reference from one grimoire to another, or to the framework, with `../`. Use `FRAMEWORK_HOME/...` and library-key paths such as `cooking-grimoire/...`, which resolve on every machine.
+- Never leave a fact stated twice. A repeat is a short navigation summary, a generated view, a release snapshot that says it is one, or a defect.
+- Never lengthen the path an assistant reads for a common task. One hub, one playbook and the reference pages that playbook names are enough.
+- Never edit `docs/skills.md` by hand. `rites/sync_docs.py` generates it, and the next run overwrites a hand edit.
+- Never create a documentation file unless it becomes the owner of a fact, supports a major version or a breaking change, or saves a recurring review from being explained again in chat.
+
+## Steps
+
+Run the steps in order. The order carries these dependencies:
+
+- Step 3 starts only when step 2 is done. Mechanical failures hide the problems that the reviews look for.
+- Step 5 follows step 4, so that the reading of each rite is fresh. It edits contract JSON, so step 7 must follow it.
+- Step 6 follows step 3 and uses its source-of-truth map.
+- Step 7 follows steps 3 to 6, because link anchors drift when documentation moves.
+- Step 9 follows step 8, so that the changelog describes the validated state.
+
+Skip step 3 or step 5 only when the user says so, and report the step as skipped with the reason.
+
+### 1. Run the validator suite
+
+```bash
+FRAMEWORK_HOME/bin/grimoire validate --parallel
+```
+
+| Form | Effect |
+|---|---|
+| `validate --parallel` | Runs the validators at the same time and prints the failing validators' diagnostics |
+| `validate` | Runs them one after another |
+| `validate --summary` | Runs them one after another and prints the summary only |
+| `validate <selector>` | Runs the named validators; [[invocations/validators/validators|validators]] lists the selectors |
+
+- Done when: the command exits 0 (every validator passed) or 1 (the failing validators are listed with their diagnostics).
+
+### 2. Fix what the validators report
+
+| Diagnostic | Action |
+|---|---|
+| A broken link, a path that is not in snake_case, a missing heading, a hyphenated path example | Fix it directly |
+| A missing hub or a misplaced file | Fix the structure, then rerun the validator that reported it |
+| A security diagnostic | Treat it as blocking. Investigate every credential pattern and unsafe construct before you continue |
+| A system folder (`invocations/`, `formulae/` or `rites/`) in content meant for a grimoire, such as the scaffold under `formulae/grimoire/` | Move it or rewrite it. Those three folders exist only at the top of the framework |
+
+Rerun step 1 after each round of fixes.
+
+- Done when: `FRAMEWORK_HOME/bin/grimoire validate` exits 0.
+- Stop when: a security diagnostic is a real credential or an unsafe construct that you cannot remove. Report it and do not start step 3.
+
+### 3. Review the architecture
+
+Follow [[invocations/dev/quality/review_architecture|review architecture]]. It is the largest judgment step: it inventories every surface, reviews them in lanes, and maps each repeated fact to its owner.
+
+- Done when: that playbook's report is written, its local fixes are applied, and each wider finding is deferred under the first rule in Never.
+
+### 4. Review rite quality
+
+Follow [[invocations/dev/quality/validate_rites|validate rites]]. Apply its fixes, then rerun step 1.
+
+- Done when: every rite is reviewed and `FRAMEWORK_HOME/bin/grimoire validate` exits 0.
+
+### 5. Audit contract coherence
+
+Follow [[invocations/dev/quality/audit_contract_coherence|audit contract coherence]]. Where a contract sentence is wrong, that playbook edits the contract JSON. Where the code is wrong, it hands the finding back to step 4 or to the user. Rerun step 1 after any edit.
+
+- Done when: every claim has a verdict and `FRAMEWORK_HOME/bin/grimoire validate` exits 0.
+- Stop when: the audit cannot tell whether a contract sentence or the code is right. Ask the user which one states the intent.
+
+### 6. Improve the documentation
+
+Follow [[invocations/dev/quality/improve_documentation|improve documentation]] and apply its fixes. Prefer, in this order:
+
+1. One owner for each fact, with links from everywhere else.
+2. A generated view over a list kept by hand. `rites/sync_docs.py` is the pattern.
+3. A page split in two when it does two jobs, and a page deleted when no other page needs it.
+
+- Done when: every page in scope is reviewed and each finding is fixed or deferred.
+
+### 7. Validate again
+
+```bash
+FRAMEWORK_HOME/bin/grimoire validate
+```
+
+Link anchors, command references and structure checks are the most likely to fail after documentation moves. Fix what fails and rerun.
+
+- Done when: the command exits 0.
+
+### 8. Sync the generated catalog
+
+```bash
+FRAMEWORK_HOME/bin/grimoire sync_docs
+```
+
+The rite compares `docs/skills.md` with what the `SKILL.md` frontmatter and `rites/data/command_surface.json` produce. Exit code 0 means the catalog is up to date. Exit code 1 with a diff means it is stale: run `FRAMEWORK_HOME/bin/grimoire sync_docs --apply`, then repeat step 7. Exit code 1 with a `[FAIL]` line means the command-surface contract did not load: run `FRAMEWORK_HOME/bin/grimoire validate skill-refs`, fix what it reports, and run this step again.
+
+- Done when: `FRAMEWORK_HOME/bin/grimoire sync_docs` exits 0 and its `[OK]` line says the catalog is up to date.
+
+### 9. Propose the version and update the changelog
+
+Do this step only when the pass made a change that a user of the framework can see.
+
+1. Decide the bump with the Compatibility Rule in [[docs/governance|governance]]. Compatibility decides it, not the size of the pass. Propose the bump to the user.
+2. Update `CHANGELOG.md` at the framework root. The change workflow in [[docs/governance|governance]] says which entry to edit.
+3. Confirm that `VERSION`, the newest `CHANGELOG.md` entry and [[docs/release|release]] agree.
+4. For a breaking change, write the migration path into the changelog entry and tell the user to announce it to the people whose grimoires it affects.
+
+- Done when: the changelog describes the pass, or you have stated that nothing user-visible changed.
+- Stop when: the proposed bump needs `VERSION` to change. Ask the user to sign off; do not apply it.
+
+## Evidence and checks
+
+- A validator result cites the suite's own output: the exit code and the diagnostics of each failing validator. `--format json` gives the suite report for exact quoting. Never report a count you made yourself.
+- A finding cites a file and a line. A finding from a review step follows that playbook's evidence rules.
+
+These must pass before the reply reports success:
+
+```bash
+FRAMEWORK_HOME/bin/grimoire validate
+FRAMEWORK_HOME/bin/grimoire sync_docs
+python -m pytest
+```
+
+`python -m pytest` runs from the framework directory. The validation profile of `/grm-dev-improve` in `rites/data/command_surface.json` names all three.
+
+The assistant cannot check two things. List them in the reply as left to the user:
+
+- A smoke test of `/grm-create`, `/grm-help` and `/grm-check` in a fresh session.
+- The announcement of a breaking change to the people whose grimoires it affects.
+
+## Outputs
+
+Files:
+
+- Fixes, applied directly to framework files.
+- A `CHANGELOG.md` entry, when the pass made a user-visible change.
+- Items in `docs/architecture_backlog.md`, only for deferred work that needs the user's review after this conversation. Small local cleanup never goes there.
+
+The reply leads with the outcome (the suite passes, or which validators still fail) and the single next action. Then it gives, in this order:
+
+1. Validators: pass or fail, with the failing validators named.
+2. Architecture review: the lanes run, the source-of-truth issues, the naming and boundary findings, the read-path findings.
+3. Contract coherence: claims audited by evidence tier, the verdict tally, the contract edits applied, the code findings deferred.
+4. Fixes applied, counted by category, with the documentation duplication and clarity fixes named.
+5. Deferred work: each item with its benefit, the surfaces it affects and a first step, and the backlog items created, updated or resolved.
+6. Whether `CHANGELOG.md` was updated, and the proposed version bump.
+7. What did not run: each skipped step with its reason, each review run in series, and the two checks left to the user.
+
+## Related
+
+- Validators and their selectors: [[invocations/validators/validators|validators]]
+- The four reviews: [[invocations/dev/quality/quality|quality]]
+- Versioning and what belongs in the framework: [[docs/governance|governance]]
+- Deferred work: [[docs/architecture_backlog|architecture backlog]]
+- A grimoire's equivalent: [[invocations/grm/check|check]]

@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "title": "Grimoire Public Command Surface",
+  "description": "Authoritative contract linking each public framework-shipped slash command to its skill source, invocation home, workflow owner, safety posture, and validation profile.",
+  "commands": [
+    {
+      "command": "/grm-create",
+      "family": "grm",
+      "skill_source": "skills/grm/create/SKILL.md",
+      "invocation": "invocations/grm/create_grimoire.md",
+      "guard": null,
+      "owner_type": "hybrid",
+      "rite_owner": null,
+      "preconditions": [
+        "Target domain",
+        "Target directory",
+        "Owner",
+        "Unique grimoire skill prefix"
+      ],
+      "mutation_profile": "judgment_gated",
+      "mutation_behavior": "Creates a new grimoire directory, scaffold files, starter chapters, git repository, and library entry.",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/validate_grimoire_structure.py --grimoire GRIMOIRE_ROOT; python rites/validate_frontmatter.py --grimoire GRIMOIRE_ROOT; python rites/validate_links.py --grimoire GRIMOIRE_ROOT"
+    },
+    {
+      "command": "/grm-add",
+      "family": "grm",
+      "skill_source": "skills/grm/add/SKILL.md",
+      "invocation": "invocations/grm/add.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": "rites/new_page.py",
+      "preconditions": [
+        "Registered active grimoire",
+        "Material to author, or a file, folder, or inbox to file"
+      ],
+      "mutation_profile": "judgment_gated",
+      "mutation_behavior": "Authors a page or chapter from a topic or chat answer (stamped by new_page.py), or files a document, folder, or the inbox as chapter-local sources and promotes drafts to pages, then updates affected pages and hubs. On a copy registered for reading it changes nothing until the user agrees to switch the copy to editing (grimoire_access.py sets `access` in library.json).",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/validate.py --grimoire GRIMOIRE_ROOT structure frontmatter links provenance"
+    },
+    {
+      "command": "/grm-move",
+      "family": "grm",
+      "skill_source": "skills/grm/move/SKILL.md",
+      "invocation": "invocations/grm/move.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": "rites/restructure_grimoire.py",
+      "preconditions": [
+        "Registered active grimoire",
+        "Source path under chapters/ that exists",
+        "Destination path under chapters/ that does not exist"
+      ],
+      "mutation_profile": "judgment_gated",
+      "mutation_behavior": "Renames or moves a page or chapter under chapters/ via restructure_grimoire.py, retargeting every full-path wikilink that pointed at the moved file(s) and renaming a moved chapter's folder-named hub; the invocation then wires the source and destination hubs, and fixes display labels. On a copy registered for reading it changes nothing until the user agrees to switch the copy to editing (grimoire_access.py sets `access` in library.json).",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/restructure_grimoire.py --grimoire GRIMOIRE_ROOT --move SRC DST; python rites/validate.py --grimoire GRIMOIRE_ROOT links orphans structure"
+    },
+    {
+      "command": "/grm-remove",
+      "family": "grm",
+      "skill_source": "skills/grm/remove/SKILL.md",
+      "invocation": "invocations/grm/remove.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": "rites/restructure_grimoire.py",
+      "preconditions": [
+        "Registered active grimoire",
+        "Target path under chapters/ that exists",
+        "Explicit user confirmation (destructive)"
+      ],
+      "mutation_profile": "judgment_gated",
+      "mutation_behavior": "Deletes a page or chapter under chapters/ via restructure_grimoire.py and reports every inbound wikilink that would break; the invocation confirms the deletion, drops the parent hub pointer, and repairs or removes the broken inbound links. Refuses to delete a chapter hub on its own. On a copy registered for reading it changes nothing until the user agrees to switch the copy to editing (grimoire_access.py sets `access` in library.json).",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/restructure_grimoire.py --grimoire GRIMOIRE_ROOT --remove PATH; python rites/validate.py --grimoire GRIMOIRE_ROOT links orphans structure"
+    },
+    {
+      "command": "/grm-update",
+      "family": "grm",
+      "skill_source": "skills/grm/update/SKILL.md",
+      "invocation": "invocations/grm/update.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": null,
+      "preconditions": [
+        "Framework Git checkout",
+        "Clean framework worktree before a bare update"
+      ],
+      "mutation_profile": "judgment_gated",
+      "mutation_behavior": "Bare: follows the UPDATE.md procedure (pull the framework with git --ff-only, then summon.py --update --apply to reconcile the library, pull every grimoire, reset and sync skills, refresh marked agent blocks, and heal grimoires confirmed current). Scoped: skills runs sync_skills.py, library runs sync_library.py, agentfile runs inject_agent_file.py plus the judgment edit for review targets. A copy registered for reading is pulled and never healed.",
+      "log_behavior": "Does not append grimoire logs.",
+      "validation_profile": "python rites/validate.py --summary; python rites/summon.py --check --format json"
+    },
+    {
+      "command": "/grm-help",
+      "family": "grm",
+      "skill_source": "skills/grm/help/SKILL.md",
+      "invocation": "invocations/grm/help.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "judgment",
+      "rite_owner": null,
+      "preconditions": [
+        "Framework skill catalog"
+      ],
+      "mutation_profile": "read_only",
+      "mutation_behavior": "Reads the generated skill catalog and the active grimoire's own skill frontmatter; presents the grimoire commands and the active grimoire's own commands. With `all`, also reads the library and presents the commands of every registered grimoire. Writes nothing.",
+      "log_behavior": "Does not append grimoire or framework logs.",
+      "validation_profile": "python rites/sync_docs.py --apply when framework skill frontmatter or command-surface metadata changes."
+    },
+    {
+      "command": "/grm-dev-validate",
+      "family": "dev",
+      "skill_source": "skills/dev/validate/SKILL.md",
+      "invocation": "invocations/validators/validate.md",
+      "guard": null,
+      "owner_type": "rite",
+      "rite_owner": "rites/validate.py",
+      "preconditions": [
+        "Framework root"
+      ],
+      "mutation_profile": "read_only",
+      "mutation_behavior": "Runs the deterministic framework validator suite, optionally narrowed by selector; writes no file.",
+      "log_behavior": "Does not append grimoire or framework logs.",
+      "validation_profile": "python rites/validate.py [all|smart|auto|summary|parallel|SELECTOR...]"
+    },
+    {
+      "command": "/grm-dev-improve",
+      "family": "dev",
+      "skill_source": "skills/dev/improve/SKILL.md",
+      "invocation": "invocations/dev/improve_framework.md",
+      "guard": null,
+      "owner_type": "judgment",
+      "rite_owner": null,
+      "preconditions": [
+        "Framework root",
+        "Maintainer intent"
+      ],
+      "mutation_profile": "judgment_gated",
+      "mutation_behavior": "May edit framework source, docs, tests, skills, and generated artifacts after reading current context.",
+      "log_behavior": "Updates CHANGELOG.md for user-visible framework changes.",
+      "validation_profile": "python rites/validate.py --parallel; python -m pytest; python rites/sync_docs.py --apply when generated docs change."
+    },
+    {
+      "command": "/grm-setup",
+      "family": "grm",
+      "skill_source": "skills/grm/setup/SKILL.md",
+      "invocation": "invocations/grm/setup.md",
+      "guard": null,
+      "owner_type": "hybrid",
+      "rite_owner": "rites/install_grimoire.py",
+      "preconditions": [
+        "Framework installed",
+        "git on PATH",
+        "A repository URL (join) or a folder under the grimoire home (adopt)"
+      ],
+      "mutation_profile": "apply_only",
+      "mutation_behavior": "Conversational onboarding. Reads summon.py --check, then joins a grimoire by link through install_grimoire.py (clone into the home, register in library.json, sync skills), adopts a folder through adopt_grimoire.py plus sync_library.py, or hands off to /grm-create. On a Claude Code plugin install it offers to turn on automatic updates (plugin_auto_update.py), which sets one key in the user's Claude Code settings. A grimoire joined from a link is registered for reading (`access: read`); `--access` records the access given, also for a grimoire that is already registered. A grimoire that is already on disk from another address is left alone unless `--switch-url` is given.",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/summon.py --check --format json; python rites/validate.py --grimoire GRIMOIRE_ROOT --summary"
+    },
+    {
+      "command": "/grm-save",
+      "family": "grm",
+      "skill_source": "skills/grm/save/SKILL.md",
+      "invocation": "invocations/grm/save.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": "rites/save_grimoire.py",
+      "preconditions": [
+        "Registered active grimoire that is a git repository",
+        "Grimoire validators pass",
+        "git identity configured"
+      ],
+      "mutation_profile": "plan_apply",
+      "mutation_behavior": "Plans the changes to share, then under --apply stages everything git tracks, commits with the composed message, pulls --rebase from the upstream, and pushes. On a conflict it pauses the rebase with the local commit kept and conflict markers in the pages, and the next save continues it once the markers are resolved; --abandon ends a paused save and keeps the local commit; never force-pushes. On a copy registered for reading it changes nothing until the user agrees to switch the copy to editing (grimoire_access.py sets `access` in library.json).",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/save_grimoire.py --grimoire GRIMOIRE_ROOT --format json (plan runs validate.py --grimoire GRIMOIRE_ROOT first)"
+    },
+    {
+      "command": "/grm-check",
+      "family": "grm",
+      "skill_source": "skills/grm/check/SKILL.md",
+      "invocation": "invocations/grm/check.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": "rites/repair_links.py",
+      "preconditions": [
+        "Registered active grimoire"
+      ],
+      "mutation_profile": "plan_apply",
+      "mutation_behavior": "Read-only by default: the full health pass or a mechanical validator selection surfaces findings; naming and boundaries are judgment reviews reported in chat. Writes only under the fix scope (repair_links.py --apply after a dry run) or when the user approves a specific fix in the health pass. The `fix` scope follows the same rule for a copy registered for reading as the commands that change a grimoire.",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/validate.py --grimoire GRIMOIRE_ROOT; python rites/repair_links.py --grimoire GRIMOIRE_ROOT (dry run)"
+    },
+    {
+      "command": "/grm-publish",
+      "family": "grm",
+      "skill_source": "skills/grm/publish/SKILL.md",
+      "invocation": "invocations/grm/publish.md",
+      "guard": "invocations/meta/grimoire_directory_guard.md",
+      "owner_type": "hybrid",
+      "rite_owner": "rites/stage_publish.py",
+      "preconditions": [
+        "Registered active grimoire",
+        "git and Python 3.10+; Node.js 22+ for build"
+      ],
+      "mutation_profile": "plan_apply",
+      "mutation_behavior": "init copies the publishing formulae (publish.json, build.sh, quartz.config.yaml, the CI file for the target) into the grimoire; build and check stage the content into publish/content/ (disposable) and run the audit; build also clones Quartz into publish/quartz/ and writes publish/quartz/public/. Nothing under chapters/ is touched. The `init` scope follows the same rule for a copy registered for reading as the commands that change a grimoire.",
+      "log_behavior": "Writes no log; a grimoire's history is its git history (rites/recent_changes.py renders it).",
+      "validation_profile": "python rites/stage_publish.py --grimoire GRIMOIRE_ROOT --apply; python rites/audit_publish.py --grimoire GRIMOIRE_ROOT --mode content"
+    }
+  ]
+}

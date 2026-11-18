@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "title": "Grimoire Mutating Rite Profiles",
+  "description": "Authoritative contract for write-capable rites: whether they plan, apply, append, or only write through an explicit operation.",
+  "profiles": [
+    {
+      "path": "rites/adopt_grimoire.py",
+      "profile": "apply_only",
+      "default_mode": "apply",
+      "plan_command": null,
+      "apply_command": "python rites/adopt_grimoire.py <directory> --skill-prefix <prefix> --description \"<description>\"",
+      "writes": [
+        "<target grimoire>/grimoire.json"
+      ],
+      "idempotency": "Refuses to overwrite an existing manifest, and refuses a skill prefix another grimoire or the framework owns; rerun returns a validation failure without changing the file.",
+      "validation_profile": "python rites/sync_library.py --home <home>; python rites/validate_grimoire_structure.py --grimoire <target> after the grimoire has a full scaffold.",
+      "tests": [
+        "tests/test_adopt_grimoire.py"
+      ]
+    },
+    {
+      "path": "rites/new_page.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/new_page.py --grimoire <path> --path chapters/<chapter>/<slug>.md --type <type> --title \"<title>\"",
+      "apply_command": "python rites/new_page.py --grimoire <path> --path chapters/<chapter>/<slug>.md --type <type> --title \"<title>\" --apply",
+      "writes": [
+        "<grimoire>/chapters/<chapter>/<slug>.md"
+      ],
+      "idempotency": "Refuses to overwrite an existing page; rerun returns a refusal without changing the file. A grimoire registered for reading on this computer is refused in plan and apply mode.",
+      "validation_profile": "python rites/validate_frontmatter.py --grimoire <path>; python rites/validate_links.py --grimoire <path>",
+      "tests": [
+        "tests/test_new_page.py",
+        "tests/test_content_rites_safety.py"
+      ]
+    },
+    {
+      "path": "rites/sync_skills.py",
+      "profile": "plan_apply",
+      "default_mode": "apply",
+      "plan_command": "python rites/sync_skills.py --dry-run",
+      "apply_command": "python rites/sync_skills.py",
+      "writes": [
+        "supported agent skill directories under the user's home directory"
+      ],
+      "idempotency": "Rerunning with the same inputs produces the same rendered skill files; stale cleanup removes any directory in a managed prefix (the framework's prefix or the prefix of any library grimoire) that is not in the current catalog. With --reset-managed, all managed namespace directories are removed before re-registration. Directories outside every managed prefix are never touched.",
+      "validation_profile": "python rites/sync_skills.py --dry-run; temp-target pytest coverage for dry-run, repeated apply, overwrite of an unmarked managed dir, stale cleanup, managed-namespace reset, outside-namespace preservation, and prefix collisions.",
+      "tests": [
+        "tests/test_sync_skills.py",
+        "tests/test_sync_skills_inline.py"
+      ]
+    },
+    {
+      "path": "rites/restructure_grimoire.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/restructure_grimoire.py --grimoire <path> --move <src> <dst>",
+      "apply_command": "python rites/restructure_grimoire.py --grimoire <path> --move <src> <dst> --apply",
+      "writes": [
+        "active-grimoire chapter pages and folders (moves, renames, removals), the wikilinks that target them, and the frontmatter sources entries that cite them"
+      ],
+      "idempotency": "Refuses a move whose destination exists and a remove of a missing path; after a move, rerunning the same move refuses (source no longer present). Link and sources rewrites are exact-target replacements, so a re-run finds nothing left to retarget. Every argument must resolve inside chapters/; anything else is refused. A grimoire registered for reading on this computer is refused in plan and apply mode.",
+      "validation_profile": "python rites/validate_links.py --grimoire <path>; python rites/validate_orphans.py --grimoire <path>; python rites/validate_grimoire_structure.py --grimoire <path>; python rites/validate_provenance.py --grimoire <path>",
+      "tests": [
+        "tests/test_restructure_grimoire.py",
+        "tests/test_content_rites_safety.py"
+      ]
+    },
+    {
+      "path": "rites/repair_links.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/repair_links.py --grimoire <path>",
+      "apply_command": "python rites/repair_links.py --grimoire <path> --apply",
+      "writes": [
+        "active-grimoire Markdown files with unambiguous wikilink repairs"
+      ],
+      "idempotency": "After apply, rerun reports no repairs for links it already normalized. A grimoire registered for reading on this computer is refused with --apply; a plan run stays allowed.",
+      "validation_profile": "python rites/validate_links.py --grimoire <path>; python rites/validate_orphans.py --grimoire <path>",
+      "tests": [
+        "tests/test_repair_links.py",
+        "tests/test_content_rites_safety.py"
+      ]
+    },
+    {
+      "path": "rites/summon.sh",
+      "profile": "apply_only",
+      "default_mode": "apply",
+      "plan_command": null,
+      "apply_command": "bash rites/summon.sh",
+      "writes": [
+        "companion-script download directory (temporary)",
+        "Framework install tree",
+        "selected grimoire repositories",
+        "agent instruction files",
+        "agent skill directories"
+      ],
+      "idempotency": "Install/update behavior is governed by the Summoning Rite contract and mode-specific prompts.",
+      "validation_profile": "Summoning Rite contract checks and a source-install smoke test.",
+      "tests": [
+        "tests/test_summon_contract.py"
+      ]
+    },
+    {
+      "path": "rites/summon_core.py",
+      "profile": "apply_only",
+      "default_mode": "apply",
+      "plan_command": null,
+      "apply_command": "python rites/summon.py",
+      "writes": [
+        "Framework install tree",
+        "selected grimoire repositories",
+        "library.json (through sync_library.update_library)",
+        "agent instruction files (the routing block, through apply_routing_block, which inject_agent_file and summon --reconcile also call)",
+        "agent skill directories"
+      ],
+      "idempotency": "Install/update behavior is governed by the Summoning Rite contract and mode-specific prompts. The routing block is idempotent: an absent file is created with the canonical block, a block-less file gets one inserted, a single clean marked region is refreshed in place, and a block already matching the template is left unchanged. A file with duplicate or malformed markers, or one that is not UTF-8, is left untouched and reported for the agentfile judgment edit. The library write keeps every unknown field and refuses a library.json that cannot be read.",
+      "validation_profile": "python -m pytest tests/test_summon_core.py tests/test_summon_core_install.py tests/test_inject_agent_file.py",
+      "tests": [
+        "tests/test_summon_core.py",
+        "tests/test_summon_core_install.py",
+        "tests/test_inject_agent_file.py",
+        "tests/test_inject_agent_file_targets.py"
+      ]
+    },
+    {
+      "path": "rites/summon_state.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/summon.py --check",
+      "apply_command": "python rites/summon.py --reconcile --apply",
+      "writes": [
+        "~/.cache/grimoire/summon-last.json (the transcript of every install and state command)"
+      ],
+      "idempotency": "--check and the plan forms of --reconcile and --update write only the transcript. With --apply, a second run on a converged install changes nothing: the library, the skill folders and the routing blocks are written through sync_library.update_library, sync_skills and summon_core.apply_routing_block, each of which is idempotent. An agent whose home folder is absent is not configured.",
+      "validation_profile": "python rites/summon.py --check --format json (exit 0 means in sync); python -m pytest tests/test_summon_state.py tests/test_summon_state_surface.py",
+      "tests": [
+        "tests/test_summon_state.py",
+        "tests/test_summon_state_surface.py"
+      ]
+    },
+    {
+      "path": "rites/sync_docs.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/sync_docs.py",
+      "apply_command": "python rites/sync_docs.py --apply",
+      "writes": [
+        "docs/skills.md"
+      ],
+      "idempotency": "After apply, rerun reports docs/skills.md is up to date.",
+      "validation_profile": "python rites/sync_docs.py --apply; git diff --check",
+      "tests": [
+        "tests/test_sync_docs.py"
+      ]
+    },
+    {
+      "path": "rites/sync_library.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/sync_library.py",
+      "apply_command": "python rites/sync_library.py --apply",
+      "writes": [
+        "~/grimoires/library.json"
+      ],
+      "idempotency": "Every library writer (this rite, summon --reconcile and the installer) writes through update_library under compare-and-swap: it re-reads and rebuilds when library.json changed since it was read, so a concurrent writer's change is incorporated and not overwritten; a persistent conflict fails loudly, and a library.json that cannot be read is left as it is. After apply, rerun reports the library is in sync unless disk state changed.",
+      "validation_profile": "python rites/sync_library.py; python rites/sync_skills.py --dry-run after approved library changes.",
+      "tests": [
+        "tests/test_sync_library.py",
+        "tests/test_sync_library_writer.py"
+      ]
+    },
+    {
+      "path": "rites/update_grimoires.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/summon.py --update",
+      "apply_command": "python rites/summon.py --update --apply",
+      "writes": [
+        "grimoire working trees (fast-forward-only pulls); during heal, framework-owned managed scaffold, absent seeded files, root sources moved into the citing chapter with their citations, the README update block, and wikilinks repaired by repair_links.py"
+      ],
+      "idempotency": "Pulls are fast-forward-only and heals are idempotent: a second run on a current, clean library pulls nothing and heals nothing new. A grimoire with no shared copy (`local_only`) is healed and never pulled. Grimoires that are dirty, diverged, or unreachable are reported and left untouched. A grimoire registered for reading on this computer is fast-forwarded but never healed or re-validated.",
+      "validation_profile": "python rites/summon.py --update; python rites/validate.py --grimoire <path> --summary after apply.",
+      "tests": [
+        "tests/test_update_grimoires.py"
+      ]
+    },
+    {
+      "path": "rites/install_grimoire.py",
+      "profile": "apply_only",
+      "default_mode": "apply",
+      "plan_command": null,
+      "apply_command": "python rites/install_grimoire.py <git-url> [--name <directory>] [--access read|edit] [--switch-url]",
+      "writes": [
+        "<grimoire home>/<directory> (clone or fast-forward)",
+        "library.json",
+        "agent skill directories"
+      ],
+      "idempotency": "Re-running fast-forwards an existing clone and rewrites the same library entry; never re-clones over a working tree. A folder that is not a git checkout is an error and is left alone; a failed pull keeps the checkout and is a warning. A grimoire with no library entry is registered for reading unless --access edit is given; an existing entry keeps its own access unless --access is given. A checkout that came from another address stops the rite with nothing changed; --switch-url points it at the new address after checking that both hold the same history.",
+      "validation_profile": "python rites/validate.py --grimoire <directory> --summary; python rites/summon.py --check",
+      "tests": [
+        "tests/test_install_grimoire.py",
+        "tests/test_install_grimoire_outcomes.py"
+      ]
+    },
+    {
+      "path": "rites/save_grimoire.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/save_grimoire.py --grimoire <path>",
+      "apply_command": "python rites/save_grimoire.py --grimoire <path> --apply --message \"<text>\"",
+      "writes": [
+        "<grimoire>/.git (commit, rebase, push to origin)"
+      ],
+      "idempotency": "A clean, up-to-date grimoire is a noop; a conflict pauses the rebase with the local commit kept and conflict markers in the pages, so re-running after the markers are removed continues the rebase and completes the save; --abandon ends a paused save and restores the recorded commit. A grimoire registered for reading on this computer is refused in every mode.",
+      "validation_profile": "The plan runs validate.py --grimoire <path> and refuses to commit a failing grimoire.",
+      "tests": [
+        "tests/test_save_grimoire.py"
+      ]
+    },
+    {
+      "path": "rites/build_plugins.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/build_plugins.py",
+      "apply_command": "python rites/build_plugins.py --apply",
+      "writes": [
+        "plugins/<family>/.claude-plugin/plugin.json",
+        "plugins/<family>/skills/<slug>/SKILL.md",
+        "plugins/grimoire/scripts/grimoire_block.md",
+        "plugins/grimoire/bin/*"
+      ],
+      "idempotency": "Rendering is a pure function of the skill sources and their invocations, the plugin descriptions in .claude-plugin/marketplace.json, the routing block template, and the launcher files in bin/; a second apply is a noop.",
+      "validation_profile": "python rites/build_plugins.py (exit 0 when the committed render matches the sources); python -m pytest tests/test_build_plugins.py",
+      "tests": [
+        "tests/test_build_plugins.py"
+      ]
+    },
+    {
+      "path": "rites/stage_publish.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/stage_publish.py --grimoire <path>",
+      "apply_command": "python rites/stage_publish.py --grimoire <path> --apply",
+      "writes": [
+        "<grimoire>/publish/content/ (emptied and rewritten; content_dir must be a folder below publish/ that holds no publishing settings)"
+      ],
+      "idempotency": "Staging is a pure function of the grimoire content and publish.json; a second apply produces the same tree.",
+      "validation_profile": "python rites/audit_publish.py --grimoire <path> --mode content",
+      "tests": [
+        "tests/test_publish_rites.py"
+      ]
+    },
+    {
+      "path": "rites/plugin_auto_update.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/plugin_auto_update.py",
+      "apply_command": "python rites/plugin_auto_update.py --apply",
+      "writes": [
+        "~/.claude/settings.json (the autoUpdate key on the Grimoire marketplace entry)"
+      ],
+      "idempotency": "Re-running after the key is set changes nothing; every other setting in the file is preserved.",
+      "validation_profile": "python rites/plugin_auto_update.py --format json (auto_update is true)",
+      "tests": [
+        "tests/test_plugin_auto_update.py",
+        "tests/test_plugin_auto_update_errors.py"
+      ]
+    },
+    {
+      "path": "rites/grimoire_access.py",
+      "profile": "plan_apply",
+      "default_mode": "plan",
+      "plan_command": "python rites/grimoire_access.py --grimoire <path> --set read|edit",
+      "apply_command": "python rites/grimoire_access.py --grimoire <path> --set read|edit --apply",
+      "writes": [
+        "~/grimoires/library.json (the access field of the grimoire's entry)"
+      ],
+      "idempotency": "Re-running after the access is set changes nothing; every other field and entry in the library is preserved. Without --set the rite only reports.",
+      "validation_profile": "python rites/grimoire_access.py --grimoire <path> --format json (summary.access is the value set)",
+      "tests": [
+        "tests/test_grimoire_access.py"
+      ]
+    }
+  ]
+}

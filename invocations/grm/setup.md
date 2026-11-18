@@ -1,0 +1,246 @@
+---
+type: playbook
+title: "Setup"
+aliases: ["setup", "grm-setup", "onboarding", "join-grimoire", "adopt"]
+tags: [framework/invocations, type/playbook, scope/grimoire]
+authority: grimoire
+last_verified: 2026-11-18
+---
+
+# Invocation: Setup
+
+Hold the setup conversation. The user ends with a grimoire on disk, registered and usable: one they
+have a link to, a new one, or a folder of notes they already have, made into a grimoire in one
+exchange.
+
+## Trigger
+
+```
+/grm-setup
+/grm-setup <git url>
+/grm-setup <folder>
+```
+
+The user says "set me up", "get started", "I have a link to the cooking grimoire", "make this
+folder a grimoire", or asks what to do first. Also run it when no grimoire is registered,
+or when `/grm-update library` reports an unmanaged folder.
+
+| A request that looks similar | Goes to |
+|---|---|
+| Start a grimoire from scratch | `/grm-create` (step 2 hands off to it) |
+| Bring an existing setup current | `/grm-update` |
+| Install the framework itself | [[docs/installation|installation]] |
+
+## Inputs
+
+This playbook needs no active grimoire and works from any directory.
+
+- `$target`: a repository link or a folder, when the user passed one.
+- The envelope of `FRAMEWORK_HOME/bin/grimoire summon --check --format json` (step 1).
+- `~/.cache/grimoire/summon-last.json`, the transcript the same run writes. Its
+  `final_state.library` names the grimoires: `ok` (registered), `missing` (on disk and not
+  registered) and `unmanaged` (folders without `grimoire.json`).
+- `~/grimoires/<name>/grimoire.json`, for a grimoire's `description`.
+- The envelopes of `install_grimoire` (step 3) and `adopt_grimoire` (step 4).
+- On a Claude Code plugin install, the envelope of
+  `FRAMEWORK_HOME/bin/grimoire plugin_auto_update --format json` (step 1).
+
+## Never
+
+- Never ask for a token, a password or a personal access token, and never store a token in a file.
+  Git already holds the user's credentials for their host. When it does not, git's own credential
+  helper prompts once: a browser window on Windows and macOS, a terminal prompt on Linux. Say that
+  this prompt may appear and move on.
+- Never clone into a directory other than `~/grimoires/<name>`. The rites resolve every grimoire
+  through that layout.
+- Never move the user's folder without asking first.
+- Never ask the user for a fact the envelope in step 1 already holds.
+- Never retry a failed clone in a loop. The cause is the link, the VPN or a credential, and only
+  the user can say which.
+
+## Steps
+
+### 1. Look before asking
+
+```bash
+FRAMEWORK_HOME/bin/grimoire summon --check --format json
+```
+
+Read `summary`: `library` counts the grimoires that are registered (`ok`), on disk and not
+registered (`missing`), and registered with a wrong or dead path (`mismatched`, `stale`);
+`agent_blocks_missing` lists the installed assistants whose routing block is absent, stale or
+unclean (an assistant that the `grimoire` plugin serves needs none); `skills_registered`
+counts registered commands; `drift` is true when any of these is out of step; `next_actions` names
+the repair. The run changes nothing except its transcript.
+
+When Grimoire runs as a Claude Code plugin, also read whether it keeps itself up to date. The run
+changes nothing:
+
+```bash
+FRAMEWORK_HOME/bin/grimoire plugin_auto_update --format json
+```
+
+Automatic updates are **off and can be turned on here** when `status` is `noop` and the message
+reads "would set". They are on when `summary.auto_update` is true. `status: blocked` means the
+plugin source is not listed in the user's own settings, so setup cannot change it.
+
+- Done when: the envelope is printed. Exit 0 means no drift and exit 1 means drift; both are answers.
+- Stop when: the command prints no envelope. The framework is not installed or Python is missing;
+  point the user to [[docs/installation|installation]].
+
+### 2. Branch on what you found
+
+Take the first row that matches:
+
+| Situation | Action |
+|---|---|
+| `$target` is a repository link: `https://`, `git@`, or a path that is a git repository | Go to step 3. |
+| `$target` is a folder on disk that is not a git repository, or a folder under `~/grimoires/` without `grimoire.json` | Go to step 4. |
+| A grimoire is on disk and not registered (`summary.library.missing` is above 0) | Name it with its description. Offer to finish setting it up first: `/grm-update` registers it, makes its commands available, and sets the assistant up to use it. Offer the three choices below as the alternatives. |
+| No grimoire is registered (`ok`, `mismatched` and `stale` in `summary.library` are all 0) | Ask one question that offers the three choices below. |
+| Grimoires are registered and `summary.drift` is false | Say so in one line and list them with their descriptions. Offer the three choices plus "nothing, I'm set". |
+| Grimoires are registered and `summary.drift` is true | Offer `/grm-update` first; `summary.next_actions` says what is out of step. |
+
+The three choices:
+
+1. **Use a grimoire you have a link to.** Ask the user to paste the repository link, then go to
+   step 3.
+2. **Start one from scratch.** Hand off to `/grm-create`.
+3. **Turn a folder of notes into one.** Ask for the folder, then go to step 4.
+
+When step 1 found that automatic updates are off and can be turned on here, add one more choice to
+whichever question this step asks, in every row: **Keep Grimoire up to date by itself.** When the
+user picks it, go to step 5, then offer the remaining choices again.
+
+- Done when: the user has chosen, and you are at step 3, at step 4, at step 5, handing off to
+  another command, or the user said they are set.
+- Stop when: the user's answer fits none of the choices. Ask again in other words; do not guess.
+
+### 3. Install the grimoire from its link
+
+```bash
+FRAMEWORK_HOME/bin/grimoire install_grimoire "<url>" --format json
+```
+
+The rite accepts `https://...`, `git@host:path.git` and local paths. It derives the directory name
+from the repository name (`--name <directory>` overrides it), clones or fast-forwards into
+`~/grimoires/<name>`, checks for `grimoire.json`, records the library entry and registers the
+grimoire's commands. The entry is registered for reading (`summary.access` is `read`): the copy
+stays up to date and no command changes it until the user switches it to editing. When the user
+has already said that they will change this grimoire, add `--access edit` to the command.
+`--access read` and `--access edit` also change a grimoire that is already on this computer;
+without the option, such a grimoire keeps the access it has. When the user gave several links, run
+the command once for each link and report each result, then go on to step 5 once. Report from the
+envelope, never from assumption:
+
+| Envelope | Action |
+|---|---|
+| `status: ok` | Say where the grimoire landed and what it is, from the `description` in its `grimoire.json`. When `summary.access` is `read`, add one line: the copy is for reading and stays up to date by itself, and the first time they ask to change something, the assistant asks whether to switch it to editing. Go to step 5. |
+| `status: error`, `summary.skills` is `failed` | The grimoire is cloned and in the library; its commands are not registered. Say that its commands are not available yet and that `/grm-update skills` registers them. Go to step 5. |
+| `status: error`, message "exists and is not a git checkout" | A folder of that name is in the way. Ask whether to move it away, or to adopt it with step 4 (when it is the user's own folder of notes). |
+| `status: blocked`, `summary.manifest` is `missing` | The repository is on disk and is not a grimoire yet. Offer to adopt it: step 4 on `~/grimoires/<name>`. Explain that adoption only writes a small identity file. |
+| `status: blocked`, `summary.origin` is set | The grimoire is already on this computer and came from the address in `summary.origin`; nothing was changed. Name both addresses and ask whether this copy should come from the new one from now on. On yes, run the command again with `--switch-url`: the rite checks that the new address holds the same grimoire before it changes anything. When the user says the link is another grimoire of the same name, run the command with `--name <directory>`. |
+| `status: blocked`, message "shares no history" | The new address holds another grimoire, and the copy was left alone. Offer `--name <directory>` to keep both. |
+| `status: error`, message "could not clone" | Name the three causes in order of likelihood: the link is wrong (compare it with the link the user was given), the host needs VPN, or git has no credential for the host yet (run the step again and watch for git's prompt). Ask the user which it is. |
+
+- Done when: `status` is `ok`, or the grimoire is registered and only its skill registration failed.
+- Stop when: `status` is `blocked` or `error` for any other reason. Take the row's action and wait
+  for the user. For any
+  other message (a malformed `grimoire.json`, git not installed, a link that yields no directory
+  name), quote the message; it names the remedy.
+
+### 4. Adopt a folder as a grimoire
+
+The folder must live under `~/grimoires/`. When it is elsewhere, ask before moving it there. Then
+gather three answers, one question at a time:
+
+| Answer | Rule |
+|---|---|
+| Skill prefix | Two to four lowercase letters matching `^[a-z][a-z0-9]*$`, unique across installed grimoires. Suggest one from the folder name (`notes-grimoire` gives `nt`). |
+| Description | One line. The default is `"<name> grimoire"`. |
+| Naming convention | Offer `snake_case` as the default, or `preserve` when the material keeps its own casing. |
+
+```bash
+FRAMEWORK_HOME/bin/grimoire adopt_grimoire <directory> --skill-prefix <prefix> --description "<desc>" --naming <convention> --format json
+FRAMEWORK_HOME/bin/grimoire sync_library --apply
+FRAMEWORK_HOME/bin/grimoire sync_skills
+```
+
+Adoption writes only `grimoire.json`; it leaves the folder's content untouched. Suggest `/grm-check`
+afterwards, so that the user sees what the validators think of the existing material, and `/grm-add`
+for anything still sitting loose.
+
+- Done when: `adopt_grimoire` exits 0 with a `write` mutation for `grimoire.json`, and the two sync
+  rites exit 0.
+- Stop when: `adopt_grimoire` exits 1 (the folder does not exist, the prefix is malformed, another
+  grimoire uses it or the framework owns it, or `grimoire.json` already exists; the rite never
+  overwrites one). Report the envelope's message and ask for a different answer.
+
+### 5. Turn on automatic updates
+
+This step applies when Grimoire runs as a Claude Code plugin. Skip it otherwise. Act on the
+envelope from step 1:
+
+- Automatic updates are on: say nothing and go on.
+- They are off and can be turned on here, and the user picked that choice in step 2: turn them on.
+
+  ```bash
+  FRAMEWORK_HOME/bin/grimoire plugin_auto_update --apply --format json
+  ```
+
+  Say that Grimoire now keeps itself up to date.
+- They are off and can be turned on here, and the user has not been asked in this conversation
+  (they came through step 3 or step 4): ask once whether Grimoire should keep itself up to date.
+  On yes, run the command above. On no, go on; do not ask again.
+- `status: blocked`: say that automatic updates are turned on under `/plugin`, Marketplaces, and
+  go on.
+
+- Done when: automatic updates are on, or the user declined, or the envelope is `blocked`.
+- Stop when: never; this step does not block setup.
+
+### 6. Close the loop
+
+1. Tell the user to open a fresh session, so that the assistant sees the grimoire's commands.
+   Assistants cache the command list.
+2. Name the verbs they will use day to day, in plain words: ask (just talk; the assistant routes
+   through the grimoire), `/grm-add` to write something down or file a document, `/grm-save` to
+   share what they changed, `/grm-update` to pick up everyone else's changes, `/grm-check` to learn
+   whether the grimoire is in good shape.
+3. When the user mentioned a group or organisation URL, give the terminal command that discovers
+   many grimoires at once: `bash FRAMEWORK_HOME/rites/summon.sh --scope <org url>`.
+
+- Done when: the user knows to open a fresh session and has the day-to-day verbs.
+
+## Evidence and checks
+
+- Quote a rite's envelope for every claim about what happened: where a grimoire landed
+  (`summary.path`), whether it is registered (the `register` mutation), whether the folder became a
+  grimoire (the `write` mutation).
+- Count commands the way the user meets them: the commands they can type in this assistant. The
+  `registered <n> skill(s)` figure in a rite's message adds up every assistant; do not repeat it as
+  the user's number of commands.
+- Setup is complete when `FRAMEWORK_HOME/bin/grimoire summon --check --format json` reports
+  `summary.library.missing` as 0 and lists the grimoire under `final_state.library.ok` in the
+  transcript.
+
+## Outputs
+
+- From a link: `~/grimoires/<name>/` cloned, an entry in `~/grimoires/library.json`, and the
+  grimoire's commands registered.
+- From a folder: `grimoire.json` in the folder, an entry in `~/grimoires/library.json`, and the grimoire's
+  commands registered.
+- On a Claude Code plugin install, when the user agreed: automatic updates turned on in their
+  Claude Code settings.
+- The reply. Ask one question at a time, in plain words, with no git vocabulary unless the user used
+  it first. Describe outcomes, not mechanisms: "your assistant is not set up to use your grimoires
+  yet", not "the routing block is missing" or "agents haven't been told where the library is". Lead
+  with the outcome, then give the one next action.
+
+## Related
+
+- Install rite: `FRAMEWORK_HOME/rites/install_grimoire.py`
+- Adopt rite: `FRAMEWORK_HOME/rites/adopt_grimoire.py`
+- Start from scratch: [[invocations/grm/create_grimoire|create grimoire]]
+- Bring everything current: [[invocations/grm/update|update]]
+- Share changes: [[invocations/grm/save|save]]
+- Every install route and troubleshooting: [[docs/installation|installation]]

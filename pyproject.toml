@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grimoire-framework"
+version = "1.0.0"
+description = "Framework for grimoires - structured, AI-navigable knowledge bases the LLM keeps current."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Justin Lavi", email = "jlavi@proton.me" }]
+keywords = ["grimoire", "knowledge-base", "ai", "obsidian", "llm", "documentation"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+
+# Runtime is intentionally pure-stdlib. Validators, library sync, skill
+# registration, and the terminal installer all run on a stock Python install.
+dependencies = []
+
+[project.optional-dependencies]
+# Test suite - pytest + a fixture grimoire under tests/.
+dev = [
+    "pytest>=7.0",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/justinlavi/grimoire"
+Repository = "https://github.com/justinlavi/grimoire"
+Issues = "https://github.com/justinlavi/grimoire/issues"
+Changelog = "https://github.com/justinlavi/grimoire/blob/main/CHANGELOG.md"
+
+# The framework is a knowledge-base + scripts repository, not a pip-installable
+# library. The pyproject.toml exists to declare the `dev` dependency group
+# contributors install on top of a stock Python - nobody is meant to `import framework_grimoire`. Tell setuptools
+# explicitly that there are no packages to ship so it doesn't try to
+# auto-discover and choke on rites/, skills/, formulae/, etc.
+[tool.setuptools]
+packages = []
+py-modules = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+# `-m "not eval"` deselects the model-in-the-loop invocation eval tier by default,
+# so the fast gate (`pytest -q`) runs only deterministic, model-free scaffolding.
+# Opt in with: FRAMEWORK_EVAL_MODEL=1 python -m pytest -m eval
+addopts = ["-ra", "--strict-markers", "-m", "not eval"]
+markers = [
+    "eval: model-in-the-loop invocation eval (deselected by default; needs FRAMEWORK_EVAL_MODEL)",
+]

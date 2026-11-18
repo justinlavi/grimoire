@@ -1,0 +1,57 @@
+# GitHub Pages: builds and deploys the grimoire's site on every push to main
+# and on a manual run. `/grm-publish init github-pages` installs this file as
+# the grimoire's .github/workflows/pages.yml. The deploy job works only while
+# the repository's Pages source is "GitHub Actions".
+#
+# The site is public unless the repository's Pages visibility is "private", an
+# option GitHub offers on some paid plans only. On every other plan the audit
+# is the only barrier between the staged pages and the public.
+
+name: Publish grimoire site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  FRAMEWORK_URL: https://github.com/justinlavi/grimoire.git
+  FRAMEWORK_REF: main
+  QUARTZ_REPO: https://github.com/jackyzha0/quartz.git
+  QUARTZ_REF: v5.1.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build the site
+        run: bash publish/build.sh
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: publish/quartz/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

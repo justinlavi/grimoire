@@ -1,0 +1,311 @@
+"""Unit tests for summon_core.py installer helpers."""
+
+import io
+import sys
+from types import SimpleNamespace
+from pathlib import Path
+
+import summon_core
+import summon
+
+
+class _NonInteractiveStdin(io.StringIO):
+    def isatty(self):
+        return False
+
+
+def test_prompt_text_returns_default_when_stdin_and_tty_are_unavailable(monkeypatch):
+    monkeypatch.setattr(sys, "stdin", _NonInteractiveStdin(""))
+
+    def fake_open(*_args, **_kwargs):
+        raise OSError("no controlling terminal")
+
+    monkeypatch.setattr("builtins.open", fake_open)
+
+    assert summon_core._prompt_text("Choice [1]: ", default="1") == "1"
+
+
+def test_prompt_cli_mode_defaults_to_framework_only_without_interactive_input(monkeypatch):
+    monkeypatch.setattr(sys, "stdin", _NonInteractiveStdin(""))
+
+    def fake_open(*_args, **_kwargs):
+        raise OSError("no controlling terminal")
+
+    monkeypatch.setattr("builtins.open", fake_open)
+
+    assert summon_core._prompt_cli_mode(scope_preselected=False) == "framework_only"
+
+
+def test_grimoire_block_comes_from_canonical_template():
+    template = (
+        Path(__file__).resolve().parents[1]
+        / "rites"
+        / "templates"
+        / "grimoire_block.md"
+    )
+
+    assert summon_core.GRIMOIRE_BLOCK == "\n" + template.read_text(encoding="utf-8")
+
+
+def test_finalize_install_preserves_core_post_install_order(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        summon_core,
+        "update_local_library",
+        lambda installed_keys, library, log: calls.append(("library", installed_keys, library)) or True,
+    )
+    monkeypatch.setattr(
+        summon_core,
+        "inject_agent_configs",
+        lambda log: calls.append(("agents",)),
+    )
+    monkeypatch.setattr(
+        summon_core,
+        "sync_skills",
+        lambda log: calls.append(("skills",)) or True,
+    )
+
+    result = summon_core.finalize_install(
+        ["cooking-grimoire"],
+        {"grimoires": {"cooking-grimoire": {"online_path": "https://example.test/repo.git"}}},
+        log=object(),
+    )
+
+    assert result is True
+    assert [call[0] for call in calls] == ["library", "agents", "skills"]
+
+
+class _FullLog:
+    def __init__(self):
+        self.events = []
+
+    def info(self, m):
+        self.events.append(("info", m))
+
+    def ok(self, m):
+        self.events.append(("ok", m))
+
+    def warn(self, m):
+        self.events.append(("warn", m))
+
+    def err(self, m):
+        self.events.append(("err", m))
+
+    def line(self, m):
+        self.events.append(("line", m))
+
+
+def test_git_sets_timeout_and_disables_terminal_prompt(monkeypatch):
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(returncode=0, stdout="out\n", stderr="")
+
+    monkeypatch.setattr(summon_core.subprocess, "run", fake_run)
+    success, out = summon_core.git("status")
+
+    assert success is True and out == "out"
+    assert captured["kwargs"]["timeout"] == summon_core.GIT_TIMEOUT
+    assert captured["kwargs"]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+
+
+def test_git_returns_false_on_timeout(monkeypatch):
+    def fake_run(cmd, **kwargs):
+        raise summon_core.subprocess.TimeoutExpired(cmd, kwargs.get("timeout"))
+
+    monkeypatch.setattr(summon_core.subprocess, "run", fake_run)
+    success, out = summon_core.git("clone", "url", "dest")
+
+    assert success is False
+    assert out == ""
+
+
+def test_install_framework_recovers_partial_working_tree(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    (framework_dir / ".git").mkdir(parents=True)  # repo present, working tree empty
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
+
+    calls = []
+
+    def fake_git(*args, log=None, **_kwargs):
+        calls.append(args)
+        if "checkout" in args:
+            (framework_dir / "framework.json").write_text("{}", encoding="utf-8")
+        return True, ""
+
+    result = summon_core.install_framework("", _FullLog(), git_fn=fake_git)
+
+    assert result is True
+    assert any("checkout" in c for c in calls)  # recovery attempted (the CLI-only path)
+    assert (framework_dir / "framework.json").exists()
+
+
+def test_install_framework_fails_when_recovery_cannot_populate(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    (framework_dir / ".git").mkdir(parents=True)
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
+
+    def fake_git(*args, log=None, **_kwargs):
+        return True, ""  # commands "succeed" but never populate a sentinel
+
+    result = summon_core.install_framework("", _FullLog(), git_fn=fake_git)
+    assert result is False
+
+
+def test_host_detection_is_anchored():
+    assert summon_core._is_github_host("github.com")
+    assert summon_core._is_github_host("api.github.com")
+    assert summon_core._is_github_host("github.acme.com")  # self-hosted GitHub Enterprise
+    assert not summon_core._is_github_host("mygithub.com")
+    assert summon_core._is_gitlab_host("gitlab.com")
+    assert summon_core._is_gitlab_host("gitlab.acme.com")  # self-hosted GitLab
+    # gitlab.github.io is a GitLab host and not a GitHub host.
+    assert summon_core._is_gitlab_host("gitlab.github.io")
+    assert not summon_core._is_github_host("gitlab.github.io")
+
+
+def test_inject_agent_file_is_idempotent_on_rerun(tmp_path):
+    target = tmp_path / "AGENTS.md"
+    summon_core.inject_agent_file(_FullLog(), target, "AGENTS")
+    once = target.read_text(encoding="utf-8")
+    assert once.count(summon_core.BEGIN_SENTINEL) == 1
+    assert once.count(summon_core.END_SENTINEL) == 1
+    # Re-running must not append a second block.
+    summon_core.inject_agent_file(_FullLog(), target, "AGENTS")
+    twice = target.read_text(encoding="utf-8")
+    assert twice == once
+
+
+def test_inject_agent_file_skips_when_current_block_present(tmp_path):
+    # A file already carrying the current canonical block is left untouched.
+    target = tmp_path / "AGENTS.md"
+    target.write_text(
+        "# AGENTS\n\n" + summon_core.canonical_routing_block() + "\n",
+        encoding="utf-8", newline="\n",
+    )
+    before = target.read_text(encoding="utf-8")
+    summon_core.inject_agent_file(_FullLog(), target, "AGENTS")
+    assert target.read_text(encoding="utf-8") == before
+
+
+def test_inject_agent_file_refreshes_stale_marked_block(tmp_path):
+    # One clean BEGIN..END region whose content is out of date is refreshed in
+    # place; surrounding content is preserved and no second block appears.
+    target = tmp_path / "AGENTS.md"
+    target.write_text(
+        f"# AGENTS\nintro\n{summon_core.BEGIN_SENTINEL}\nstale body\n{summon_core.END_SENTINEL}\ntail\n",
+        encoding="utf-8", newline="\n",
+    )
+    summon_core.inject_agent_file(_FullLog(), target, "AGENTS")
+    after = target.read_text(encoding="utf-8")
+    assert summon_core.canonical_routing_block() in after
+    assert "stale body" not in after and "intro" in after and "tail" in after
+    assert after.count(summon_core.BEGIN_SENTINEL) == 1
+
+
+def test_inject_agent_file_inserts_into_blockless_file_preserving_content(tmp_path):
+    # A file with content but no block signature gets the marked block inserted at
+    # install time; existing user content is preserved.
+    target = tmp_path / "AGENTS.md"
+    target.write_text("# AGENTS\n\nmy own notes\n", encoding="utf-8", newline="\n")
+    summon_core.inject_agent_file(_FullLog(), target, "AGENTS")
+    after = target.read_text(encoding="utf-8")
+    assert after.count(summon_core.BEGIN_SENTINEL) == 1
+    assert "my own notes" in after
+
+
+def test_inject_agent_file_never_duplicates_a_legacy_heading_block(tmp_path):
+    # An unmarked (heading-only) block has no clean markers; the install pass must
+    # leave it for judgment, never append a second block.
+    target = tmp_path / "AGENTS.md"
+    original = "# AGENTS\n## Grimoire Knowledge Base\nlegacy body\n"
+    target.write_text(original, encoding="utf-8", newline="\n")
+    summon_core.inject_agent_file(_FullLog(), target, "AGENTS")
+    after = target.read_text(encoding="utf-8")
+    assert after == original  # untouched
+    assert after.count(summon_core.BEGIN_SENTINEL) == 0
+
+
+def test_dispatcher_parses_install_flags():
+    parser = summon.build_parser()
+    args = parser.parse_args(["--scope", "https://example.com/org"])
+    assert args.scope == "https://example.com/org"
+    assert args.framework_url is None
+
+
+def test_install_framework_clones_the_ref_named_by_framework_ref(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
+    monkeypatch.setenv("FRAMEWORK_REF", "v1.0.0")
+    calls = []
+
+    def fake_git(*args, log=None, **_kwargs):
+        calls.append(args)
+        if args[0] == "clone":
+            (framework_dir / ".git").mkdir(parents=True)
+            (framework_dir / "framework.json").write_text("{}", encoding="utf-8")
+        return True, ""
+
+    assert summon_core.install_framework("https://example.com/grimoire.git", _FullLog(), git_fn=fake_git) is True
+    assert calls[0][:3] == ("clone", "--branch", "v1.0.0")
+
+
+def test_install_framework_clones_the_default_branch_without_framework_ref(tmp_path, monkeypatch):
+    framework_dir = tmp_path / "framework"
+    monkeypatch.setattr(summon_core, "FRAMEWORK_DIR", framework_dir)
+    monkeypatch.delenv("FRAMEWORK_REF", raising=False)
+    calls = []
+
+    def fake_git(*args, log=None, **_kwargs):
+        calls.append(args)
+        (framework_dir / ".git").mkdir(parents=True, exist_ok=True)
+        (framework_dir / "framework.json").write_text("{}", encoding="utf-8")
+        return True, ""
+
+    summon_core.install_framework("https://example.com/grimoire.git", _FullLog(), git_fn=fake_git)
+    assert calls[0] == ("clone", "https://example.com/grimoire.git", str(framework_dir))
+
+
+def test_discovery_never_lists_the_framework_as_a_grimoire():
+    assert summon_core._metadata_marks_grimoire("grimoire", "A framework for building grimoires") is False
+    assert summon_core._metadata_marks_grimoire("cooking-grimoire", "") is True
+    assert summon_core._metadata_marks_grimoire("notes", "a shared grimoire", []) is True
+
+
+def test_github_user_discovery_adds_private_repos_the_token_can_see(monkeypatch):
+    responses = {
+        "https://api.github.com/orgs/octo/repos?per_page=100": (None, "404"),
+        "https://api.github.com/users/octo/repos?per_page=100": (
+            [{"name": "grimoire", "description": "A framework for building grimoires", "clone_url": "u1"}], None,
+        ),
+        "https://api.github.com/user/repos?per_page=100&affiliation=owner,organization_member": (
+            [
+                {"name": "cooking-grimoire", "owner": {"login": "octo"}, "clone_url": "u2", "private": True},
+                {"name": "other-grimoire", "owner": {"login": "someone-else"}, "clone_url": "u3"},
+            ],
+            None,
+        ),
+    }
+    monkeypatch.setattr(summon_core, "_api_get", lambda url, **_k: responses[url])
+
+    entries = summon_core.try_github_discovery("github.com", "octo", "token", _FullLog())
+    assert set(entries) == {"cooking-grimoire"}
+    assert entries["cooking-grimoire"]["online_path"] == "u2"
+
+
+def test_github_user_discovery_without_a_token_stays_public(monkeypatch):
+    calls = []
+
+    def fake_get(url, **_k):
+        calls.append(url)
+        if "/orgs/" in url:
+            return None, "404"
+        return [{"name": "cooking-grimoire", "clone_url": "u2"}], None
+
+    monkeypatch.setattr(summon_core, "_api_get", fake_get)
+    entries = summon_core.try_github_discovery("github.com", "octo", "", _FullLog())
+    assert set(entries) == {"cooking-grimoire"}
+    assert not any("/user/repos" in c for c in calls)

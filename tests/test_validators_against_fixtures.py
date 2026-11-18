@@ -1,0 +1,636 @@
+"""End-to-end tests: every validator runs as a subprocess against fixture grimoires.
+
+The good_grimoire fixture must produce exit 0 from every validator that
+accepts a `--grimoire` flag. The bad_* fixtures must produce exit 1 from
+their corresponding validator(s).
+
+These tests exercise the validators exactly the way the orchestrator and
+grimoire-skill flows do - via subprocess invocation, so any breakage in argv
+parsing, exit codes, or stdout flushing is caught.
+"""
+
+import os
+import subprocess
+import sys
+import shutil
+import json
+from pathlib import Path
+
+import pytest
+
+# rites/ is on sys.path via tests/conftest.py; the orchestrator's validator
+# lists are the source of truth for the expected validator counts and names.
+import validate
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+RITES = REPO_ROOT / "rites"
+FIXTURES = Path(__file__).parent / "fixtures"
+GOOD = FIXTURES / "good_grimoire"
+BAD_FRONT = FIXTURES / "bad_frontmatter"
+BAD_LINKS = FIXTURES / "bad_links"
+WARN_LABELS = FIXTURES / "warn_labels"
+
+FRAMEWORK_VALIDATOR_NAMES = {Path(name).stem for name in validate.FRAMEWORK_RITES}
+GRIMOIRE_VALIDATOR_NAMES = {Path(name).stem for name in validate.GRIMOIRE_RITES}
+
+
+def _run(script: str, grimoire: Path, *extra_args: str) -> subprocess.CompletedProcess:
+    """Invoke a validator against a fixture grimoire."""
+    return subprocess.run(
+        [sys.executable, str(RITES / script), "--grimoire", str(grimoire), *extra_args],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Good fixture - every grimoire-aware validator must exit 0
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("script", validate.GRIMOIRE_RITES)
+def test_good_grimoire_passes(script):
+    result = _run(script, GOOD)
+    assert result.returncode == 0, (
+        f"{script} unexpectedly failed on good_grimoire fixture\n"
+        f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Bad fixtures - the corresponding validator must exit non-zero
+# ---------------------------------------------------------------------------
+
+
+def test_bad_frontmatter_is_caught():
+    result = _run("validate_frontmatter.py", BAD_FRONT)
+    assert result.returncode != 0, (
+        "validate_frontmatter.py should have flagged bad_frontmatter fixture\n"
+        f"--- stdout ---\n{result.stdout}"
+    )
+    out = result.stdout
+    # The three deliberate violations should each surface.
+    assert "missing required field" in out or "missing `type" in out
+    assert "invalid authority" in out
+    assert "last_verified" in out
+
+
+def test_bad_frontmatter_structured_diagnostics_have_codes():
+    result = _run("validate_frontmatter.py", BAD_FRONT, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "FRONTMATTER_INVALID_AUTHORITY" in codes
+    assert "FRONTMATTER_INVALID_DATE_FORMAT" in codes
+    assert "FRONTMATTER_MISSING_TYPE" in codes
+
+
+def test_validator_scans_sibling_of_skip_dir(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    extra = grimoire / "publish_extra"
+    extra.mkdir()
+    (extra / "broken.md").write_text(
+        "---\n"
+        'type: reference\n'
+        'title: "Broken"\n'
+        "tags: []\n"
+        "authority: grimoire\n"
+        "last_verified: 2026-05-25\n"
+        "---\n\n"
+        "See [[chapters/nope/nope|nope]].\n",
+        encoding="utf-8",
+    )
+
+    result = _run("validate_links.py", grimoire)
+
+    # `publish_extra` shares a prefix with the skipped `publish` dir; it must
+    # still be scanned, so the broken wikilink inside it is caught.
+    assert result.returncode != 0
+    assert "publish_extra" in result.stdout
+
+
+def test_source_type_is_reserved_for_sources_layer(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    (grimoire / "chapters/recipes/source_note.md").write_text(
+        """---
+type: source
+title: "Misplaced Source Note"
+tags: [type/source]
+sources: ["https://example.com/source"]
+authority: external
+last_verified: 2026-05-25
+---
+
+# Misplaced Source Note
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_frontmatter.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "FRONTMATTER_SOURCE_OUTSIDE_SOURCES" in codes
+
+
+@pytest.mark.parametrize("script", ["validate_frontmatter.py", "validate_provenance.py"])
+def test_colocated_raw_source_is_accepted(tmp_path, script):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    source_dir = grimoire / "chapters/recipes/sources"
+    source_dir.mkdir()
+    (source_dir / "recipe_scan.pdf").write_bytes(b"%PDF-1.4\n")
+    (grimoire / "chapters/recipes/source_backed.md").write_text(
+        """---
+type: concept
+title: "Source Backed"
+tags: [type/concept]
+sources: ["chapters/recipes/sources/recipe_scan.pdf"]
+authority: external
+last_verified: 2026-05-25
+---
+
+# Source Backed
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run(script, grimoire, "--format", "json")
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_structure_does_not_require_hubs_in_colocated_sources(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    source_dir = grimoire / "chapters/recipes/sources/raw"
+    source_dir.mkdir(parents=True)
+    (source_dir / "capture.md").write_text(
+        """---
+type: source
+title: "Capture"
+tags: [type/source]
+sources: ["https://example.com/source"]
+authority: external
+last_verified: 2026-05-25
+---
+
+# Capture
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_grimoire_structure.py", grimoire, "--format", "json")
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_provenance_rejects_missing_colocated_source(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    (grimoire / "chapters/recipes/missing_source_backed.md").write_text(
+        """---
+type: concept
+title: "Missing Source Backed"
+tags: [type/concept]
+sources: ["chapters/recipes/sources/missing.pdf"]
+authority: external
+last_verified: 2026-05-25
+---
+
+# Missing Source Backed
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_provenance.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "PROVENANCE_SOURCE_MISSING" in codes
+
+
+def test_provenance_validates_colocated_source_wrappers(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    source_dir = grimoire / "chapters/recipes/sources"
+    source_dir.mkdir()
+    (source_dir / "example_source.md").write_text(
+        """---
+type: source
+title: "Example Source"
+tags: [type/source]
+sources: ["https://example.com/source"]
+authority: external
+last_verified: 2026-05-25
+---
+
+# Example Source
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_provenance.py", grimoire, "--format", "json")
+
+    assert result.returncode == 0, result.stdout
+    report = json.loads(result.stdout)
+    assert report["checked"]["source_wrappers"] == 1
+
+    (source_dir / "bad_source.md").write_text(
+        """---
+type: source
+title: "Bad Source"
+tags: [type/source]
+sources: ["chapters/recipes/sources/bad_source.md"]
+authority: grimoire
+last_verified: 2026-05-25
+---
+
+# Bad Source
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_provenance.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "PROVENANCE_SOURCE_WRAPPER_AUTHORITY" in codes
+    assert "PROVENANCE_SOURCE_WRAPPER_SELF_REFERENCE" in codes
+
+
+def test_frontmatter_rejects_implausible_last_verified(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    (grimoire / "chapters/recipes/epoch_sentinel.md").write_text(
+        """---
+type: concept
+title: "Epoch Sentinel"
+tags: [chapter/recipes, type/concept]
+authority: grimoire
+last_verified: 1970-01-01
+---
+
+# Epoch Sentinel
+""",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_frontmatter.py", grimoire, "--format", "json")
+
+    # A well-formed but implausibly early date must be caught as a sentinel, not
+    # accepted as a valid ISO date.
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "FRONTMATTER_IMPLAUSIBLE_DATE" in codes
+    assert "FRONTMATTER_INVALID_DATE_FORMAT" not in codes
+
+
+def test_bad_links_is_caught():
+    result = _run("validate_links.py", BAD_LINKS)
+    assert result.returncode != 0, (
+        "validate_links.py should have flagged bad_links fixture\n"
+        f"--- stdout ---\n{result.stdout}"
+    )
+    out = result.stdout
+    assert "BROKEN" in out
+    # Both a markdown link and a wikilink should be reported broken.
+    assert "does_not_exist.md" in out
+    assert "no-such-wikilink" in out
+
+
+def test_bad_links_structured_diagnostics_have_codes():
+    result = _run("validate_links.py", BAD_LINKS, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = [diagnostic["code"] for diagnostic in report["diagnostics"]]
+    assert "LINK_MARKDOWN_INTERNAL" in codes
+    assert "LINK_MARKDOWN_BROKEN" in codes
+    assert "LINK_WIKILINK_BROKEN" in codes
+
+
+def test_markdown_page_link_is_caught_in_vault_surface(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    leaf = grimoire / "chapters/recipes/sourdough.md"
+    leaf.write_text(
+        leaf.read_text(encoding="utf-8") + "\nSee [recipes](recipes.md).\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_links.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "LINK_MARKDOWN_INTERNAL" in codes
+
+
+def test_markdown_page_link_is_allowed_in_public_doc(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    readme = grimoire / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\nSee [recipes](chapters/recipes/recipes.md).\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_links.py", grimoire, "--format", "json")
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_wikilink_is_caught_in_public_doc(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    readme = grimoire / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\nSee [[chapters/recipes/recipes|recipes]].\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_links.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    codes = {diagnostic["code"] for diagnostic in report["diagnostics"]}
+    assert "LINK_WIKILINK_PUBLIC_DOC" in codes
+
+
+def test_verbose_wikilink_label_warns_without_failing():
+    result = _run("validate_links.py", WARN_LABELS)
+    assert result.returncode == 0, (
+        "Verbose wikilink labels should warn but not fail validation\n"
+        f"--- stdout ---\n{result.stdout}"
+    )
+    assert "WARN" in result.stdout
+    assert "Display label should be target filename only" in result.stdout
+
+
+def test_verbose_wikilink_label_structured_warning_does_not_fail():
+    result = _run("validate_links.py", WARN_LABELS, "--format", "json")
+
+    assert result.returncode == 0
+    report = json.loads(result.stdout)
+    assert report["summary"]["errors"] == 0
+    assert report["summary"]["warnings"] == 1
+    assert report["diagnostics"][0]["code"] == "LINK_LABEL_VERBOSE"
+
+
+def test_structure_validator_catches_stale_obsidian_app_settings(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    app = grimoire / ".obsidian" / "app.json"
+    app.write_text("{}\n", encoding="utf-8")
+
+    result = _run("validate_grimoire_structure.py", grimoire)
+
+    assert result.returncode != 0
+    assert ".obsidian/app.json" in result.stdout
+
+
+def test_grimoire_structure_flags_folder_named_non_hub(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    hub = grimoire / "chapters/recipes/recipes.md"
+    hub.write_text(
+        hub.read_text(encoding="utf-8").replace("type: hub", "type: concept", 1),
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_grimoire_structure.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    codes = {d["code"] for d in json.loads(result.stdout)["diagnostics"]}
+    assert "GRIMOIRE_STRUCTURE_HUB_NOT_DECLARED" in codes
+
+
+def test_grimoire_structure_flags_misplaced_hub(tmp_path):
+    grimoire = tmp_path / "good_grimoire"
+    shutil.copytree(GOOD, grimoire)
+    (grimoire / "chapters/recipes/misplaced.md").write_text(
+        '---\ntype: hub\ntitle: "Misplaced"\ntags: [type/hub]\n---\n\n# Misplaced\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    result = _run("validate_grimoire_structure.py", grimoire, "--format", "json")
+
+    assert result.returncode != 0
+    codes = {d["code"] for d in json.loads(result.stdout)["diagnostics"]}
+    assert "GRIMOIRE_STRUCTURE_HUB_MISPLACED" in codes
+
+
+# ---------------------------------------------------------------------------
+# The framework itself - meta-test that the suite still passes against the live tree
+# ---------------------------------------------------------------------------
+
+
+def test_full_validator_suite_passes_against_framework():
+    """The orchestrator returns 0 on the framework itself."""
+    result = subprocess.run(
+        [sys.executable, str(RITES / "validate.py")],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, (
+        "Full validator suite failed against the framework\n"
+        f"--- stdout (tail) ---\n{result.stdout[-2000:]}\n"
+        f"--- stderr (tail) ---\n{result.stderr[-1000:]}"
+    )
+
+
+def test_full_validator_suite_emits_structured_aggregate_report():
+    result = subprocess.run(
+        [sys.executable, str(RITES / "validate.py"), "--format", "json"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(result.stdout)
+    assert report["validator"] == "validate"
+    assert report["status"] == "pass"
+    assert report["checked"]["validators"] == len(validate.FRAMEWORK_RITES)
+    assert len(report["reports"]) == len(validate.FRAMEWORK_RITES)
+    assert {
+        validator_report["validator"] for validator_report in report["reports"]
+    } == FRAMEWORK_VALIDATOR_NAMES
+
+
+def test_grimoire_validator_suite_passes_good_fixture():
+    result = subprocess.run(
+        [sys.executable, str(RITES / "validate.py"), "--grimoire", str(GOOD), "--format", "json"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(result.stdout)
+    assert report["validator"] == "validate"
+    assert report["profile"] == "grimoire"
+    assert report["status"] == "pass"
+    assert report["checked"]["validators"] == len(validate.GRIMOIRE_RITES)
+    assert len(report["reports"]) == len(validate.GRIMOIRE_RITES)
+    assert {
+        validator_report["validator"] for validator_report in report["reports"]
+    } == GRIMOIRE_VALIDATOR_NAMES
+
+
+def test_grimoire_validator_suite_fails_bad_fixture():
+    result = subprocess.run(
+        [sys.executable, str(RITES / "validate.py"), "--grimoire", str(BAD_FRONT), "--format", "json"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    assert result.returncode != 0
+    report = json.loads(result.stdout)
+    assert report["profile"] == "grimoire"
+    assert report["status"] == "fail"
+    assert report["summary"]["failed_validators"] >= 1
+    failing = {
+        validator_report["validator"]
+        for validator_report in report["reports"]
+        if validator_report["status"] == "fail"
+    }
+    assert "validate_frontmatter" in failing
+
+
+def test_orchestrator_loads_validator_lists_from_contract():
+    data = json.loads((RITES / "data" / "validators.json").read_text(encoding="utf-8"))
+    assert validate.FRAMEWORK_RITES == data["framework"]
+    assert validate.GRIMOIRE_RITES == data["grimoire"]
+
+
+def test_validators_contract_lists_only_real_validators():
+    data = json.loads((RITES / "data" / "validators.json").read_text(encoding="utf-8"))
+    assert data["framework"] and data["grimoire"]
+    for name in set(data["framework"]) | set(data["grimoire"]):
+        assert (RITES / name).is_file(), (
+            f"{name} is declared in validators.json but does not exist"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Negative coverage - validators must FAIL on a violation, not only pass clean
+# ---------------------------------------------------------------------------
+
+
+def _run_framework(script: str, framework_home: Path, *extra_args: str) -> subprocess.CompletedProcess:
+    """Run a framework-profile validator against an alternate root via FRAMEWORK_HOME."""
+    return subprocess.run(
+        [sys.executable, str(RITES / script), *extra_args],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        env={**os.environ, "FRAMEWORK_HOME": str(framework_home)},
+    )
+
+
+def _codes(result: subprocess.CompletedProcess) -> set:
+    return {d["code"] for d in json.loads(result.stdout)["diagnostics"]}
+
+
+def _make_min_grimoire(root: Path) -> Path:
+    (root / "chapters" / "recipes").mkdir(parents=True)
+    (root / "grimoire.json").write_text(
+        '{"name": "g", "skill_prefix": "gg", "description": "x"}\n', encoding="utf-8"
+    )
+    (root / "g.md").write_text(
+        '---\ntype: hub\ntitle: "G"\ntags: [hub/root]\n---\n'
+        "# G\n- [[chapters/recipes/recipes|recipes]]\n",
+        encoding="utf-8",
+    )
+    (root / "chapters" / "recipes" / "recipes.md").write_text(
+        '---\ntype: hub\ntitle: "Recipes"\ntags: [hub/chapter]\n---\n# Recipes\n',
+        encoding="utf-8",
+    )
+    return root
+
+
+def test_validate_security_flags_exec_in_a_rite(tmp_path):
+    (tmp_path / "rites").mkdir()
+    (tmp_path / "rites" / "evil.py").write_text("def f():\n    exec(payload)\n", encoding="utf-8")
+
+    result = _run_framework("validate_security.py", tmp_path, "--format", "json")
+
+    assert result.returncode != 0
+    assert "SECURITY_EXEC" in _codes(result)
+
+
+def test_validate_portability_check_segments_flags_violations():
+    import validate_portability as vp
+
+    assert any(code == "PORTABILITY_RESERVED_CHAR" for code, _ in vp.check_segments(["a<b.md"]))
+    assert any(code == "PORTABILITY_RESERVED_BASENAME" for code, _ in vp.check_segments(["CON.md"]))
+    assert any(code == "PORTABILITY_TRAILING_DOT_SPACE" for code, _ in vp.check_segments(["trailing ."]))
+    assert vp.check_segments(["fine_name.md"]) == []
+
+
+def test_validate_orphans_flags_unreachable_island(tmp_path):
+    g = _make_min_grimoire(tmp_path / "g")
+    (g / "chapters" / "recipes" / "island.md").write_text(
+        '---\ntype: concept\ntitle: "Island"\ntags: []\n'
+        "authority: grimoire\nlast_verified: 2026-05-25\n---\n# Island\n",
+        encoding="utf-8",
+    )
+
+    result = _run("validate_orphans.py", g, "--format", "json")
+
+    assert result.returncode != 0
+    assert "ORPHAN_PAGE" in _codes(result)
+
+
+def test_validate_doc_trees_flags_drifted_diagram(tmp_path):
+    g = tmp_path / "g"
+    (g / "chapters").mkdir(parents=True)
+    (g / "grimoire.json").write_text(
+        '{"name": "g", "skill_prefix": "gg", "description": "x"}\n', encoding="utf-8"
+    )
+    (g / "g.md").write_text(
+        '---\ntype: hub\ntitle: "G"\ntags: [hub/root]\n---\n'
+        "# G\n\n```\nchapters/\n|-- ghost.md\n```\n",
+        encoding="utf-8",
+    )
+
+    result = _run("validate_doc_trees.py", g, "--format", "json")
+
+    assert result.returncode != 0
+    assert "DOC_TREE_MISSING_ENTRY" in _codes(result)
+
+
+def test_parallel_validator_reports_are_sorted():
+    result = subprocess.run(
+        [sys.executable, str(RITES / "validate.py"), "--parallel", "--format", "json"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, result.stdout[-2000:]
+    names = [r["validator"] for r in json.loads(result.stdout)["reports"]]
+    assert names == sorted(names)

@@ -1,0 +1,5 @@
+{
+  "name": "good_grimoire",
+  "skill_prefix": "good",
+  "description": "Fixture grimoire used by the framework test suite - passes all validators."
+}

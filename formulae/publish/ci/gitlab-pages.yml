@@ -1,0 +1,52 @@
+# GitLab Pages: builds the grimoire's site on every push and publishes it from
+# the default branch, at the project's Pages URL. `/grm-publish init
+# gitlab-pages` installs this file as the grimoire's .gitlab-ci.yml.
+#
+# Only people who can see the repository can open the site while the project's
+# "Pages access control" setting is "project members".
+#
+# The build job clones the framework and Quartz, so the runner needs outbound
+# access to FRAMEWORK_URL and QUARTZ_REPO. Each variable accepts a mirror.
+
+stages:
+  - build
+  - deploy
+
+image: node:22
+
+variables:
+  FRAMEWORK_URL: "https://github.com/justinlavi/grimoire.git"
+  FRAMEWORK_REF: "main"
+  QUARTZ_REPO: "https://github.com/jackyzha0/quartz.git"
+  QUARTZ_REF: "v5.1.0"
+
+# The cache holds only Quartz's installed packages. publish/build.sh clones
+# Quartz beside them and moves them into the clone, so a restored cache is
+# reused rather than deleted.
+cache:
+  key: quartz-$CI_COMMIT_REF_SLUG
+  paths:
+    - publish/quartz/node_modules/
+    - publish/quartz/.quartz/
+
+build:
+  stage: build
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq python3 git >/dev/null
+  script:
+    - bash publish/build.sh
+    - rm -rf public && mv publish/quartz/public public
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
+
+pages:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - echo "Publishing to GitLab Pages"
+  artifacts:
+    paths:
+      - public

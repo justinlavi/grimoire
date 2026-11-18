@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Validates framework semantics: hyphenated path examples in body text.
+
+What this rite checks (mechanical, deterministic):
+- Hyphenated path examples: a path under `chapters/` written in prose, such as
+  `chapters/example-name/` or `chapters/recipes/file-name.md`, should use snake_case.
+  A path without the `chapters/` prefix, such as a bare `file-name.md`, is not flagged.
+  Heading lines are not scanned.
+
+What this rite does NOT do: intelligent semantic analysis (naming quality,
+discoverability, organization). For that, use /grm-check naming.
+Filename naming is enforced separately by validate_naming.py.
+
+Usage: python rites/validate_semantics.py
+Mutation profile: read-only.
+Exit codes: 0 = no violations, 1 = violations found
+"""
+
+import re
+import sys
+
+from _lib import default_framework_root, is_skipped, ok, walk_files, warn
+from diagnostics import DiagnosticReporter, add_output_format_arg
+
+FRAMEWORK_ROOT = default_framework_root()
+
+# Files exempt from scanning. These either *define* the patterns the rite
+# checks (and so necessarily mention them) or are docs whose explicit purpose
+# is to discuss the patterns as illustrative examples.
+SKIP_FILES = {
+    "validate_semantics.md",  # describes the rite, names the patterns it scans
+    "validate_naming.md",     # documents naming-violation examples
+    "script_vs_ai.md",        # demos validator behavior
+}
+
+SKIP_DIRS = {
+    "invocations/dev/quality",  # quality docs discuss the patterns as examples
+}
+
+# Hyphen pattern for the chapters layer only; a path outside chapters/ may be hyphenated.
+HYPHEN_PATTERN = re.compile(r"chapters/[a-z]+-[a-z]+/|chapters/[^ ]*[a-z]+-[a-z]+\.md")
+
+
+def scan_markdown_files(root, predicate):
+    """Yield (rel_path, line_number, line) for the first line of each .md file matching predicate."""
+    for path in walk_files(root, "*.md"):
+        if path.name in SKIP_FILES:
+            continue
+        rel = path.relative_to(root).as_posix()
+        if is_skipped(rel, SKIP_DIRS):
+            continue
+        try:
+            content = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for lineno, line in enumerate(content.splitlines(), start=1):
+            if predicate(line):
+                yield rel, lineno, line
+                break  # one report per file is enough
+
+
+def check_hyphenated_examples(reporter, human):
+    """Report any markdown file containing hyphenated path examples in body text."""
+    if human:
+        print("Checking for hyphenated path examples...")
+    found = 0
+
+    def is_hyphenated_body_line(line):
+        if line.lstrip().startswith("#"):
+            return False
+        return HYPHEN_PATTERN.search(line) is not None
+
+    for rel, lineno, _line in scan_markdown_files(FRAMEWORK_ROOT, is_hyphenated_body_line):
+        reporter.error(
+            "SEMANTICS_HYPHENATED_EXAMPLE",
+            "hyphenated path example should use snake_case",
+            path=rel,
+            line=lineno,
+        )
+        if human:
+            warn(f"Hyphenated example: {rel}:{lineno}")
+        found += 1
+
+    if human and found == 0:
+        ok("No hyphenated examples found")
+    if human:
+        print()
+    return found
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Validate framework semantics")
+    add_output_format_arg(parser)
+    args = parser.parse_args()
+    human = args.format == "human"
+    reporter = DiagnosticReporter("validate_semantics", FRAMEWORK_ROOT)
+
+    if human:
+        print()
+        print("Validate Framework Semantics")
+        print("====================================")
+        print(f"Framework root: {FRAMEWORK_ROOT}")
+        print()
+
+    hyphen_count = check_hyphenated_examples(reporter, human)
+
+    if not human:
+        reporter.emit(args.format, checked={"hyphenated_paths": hyphen_count})
+        return reporter.exit_code()
+
+    print("====================================")
+    print(f"Hyphenated paths:   {hyphen_count}")
+    print()
+
+    if hyphen_count == 0:
+        print("Semantic validation passed.")
+        print()
+        print("For intelligent semantic analysis (naming quality, discoverability):")
+        print("   /grm-check naming")
+        print()
+        return 0
+
+    print("Semantic validation failed.")
+    print("   Convert hyphenated path examples to snake_case.")
+    print()
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
