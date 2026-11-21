@@ -10,10 +10,13 @@ framework at its one location, `~/.grimoire`. A plugin's description comes from
 its marketplace entry, which owns it.
 
 Rendered files: `plugins/<plugin>/.claude-plugin/plugin.json` and
-`skills/<slug>/SKILL.md` for every plugin, plus `scripts/grimoire_block.md` and
-`bin/*` for the `grimoire` plugin, which carries the session-start hook. The
-hook itself (`hooks/`) and the rest of `scripts/` are authored in place and are
-never touched.
+`skills/<slug>/SKILL.md` for every plugin, plus `scripts/grimoire_block.md` for
+the `grimoire` plugin, which carries the session-start hook. The hook itself
+(`hooks/`) and the rest of `scripts/` are authored in place and are never
+touched.
+
+A plugin has no top-level `bin/` folder: claude.ai and Cowork refuse to install
+a plugin that has one. Plugin skills run the launcher at `~/.grimoire/bin/`.
 
 The rendered tree is committed: a marketplace serves it straight from git.
 
@@ -143,11 +146,8 @@ def render_family(
             files[f"skills/{spec.source_dir.name}/SKILL.md"] = render_plugin_skill(spec, families, specs, on_warning)
     if family["plugin"] == SESSION_PLUGIN:
         # The hook prints the routing block before the framework exists, so the
-        # plugin carries a copy of the canonical template; the launcher goes on
-        # the agent's PATH through the plugin's bin/.
+        # plugin carries a copy of the canonical template.
         files["scripts/grimoire_block.md"] = read_utf8(FRAMEWORK_PATH / "rites" / "templates" / "grimoire_block.md")
-        for name in ("grimoire", "grimoire.cmd", "grimoire.py"):
-            files[f"bin/{name}"] = read_utf8(FRAMEWORK_PATH / "bin" / name)
     return files
 
 
@@ -164,7 +164,7 @@ def render_all(on_warning: Callable[[str], None] = warn) -> dict[str, str]:
 
 
 def current_render_targets() -> dict[str, str]:
-    """The committed files this rite owns: plugin.json, skills, bin and the routing block copy."""
+    """The committed files this rite owns: plugin.json, skills and the routing block copy."""
     existing: dict[str, str] = {}
     if not PLUGINS_DIR.is_dir():
         return existing
@@ -173,7 +173,7 @@ def current_render_targets() -> dict[str, str]:
             continue
         rel = path.relative_to(PLUGINS_DIR).as_posix()
         parts = rel.split("/")
-        if (len(parts) >= 2 and parts[1] in {"skills", ".claude-plugin", "bin"}) or rel.endswith("/scripts/grimoire_block.md"):
+        if (len(parts) >= 2 and parts[1] in {"skills", ".claude-plugin"}) or rel.endswith("/scripts/grimoire_block.md"):
             existing[rel] = read_utf8(path)
     return existing
 

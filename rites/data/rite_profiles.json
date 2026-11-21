@@ -227,10 +227,9 @@
       "writes": [
         "plugins/<family>/.claude-plugin/plugin.json",
         "plugins/<family>/skills/<slug>/SKILL.md",
-        "plugins/grimoire/scripts/grimoire_block.md",
-        "plugins/grimoire/bin/*"
+        "plugins/grimoire/scripts/grimoire_block.md"
       ],
-      "idempotency": "Rendering is a pure function of the skill sources and their invocations, the plugin descriptions in .claude-plugin/marketplace.json, the routing block template, and the launcher files in bin/; a second apply is a noop.",
+      "idempotency": "Rendering is a pure function of the skill sources and their invocations, the plugin descriptions in .claude-plugin/marketplace.json, and the routing block template; a second apply is a noop.",
       "validation_profile": "python rites/build_plugins.py (exit 0 when the committed render matches the sources); python -m pytest tests/test_build_plugins.py",
       "tests": [
         "tests/test_build_plugins.py"

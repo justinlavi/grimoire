@@ -1,7 +1,7 @@
 {
   "name": "grimoire-dev",
-  "version": "1.0.0",
-  "description": "Grimoire maintenance verbs (validate, improve) for working on the framework itself.",
+  "version": "1.0.1",
+  "description": "Tools for working on Grimoire itself: run the framework's validators and its quality review. Using a grimoire needs only the grimoire plugin.",
   "author": {
     "name": "Justin Lavi",
     "url": "https://github.com/justinlavi/grimoire"

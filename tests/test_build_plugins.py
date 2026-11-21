@@ -1,7 +1,6 @@
 """The committed plugins/ tree is the render of the skill sources, and every plugin skill is self-contained."""
 
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -98,14 +97,13 @@ def test_rendered_plugin_descriptions_are_the_marketplace_entries():
         assert manifest["description"] == entry["description"], name
 
 
-def test_each_description_names_exactly_the_verbs_its_plugin_carries():
-    rendered = build_plugins.render_all()
+def test_each_description_says_what_the_plugin_is_in_sentences():
+    """A marketplace shows the description alone, so it describes the plugin and is no list of commands."""
     for name, entry in _marketplace_entries().items():
-        named = re.search(r"\(([^)]*)\)", entry["description"])
-        assert named, f"{name}: the description lists no verbs in parentheses"
-        verbs = sorted(verb.strip() for verb in named.group(1).split(","))
-        carried = sorted(k.split("/")[2] for k in rendered if k.startswith(f"{name}/skills/"))
-        assert verbs == carried, name
+        description = entry["description"]
+        assert description.endswith("."), name
+        assert 80 <= len(description) <= 400, name
+        assert "(" not in description, f"{name}: the description lists items in parentheses"
 
 
 def test_plugin_descriptions_state_the_task_not_the_audience():

@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.0.1] - 2026-11-21
+
+An existing install needs nothing beyond the update itself: `/grm-update`, or the plugin's
+automatic update. No grimoire changes.
+
+### Fixed
+
+- **Installing through claude.ai, the Claude desktop app and Cowork.** Those apps refuse a plugin
+  that has a top-level `bin/` folder, and the `grimoire` plugin had one. The plugin carries no
+  `bin/` folder; its commands run the launcher of the installed framework,
+  `~/.grimoire/bin/grimoire`.
+
+### Changed
+
+- **Plugin descriptions.** The marketplace entries of `grimoire` and `grimoire-dev` say what each
+  plugin is and does.
+
+### Removed
+
+- **The bare `grimoire` command inside Claude Code.** The plugin's `bin/` folder put the launcher
+  on the PATH of the Bash tool. Run it by its path: `~/.grimoire/bin/grimoire <rite>`.
+
 ## [1.0.0] - 2026-11-18
 
 The first release of Grimoire: a framework, installed once, that lets an AI assistant build and

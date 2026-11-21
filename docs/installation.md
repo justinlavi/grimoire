@@ -4,7 +4,7 @@ title: "Installation"
 aliases: ["install", "summon", "setup"]
 tags: [type/reference, framework/docs]
 authority: grimoire
-last_verified: 2026-11-14
+last_verified: 2026-11-21
 ---
 
 # Installing Grimoire
@@ -208,9 +208,6 @@ writes default to UTF-8 on every platform, and the launcher exits with the rite'
 | A rite | `~/.grimoire/bin/grimoire validate --summary` |
 | The list of rites | `~/.grimoire/bin/grimoire --list` |
 | A rite from the Windows command prompt | `%USERPROFILE%\.grimoire\bin\grimoire.cmd validate --summary` |
-
-Inside Claude Code with the `grimoire` plugin installed, the plugin's `bin/` folder is on the
-PATH of the Bash tool, so `grimoire validate --summary` works there.
 
 ## Smoke test
 

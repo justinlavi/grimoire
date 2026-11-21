@@ -3,7 +3,7 @@
 
 `bin/grimoire` (POSIX sh) and `bin/grimoire.cmd` (Windows) find a Python 3.10+ and
 hand off here. The framework is the checkout this file sits in (`<framework>/bin/`)
-or, when the launcher runs from the grimoire plugin, `$FRAMEWORK_HOME`, default
+or, for a copy of the launcher kept elsewhere, `$FRAMEWORK_HOME`, default
 `~/.grimoire`.
 
     grimoire <rite> [arguments...]
