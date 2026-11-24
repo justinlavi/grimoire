@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.1.0] - 2026-11-24
+
+An existing install needs nothing beyond the update itself: `/grm-update`, or the plugin's
+automatic update. No grimoire changes. A library that recorded a link together with its
+credential loses the credential the next time that grimoire is set up from its link.
+
+### Added
+
+- **Naming the access when setting up.** `/grm-setup <link> read` and `/grm-setup <link> edit`
+  set a grimoire up with exactly that access and ask nothing first. The same line brings a
+  grimoire that is already on the computer to that access and to that link.
+- **Links that carry a credential.** A link such as `https://<token>@host/...` works as it is.
+  Git keeps the credential with the copy; the library and everything Grimoire prints hold the
+  address without it. Setting a grimoire up again from a link with a new credential gives the
+  copy that credential once it is shown to work, with or without an access word.
+- **A warning for unshared work in a copy for reading.** Setup says how many unsaved changes
+  and unshared commits such a copy holds, since it takes in no updates while it holds them.
+
+### Changed
+
+- **Two links that differ only by their credential are one address.** Setup treats the second as
+  a renewed sign-in and does not stop to ask about a change of address.
+- **A link always goes through setup.** The playbook installs from a link also when the
+  grimoire is already registered, so a renewed credential or a named access takes effect.
+
+### Fixed
+
+- **Credentials in output.** A rite's results, messages and terminal output show an address
+  without the credential it carries.
+
 ## [1.0.1] - 2026-11-21
 
 An existing install needs nothing beyond the update itself: `/grm-update`, or the plugin's

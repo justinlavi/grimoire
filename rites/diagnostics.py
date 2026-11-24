@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from _lib import ensure_utf8_stdio
+from _lib import ensure_utf8_stdio, scrub_credentials
 
 ensure_utf8_stdio()
 
@@ -197,6 +197,17 @@ def human_label(severity: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _without_credentials(value: Any) -> Any:
+    """`value` with the credentials removed from every address in its strings, at any depth."""
+    if isinstance(value, str):
+        return scrub_credentials(value)
+    if isinstance(value, dict):
+        return {key: _without_credentials(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_without_credentials(item) for item in value]
+    return value
+
+
 class ResultReporter:
     """Collect and emit the outcome of a mutating rite.
 
@@ -219,13 +230,13 @@ class ResultReporter:
         self.mutations.append({
             "action": action,
             "path": normalize_path(path, self.root),
-            "detail": detail,
+            "detail": scrub_credentials(detail) if isinstance(detail, str) else detail,
         })
 
     def message(self, severity: str, text: str, path: str | Path | None = None) -> None:
         self.messages.append({
             "severity": severity,
-            "message": text,
+            "message": scrub_credentials(text),
             "path": normalize_path(path, self.root),
         })
 
@@ -249,7 +260,7 @@ class ResultReporter:
             "status": self.status(),
             "mode": self.mode,
             "root": str(self.root) if self.root is not None else None,
-            "summary": summary or {},
+            "summary": _without_credentials(summary or {}),
             "mutations": self.mutations,
             "messages": self.messages,
         }

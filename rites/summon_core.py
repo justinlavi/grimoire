@@ -243,6 +243,19 @@ def grimoire_command(rite, *args, root=None):
 # ---------------------------------------------------------------------------
 
 
+def _scrub(text):
+    """`text` without the credentials of any address in it.
+
+    The rule lives in `_lib.scrub_credentials`. Before the framework checkout is
+    on disk that module cannot be imported, and the text is returned as it is.
+    """
+    try:
+        from _lib import scrub_credentials
+    except ImportError:
+        return text
+    return scrub_credentials(str(text))
+
+
 class Logger:
     """Terminal logger with prefixed output.
 
@@ -250,11 +263,11 @@ class Logger:
     subprocess output that should appear in the user-visible log without a tag
     prefix. Any object with the same surface can stand in (tests, orchestrators).
     """
-    def info(self, msg):  print(f"  [INFO]  {msg}")
-    def ok(self, msg):    print(f"  [OK]    {msg}")
-    def warn(self, msg):  print(f"  [WARN]  {msg}")
-    def err(self, msg):   print(f"  [ERROR] {msg}")
-    def line(self, text): print(text)
+    def info(self, msg):  print(f"  [INFO]  {_scrub(msg)}")
+    def ok(self, msg):    print(f"  [OK]    {_scrub(msg)}")
+    def warn(self, msg):  print(f"  [WARN]  {_scrub(msg)}")
+    def err(self, msg):   print(f"  [ERROR] {_scrub(msg)}")
+    def line(self, text): print(_scrub(text))
 
 
 # ---------------------------------------------------------------------------
@@ -850,6 +863,8 @@ def update_local_library(installed_keys, library, log, home=None, access="read",
 
     The write goes through `sync_library.update_library`: compare-and-swap, fields
     of existing entries kept, `local_path` formatted by `_lib.format_local_path`.
+    No entry leaves with a credential in its `online_path`: the address is kept
+    and the credential dropped, for the installed keys and for every other entry.
     A key with no entry gains `"access": <access>`; an existing entry keeps its
     own `access`, or lack of one, unless `replace_access` is true. A library that
     cannot be read is left as it is and the function returns False.
@@ -858,7 +873,7 @@ def update_local_library(installed_keys, library, log, home=None, access="read",
     home = Path(home or GRIMOIRES_HOME)
     library_path = home / "library.json"
     use_framework_modules()
-    from _lib import format_local_path
+    from _lib import format_local_path, strip_credentials
     import sync_library
 
     discovered = library.get("grimoires", {})
@@ -874,6 +889,9 @@ def update_local_library(installed_keys, library, log, home=None, access="read",
             if online_path or "online_path" not in entry:
                 entry["online_path"] = online_path
             current["grimoires"][key] = entry
+        for entry in current["grimoires"].values():
+            if isinstance(entry, dict) and isinstance(entry.get("online_path"), str):
+                entry["online_path"] = strip_credentials(entry["online_path"])
         current["grimoires"] = dict(sorted(current["grimoires"].items()))
         return current
 

@@ -159,7 +159,7 @@ curl -fsSL https://raw.githubusercontent.com/justinlavi/grimoire/main/rites/summ
 ```
 
 **When it finds nothing.** The installer reports the failure, installs the framework and clones
-no grimoire. Join a grimoire afterwards with `/grm-setup <url>` in the assistant.
+no grimoire. Join a grimoire afterwards with `/grm-setup <url>` in the assistant; add `read` or `edit` after the link to say how you will use it.
 
 **When a grimoire is found before the framework.** The README of every grimoire carries the
 installer line with that grimoire's own URL as `--scope`, so one command installs both.

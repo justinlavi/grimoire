@@ -1,6 +1,6 @@
 {
   "name": "grimoire",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Knowledge bases your AI assistant reads and maintains with you. A grimoire keeps knowledge as linked Markdown pages in a git repository, so the assistant opens the right page instead of searching. Set one up, add to it, check it, share it, publish it as a website, and stay up to date automatically.",
   "author": {
     "name": "Justin Lavi",

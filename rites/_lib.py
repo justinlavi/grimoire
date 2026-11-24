@@ -232,20 +232,71 @@ def iter_colocated_source_markdown(root: Path) -> Iterable[Path]:
 # ---------------------------------------------------------------------------
 
 
+_ADDRESS_USERINFO = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*://)([^/]*)@")
+_HTTP_CREDENTIALS_IN_TEXT = re.compile(r"(?i)\b(https?://)[^/\s'\"<>]*@")
+_PASSWORD_IN_TEXT = re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://[^/\s:@'\"<>]*):[^/\s'\"<>]*@")
+
+
+def address_credentials(url: str) -> str:
+    """The credentials an address carries: the text between `://` and the `@` of its host, or `""`.
+
+    The host part of an address ends at its first slash, as git reads it, so a
+    credential may hold `?`, `#` and `@`.
+
+    Only an `http` or `https` address counts as carrying its whole user part as a
+    credential, because a token is often written there alone. Any other
+    `scheme://` address counts only a password. `git@host:path` and local paths
+    carry none.
+    """
+    match = _ADDRESS_USERINFO.match(url.strip())
+    if not match:
+        return ""
+    userinfo = match.group(2)
+    if match.group(1).lower() in ("http://", "https://"):
+        return userinfo
+    return userinfo.partition(":")[2]
+
+
+def strip_credentials(url: str) -> str:
+    """The address without the credentials it carries.
+
+    `https://token@host/x` and `https://user:secret@host/x` both become
+    `https://host/x`. Any other `scheme://` address keeps its user name and loses
+    a password: `ssh://git:secret@host/x` becomes `ssh://git@host/x`.
+    `git@host:path` and local paths are returned as they are.
+    """
+    text = url.strip()
+    match = _ADDRESS_USERINFO.match(text)
+    if not match:
+        return text
+    scheme, userinfo, rest = match.group(1), match.group(2), text[match.end():]
+    if scheme.lower() in ("http://", "https://"):
+        return scheme + rest
+    user = userinfo.partition(":")[0]
+    return f"{scheme}{user}@{rest}" if user else scheme + rest
+
+
+def scrub_credentials(text: str) -> str:
+    """`text` with the credentials removed from every address in it, by the rule of `strip_credentials`."""
+    if "://" not in text:
+        return text
+    return _PASSWORD_IN_TEXT.sub(r"\1@", _HTTP_CREDENTIALS_IN_TEXT.sub(r"\1", text))
+
+
 def info(msg: str) -> None:
-    print(f"  [INFO]  {msg}")
+    print(f"  [INFO]  {scrub_credentials(msg)}")
 
 
 def ok(msg: str) -> None:
-    print(f"  [OK]    {msg}")
+    print(f"  [OK]    {scrub_credentials(msg)}")
 
 
 def warn(msg: str) -> None:
-    print(f"  [WARN]  {msg}")
+    print(f"  [WARN]  {scrub_credentials(msg)}")
 
 
 def err(msg: str) -> None:
-    print(f"  [ERROR] {msg}")
+    print(f"  [ERROR] {scrub_credentials(msg)}")
 
 
 # ---------------------------------------------------------------------------

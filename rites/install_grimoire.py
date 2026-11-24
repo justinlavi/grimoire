@@ -28,6 +28,18 @@ rite fetches the new address, checks that it shares history with the checkout,
 and points the checkout at it. A repository with no shared history is another
 grimoire and is refused.
 
+A link may carry a credential (`https://<token>@host/...`). Git keeps it in the
+checkout's own configuration, where it needs it. The library, the envelope and
+every message hold the address without it. Two links that differ only by their
+credential are one address: when the link carries a credential the checkout does
+not have, the rite fetches with it and, on success, gives it to the checkout; the
+summary then carries `credential: "refreshed"`. A credential that cannot fetch
+changes nothing.
+
+A grimoire that ends registered for reading while its checkout holds unsaved
+changes or commits its upstream does not have gets a warning, and the summary
+carries their counts as `unshared`.
+
 The envelope records `clone` when the rite cloned and `pull` only when the
 fast-forward pull of an existing checkout succeeded. A folder that is not a git
 checkout is an error, and a library or skill registration that fails is an error.
@@ -48,7 +60,7 @@ from pathlib import Path
 
 import summon_core
 import sync_library
-from _lib import load_manifest, read_library
+from _lib import address_credentials, load_manifest, read_library, scrub_credentials, strip_credentials
 from diagnostics import ResultReporter, add_output_format_arg
 
 FRAMEWORK_PATH = Path(__file__).resolve().parent.parent
@@ -78,9 +90,13 @@ def derive_key(url: str) -> str:
 
 
 def same_address(first: str, second: str) -> bool:
-    """True when two addresses name one repository, ignoring a trailing slash, `.git` and letter case."""
+    """True when two addresses name one repository.
+
+    A trailing slash, `.git`, letter case and the credentials an address carries
+    are ignored.
+    """
     def bare(value: str) -> str:
-        text = value.strip().replace("\\", "/").rstrip("/")
+        text = strip_credentials(value).replace("\\", "/").rstrip("/")
         return re.sub(r"\.git$", "", text, flags=re.IGNORECASE).rstrip("/").lower()
 
     return bare(first) == bare(second)
@@ -95,31 +111,49 @@ def recorded_access(library_path: Path, key: str) -> str | None:
     return "read" if entry.get("access") == "read" else "edit"
 
 
-def switch_address(target: Path, origin: str, url: str) -> tuple[str, str]:
+def switch_address(target: Path, origin: str, url: str, credential_only: bool = False) -> tuple[str, str]:
     """Point the checkout at `url` when `url` holds the same grimoire.
 
     Returns `("ok", "")`, or `("error", text)` when the address cannot be fetched,
     or `("blocked", text)` when it shares no history with the checkout. The
-    checkout's remote changes only on `ok`.
+    checkout's remote changes only on `ok`. `credential_only` words the texts for
+    a link that differs from the checkout's only by its credential. No text
+    carries a credential.
     """
     folder = str(target)
+    shown, came_from = strip_credentials(url), strip_credentials(origin)
     code, _out, err = summon_core.git_capture("-C", folder, "fetch", "--quiet", url)
     if code != 0:
         reason = (err or "fetch failed").strip().splitlines()[-1][:200]
+        if credential_only:
+            return "error", (
+                f"could not fetch {shown} with the credential in the link ({reason}), so {target} keeps the "
+                "sign-in it had: check that the link is current and complete, and your VPN"
+            )
         return "error", (
-            f"could not fetch {url} ({reason}), so {target} still comes from {origin}: check the URL, "
-            "your VPN, and that git already holds a credential for this host"
+            f"could not fetch {shown} ({reason}), so {target} still comes from {came_from}: check the URL, "
+            "your VPN, and that git can sign in to this host"
         )
     code, _out, _err = summon_core.git_capture("-C", folder, "merge-base", "HEAD", "FETCH_HEAD")
     if code != 0:
         return "blocked", (
-            f"the repository at {url} shares no history with {target}, which comes from {origin}, so it is "
+            f"the repository at {shown} shares no history with {target}, which comes from {came_from}, so it is "
             "another grimoire and nothing was changed: pass --name for another directory"
         )
     code, _out, err = summon_core.git_capture("-C", folder, "remote", "set-url", "origin", url)
     if code != 0:
-        return "error", f"could not point {target} at {url}: {(err or 'git remote set-url failed').strip()[:200]}"
+        return "error", f"could not point {target} at {shown}: {(err or 'git remote set-url failed').strip()[:200]}"
     return "ok", ""
+
+
+def unshared_work(target: Path) -> tuple[int, int]:
+    """Unsaved changes and commits the upstream does not have, as two counts; zero where git cannot tell."""
+    folder = str(target)
+    code, out, _err = summon_core.git_capture("-C", folder, "status", "--porcelain")
+    changes = len([line for line in out.splitlines() if line.strip()]) if code == 0 else 0
+    code, out, _err = summon_core.git_capture("-C", folder, "rev-list", "--count", "@{upstream}..HEAD")
+    commits = int(out.strip()) if code == 0 and out.strip().isdigit() else 0
+    return changes, commits
 
 
 def _run_sync_skills() -> tuple[bool, str]:
@@ -137,7 +171,7 @@ def _run_sync_skills() -> tuple[bool, str]:
 
 def _register(key, entry, target, library_path, log, home, access, reporter) -> bool:
     """Write the library entry: the address the checkout fetches from, and `access` when one was given."""
-    entry["online_path"] = sync_library.detect_origin_url(target) or entry["online_path"]
+    entry["online_path"] = strip_credentials(sync_library.detect_origin_url(target) or entry["online_path"])
     before = recorded_access(library_path, key)
     registered = summon_core.update_local_library(
         [key], {"grimoires": {key: entry}}, log, home=home,
@@ -148,9 +182,17 @@ def _register(key, entry, target, library_path, log, home, access, reporter) -> 
     return registered
 
 
+class _Parser(argparse.ArgumentParser):
+    """An argument parser whose error text never carries the credential of a link."""
+
+    def error(self, message: str):
+        super().error(scrub_credentials(message))
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Clone and register an existing grimoire")
-    parser.add_argument("url", help="Git URL of the grimoire (https://..., git@host:path.git, or a local path)")
+    parser = _Parser(description="Clone and register an existing grimoire")
+    parser.add_argument("url", help="Git URL of the grimoire (https://..., git@host:path.git, or a local path); "
+                                    "a credential in it is used and never recorded or printed")
     parser.add_argument("--name", default="", help="Directory name under the grimoire home (default: repository name)")
     parser.add_argument("--home", type=Path, default=summon_core.GRIMOIRES_HOME, help="Grimoire home (default: ~/grimoires)")
     parser.add_argument("--access", choices=("read", "edit"), default=None,
@@ -166,18 +208,19 @@ def main() -> int:
     home = args.home.expanduser().resolve()
     reporter = ResultReporter("install_grimoire", root=home, mode="apply")
 
+    address = strip_credentials(args.url)
     key = args.name.strip() or derive_key(args.url)
     if not key or not SAFE_KEY_RE.fullmatch(key):
-        reporter.message("error", f"cannot derive a safe directory name from {args.url!r}; pass --name")
+        reporter.message("error", f"cannot derive a safe directory name from {address!r}; pass --name")
         if human:
-            print(f"  [ERROR] Cannot derive a directory name from {args.url!r}; pass --name <directory>")
+            print(f"  [ERROR] Cannot derive a directory name from {address!r}; pass --name <directory>")
         else:
             reporter.emit(args.format)
         return 1
 
     target = home / key
     library_path = home / "library.json"
-    summary = {"key": key, "path": str(target), "url": args.url, "manifest": "unknown", "skills": "skipped"}
+    summary = {"key": key, "path": str(target), "url": address, "manifest": "unknown", "skills": "skipped"}
 
     sink = contextlib.nullcontext() if human else contextlib.redirect_stdout(io.StringIO())
     with sink:
@@ -195,23 +238,31 @@ def main() -> int:
             home.mkdir(parents=True, exist_ok=True)
             entry = {"name": key, "online_path": args.url}
             origin = sync_library.detect_origin_url(target) if (target / ".git").is_dir() else ""
+            switched, text = "", ""
             if origin and not same_address(origin, args.url):
-                summary["origin"] = origin
+                came_from = strip_credentials(origin)
+                summary["origin"] = came_from
                 if args.switch_url:
                     switched, text = switch_address(target, origin, args.url)
                 else:
                     switched, text = "blocked", (
-                        f"{key} is already at {target} and comes from {origin}, not from {args.url}; nothing "
+                        f"{key} is already at {target} and comes from {came_from}, not from {address}; nothing "
                         "was changed. Run again with --switch-url to make this copy come from the new "
                         "address, or pass --name for another directory when this is another grimoire"
                     )
                 if switched == "ok":
-                    reporter.mutation("remote", path=target, detail=f"{origin} -> {args.url}")
-                else:
-                    stopped = True
-                    reporter.message("error", text, path=target)
-                    if switched == "blocked":
-                        reporter.set_status("blocked")
+                    reporter.mutation("remote", path=target, detail=f"{came_from} -> {address}")
+            elif origin and address_credentials(args.url) not in ("", address_credentials(origin)):
+                # One address, and the link carries a credential the checkout does not have.
+                switched, text = switch_address(target, origin, args.url, credential_only=True)
+                if switched == "ok":
+                    summary["credential"] = "refreshed"
+                    reporter.mutation("remote", path=target, detail=f"credential refreshed for {address}")
+            if switched not in ("", "ok"):
+                stopped = True
+                reporter.message("error", text, path=target)
+                if switched == "blocked":
+                    reporter.set_status("blocked")
             if not stopped:
                 outcome = summon_core.install_grimoire(key, entry, log, home=home)
 
@@ -220,8 +271,11 @@ def main() -> int:
         elif outcome is None:
             reporter.message(
                 "error",
-                f"could not clone {args.url} into {target}: check the URL, your VPN, and that git "
-                "already holds a credential for this host (git prompts once, the way it does for any repository)",
+                f"could not clone {address} into {target}: check the URL, your VPN, and "
+                + ("the sign-in: the credential in the link may be out of date or cut short, or git may hold "
+                   "none for this host" if address_credentials(args.url) else
+                   "that git already holds a credential for this host (git prompts once, the way it does for "
+                   "any repository)"),
                 path=target,
             )
         elif outcome == summon_core.SKIPPED:
@@ -239,7 +293,7 @@ def main() -> int:
                     path=target,
                 )
             else:
-                reporter.mutation("clone" if outcome == summon_core.CLONED else "pull", path=target, detail=args.url)
+                reporter.mutation("clone" if outcome == summon_core.CLONED else "pull", path=target, detail=address)
             manifest, errors = load_manifest(target)
             if manifest is None or errors:
                 summary["manifest"] = "missing" if manifest is None else "invalid"
@@ -265,6 +319,16 @@ def main() -> int:
                 recorded_entry = (recorded or {}).get("grimoires", {}).get(key)
                 summary["access"] = "read" if isinstance(recorded_entry, dict) and recorded_entry.get("access") == "read" else "edit"
                 reporter.mutation("register", path=library_path, detail=key)
+                changes, commits = unshared_work(target) if summary["access"] == "read" else (0, 0)
+                if changes or commits:
+                    summary["unshared"] = {"changes": changes, "commits": commits}
+                    text = (
+                        f"{key} is set up for reading and its copy holds work that was never shared "
+                        f"({changes} unsaved change(s), {commits} commit(s)). A copy for reading takes in no "
+                        "updates while it holds that work: switch the copy to editing and save, or discard the work"
+                    )
+                    reporter.message("warning", text, path=target)
+                    log.warn(text)
                 if not args.no_skills:
                     ok, detail = _run_sync_skills()
                     summary["skills"] = "synced" if ok else "failed"

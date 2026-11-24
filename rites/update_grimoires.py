@@ -60,6 +60,7 @@ from _lib import (
     read_library,
     read_utf8,
     resolve_local_path,
+    strip_credentials,
     write_utf8,
 )
 from scaffold_contract import file_entries, load_scaffold_contract, managed_scaffold_files
@@ -574,7 +575,7 @@ def process_grimoire(
         "key": key,
         "local_path": str(local_path),
         "host": host,
-        "online_path": online,
+        "online_path": strip_credentials(online) if isinstance(online, str) else online,
         "access": "read" if entry.get("access") == "read" else "edit",
         "pulled": False,
         "heal_eligible": False,

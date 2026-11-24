@@ -49,6 +49,7 @@ from _lib import (
     ok,
     read_library,
     resolve_local_path,
+    strip_credentials,
     warn,
     write_json,
 )
@@ -143,7 +144,7 @@ def scan_grimoire_home(home):
                 "key": child.name,
                 "path": child,
                 "manifest": manifest,
-                "online_path": detect_origin_url(child),
+                "online_path": strip_credentials(detect_origin_url(child)),
             }
         )
 
@@ -262,9 +263,11 @@ def build_synced_library(scan, library, home):
         entry = dict(existing) if isinstance(existing, dict) else {}
         entry["local_path"] = expected_local_path(home, key)
         # Prefer existing online_path if present and non-empty; otherwise use
-        # the detected git origin (or null).
+        # the detected git origin (or null). The library never holds a credential.
         if not entry.get("online_path"):
             entry["online_path"] = g["online_path"] or None
+        if isinstance(entry["online_path"], str):
+            entry["online_path"] = strip_credentials(entry["online_path"])
         new_entries[key] = entry
 
     return {**library, "grimoires": dict(sorted(new_entries.items()))}

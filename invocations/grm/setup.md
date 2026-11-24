@@ -4,7 +4,7 @@ title: "Setup"
 aliases: ["setup", "grm-setup", "onboarding", "join-grimoire", "adopt"]
 tags: [framework/invocations, type/playbook, scope/grimoire]
 authority: grimoire
-last_verified: 2026-11-18
+last_verified: 2026-11-24
 ---
 
 # Invocation: Setup
@@ -18,6 +18,8 @@ exchange.
 ```
 /grm-setup
 /grm-setup <git url>
+/grm-setup <git url> read
+/grm-setup <git url> edit
 /grm-setup <folder>
 ```
 
@@ -35,7 +37,14 @@ or when `/grm-update library` reports an unmanaged folder.
 
 This playbook needs no active grimoire and works from any directory.
 
-- `$target`: a repository link or a folder, when the user passed one.
+- `$target` and `$access`, both read from the text the user typed after the command. When the
+  last word of that text is exactly `read` or `edit`, in any letter case, that word is `$access`
+  and the text before it is `$target`. Otherwise the whole text is `$target` and there is no
+  `$access`: a folder name that holds spaces stays whole, and no other word is ever an access.
+  Quotes around the text are not part of `$target`. Pass `$access` to a rite in lower case.
+  `$access` belongs to a repository link. When `$target` is a folder that is not a git
+  repository, say in one line that a folder the user adopts is theirs to edit, and go on without
+  `$access`.
 - The envelope of `FRAMEWORK_HOME/bin/grimoire summon --check --format json` (step 1).
 - `~/.cache/grimoire/summon-last.json`, the transcript the same run writes. Its
   `final_state.library` names the grimoires: `ok` (registered), `missing` (on disk and not
@@ -50,7 +59,14 @@ This playbook needs no active grimoire and works from any directory.
 - Never ask for a token, a password or a personal access token, and never store a token in a file.
   Git already holds the user's credentials for their host. When it does not, git's own credential
   helper prompts once: a browser window on Windows and macOS, a terminal prompt on Linux. Say that
-  this prompt may appear and move on.
+  this prompt may appear and move on. A link that carries its own credential needs nothing more:
+  pass it to the rite as it is.
+- Never write out the credential part of a link, the text between `://` and the `@` before the
+  host, in a reply, a question or a file. Name a link by its host and path. The rites do the same:
+  nothing they print or record carries it.
+- Never conclude from step 1 that a link needs no install. A grimoire that is already registered
+  still goes through step 3: the rite brings the copy up to date, gives it a new credential that
+  the link carries, and records `$access`.
 - Never clone into a directory other than `~/grimoires/<name>`. The rites resolve every grimoire
   through that layout.
 - Never move the user's folder without asking first.
@@ -59,6 +75,11 @@ This playbook needs no active grimoire and works from any directory.
   the user can say which.
 
 ## Steps
+
+When `$target` is a repository link and `$access` is set, the command states the whole result:
+this grimoire, from this address, with this access. Start at step 3 and ask nothing before it.
+Then run the second command of step 1, which reads the automatic-update state, do step 5 and
+finish with step 6. In every other case start at step 1.
 
 ### 1. Look before asking
 
@@ -118,28 +139,48 @@ user picks it, go to step 5, then offer the remaining choices again.
 
 ### 3. Install the grimoire from its link
 
+Without `$access`:
+
 ```bash
 FRAMEWORK_HOME/bin/grimoire install_grimoire "<url>" --format json
+```
+
+With `$access`:
+
+```bash
+FRAMEWORK_HOME/bin/grimoire install_grimoire "<url>" --access <read|edit> --switch-url --format json
 ```
 
 The rite accepts `https://...`, `git@host:path.git` and local paths. It derives the directory name
 from the repository name (`--name <directory>` overrides it), clones or fast-forwards into
 `~/grimoires/<name>`, checks for `grimoire.json`, records the library entry and registers the
-grimoire's commands. The entry is registered for reading (`summary.access` is `read`): the copy
-stays up to date and no command changes it until the user switches it to editing. When the user
-has already said that they will change this grimoire, add `--access edit` to the command.
-`--access read` and `--access edit` also change a grimoire that is already on this computer;
-without the option, such a grimoire keeps the access it has. When the user gave several links, run
-the command once for each link and report each result, then go on to step 5 once. Report from the
-envelope, never from assumption:
+grimoire's commands.
+
+- **Access.** Without `$access`, a new grimoire is registered for reading (`summary.access` is
+  `read`): the copy stays up to date and no command changes it until the user switches it to
+  editing. A grimoire that is already on this computer keeps the access it has. When the user has
+  already said that they will change this grimoire, add `--access edit` to the first command. With
+  `$access`, the copy ends with exactly that access, whatever it had.
+- **Address.** With `$access`, `--switch-url` makes the link the address the copy comes from, also
+  when the copy came from another address. The rite refuses a link that holds another grimoire.
+- **A link that carries a credential.** Pass the link as it is. Git keeps the credential with the
+  copy. When the grimoire is already here and the link carries a credential the copy does not
+  have, the rite checks the credential and gives it to the copy; `summary.credential` is then
+  `refreshed`. This happens with and without `$access`.
+
+When the user gave several links, run the command once for each link and report each result, then
+go on to step 5 once. Report from the envelope, never from assumption:
 
 | Envelope | Action |
 |---|---|
 | `status: ok` | Say where the grimoire landed and what it is, from the `description` in its `grimoire.json`. When `summary.access` is `read`, add one line: the copy is for reading and stays up to date by itself, and the first time they ask to change something, the assistant asks whether to switch it to editing. Go to step 5. |
+| `status: ok`, `summary.credential` is `refreshed` | As the row above, and add one line: the copy's sign-in was renewed from the link. |
+| `status: ok`, `summary.unshared` is set | The copy is set up for reading and holds work that was never shared: `summary.unshared.changes` unsaved changes and `summary.unshared.commits` commits. Say so with both numbers, and say that a copy for reading takes in no updates while it holds that work. Ask whether to switch the copy to editing so the work can be saved, or to leave it. Never discard the work unless the user says to. Then go to step 5. |
 | `status: error`, `summary.skills` is `failed` | The grimoire is cloned and in the library; its commands are not registered. Say that its commands are not available yet and that `/grm-update skills` registers them. Go to step 5. |
 | `status: error`, message "exists and is not a git checkout" | A folder of that name is in the way. Ask whether to move it away, or to adopt it with step 4 (when it is the user's own folder of notes). |
 | `status: blocked`, `summary.manifest` is `missing` | The repository is on disk and is not a grimoire yet. Offer to adopt it: step 4 on `~/grimoires/<name>`. Explain that adoption only writes a small identity file. |
-| `status: blocked`, `summary.origin` is set | The grimoire is already on this computer and came from the address in `summary.origin`; nothing was changed. Name both addresses and ask whether this copy should come from the new one from now on. On yes, run the command again with `--switch-url`: the rite checks that the new address holds the same grimoire before it changes anything. When the user says the link is another grimoire of the same name, run the command with `--name <directory>`. |
+| `status: error`, message "with the credential in the link" | The link's credential did not work, and the copy keeps the sign-in it had. Say that the link may be out of date or cut short, and ask the user to get a current link from where they got this one. |
+| `status: blocked`, `summary.origin` is set | The grimoire is already on this computer and came from the address in `summary.origin`; nothing was changed. This row arises only without `$access`. Name both addresses and ask whether this copy should come from the new one from now on. On yes, run the command again with `--switch-url`: the rite checks that the new address holds the same grimoire before it changes anything. When the user says the link is another grimoire of the same name, run the command with `--name <directory>`. |
 | `status: blocked`, message "shares no history" | The new address holds another grimoire, and the copy was left alone. Offer `--name <directory>` to keep both. |
 | `status: error`, message "could not clone" | Name the three causes in order of likelihood: the link is wrong (compare it with the link the user was given), the host needs VPN, or git has no credential for the host yet (run the step again and watch for git's prompt). Ask the user which it is. |
 

@@ -4,7 +4,7 @@ title: "Grimoire Reference Guide"
 aliases: ["terminology", "glossary", "reference"]
 tags: [type/reference, framework/docs]
 authority: grimoire
-last_verified: 2026-11-18
+last_verified: 2026-11-24
 ---
 
 # Grimoire Reference Guide
@@ -212,8 +212,8 @@ identity of a grimoire is in its [manifest](#grimoire-manifest).
 |---|---|
 | Key | The folder name of the grimoire. It is also the [path key](#path-keys) for that grimoire. |
 | `local_path` | The absolute path to the root of the grimoire. `$HOME` stands for the user's home directory. |
-| `online_path` | The address the copy on this computer fetches from, or `null` when it has none. `/grm-setup` with another address for a grimoire that is already here changes nothing until the user agrees to switch; then the copy and this field change together. |
-| `access` | `read` or `edit`; `edit` when the field is absent. A grimoire joined from a link starts as `read`: it is pulled and never changed on this computer. `/grm-setup` sets the field when the user says how they will use the grimoire. The commands that change a grimoire ask before they switch it to `edit`; the [grimoire directory guard](../invocations/meta/grimoire_directory_guard.md#before-a-command-changes-the-grimoire) holds the rule, and `grimoire_access` reads and sets the field. |
+| `online_path` | The address the copy on this computer fetches from, or `null` when it has none. It never holds a credential: when a link carries one (`https://<token>@host/...`), git keeps it in the copy's own configuration and this field holds the address without it. `/grm-setup` with another address for a grimoire that is already here changes nothing until the user agrees to switch, or names an access after the link; then the copy and this field change together. |
+| `access` | `read` or `edit`; `edit` when the field is absent. A grimoire joined from a link starts as `read`: it is pulled and never changed on this computer. `/grm-setup <link> read` and `/grm-setup <link> edit` set the field outright, also for a grimoire that is already here; without the word, `/grm-setup` sets it when the user says how they will use the grimoire. The commands that change a grimoire ask before they switch it to `edit`; the [grimoire directory guard](../invocations/meta/grimoire_directory_guard.md#before-a-command-changes-the-grimoire) holds the rule, and `grimoire_access` reads and sets the field. |
 
 The installer, `/grm-setup` and `/grm-create` add entries. `/grm-update library` reconciles the
 file with the folders under `~/grimoires/`: it reports a grimoire that has no entry, an entry
